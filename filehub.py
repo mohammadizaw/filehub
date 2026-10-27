@@ -623,6 +623,22 @@ function run() {
 }"""
 
 
+# The Mac's own share panels (AirDrop / Messages). The script stays alive while the panel is open.
+SHARE_JS = """ObjC.import('AppKit');
+function run(argv) {
+  const via = argv.shift();
+  const name = via === 'messages' ? $.NSSharingServiceNameComposeMessage : $.NSSharingServiceNameSendViaAirDrop;
+  const svc = $.NSSharingService.sharingServiceNamed(name);
+  if (svc.isNil()) return 'missing';
+  const items = $.NSMutableArray.array;
+  argv.forEach(p => items.addObject($.NSURL.fileURLWithPath(p)));
+  $.NSApplication.sharedApplication;
+  svc.performWithItems(items);
+  $.NSRunLoop.currentRunLoop.runUntilDate($.NSDate.dateWithTimeIntervalSinceNow(300));
+  return 'ok';
+}"""
+
+
 def clipboard_set(paths):
     """Put files on the Mac clipboard, so they can be pasted here, in Finder, Mail..."""
     out = subprocess.run(["osascript", "-l", "JavaScript", "-e", CLIP_WRITE] + paths,
@@ -909,6 +925,19 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/clipboard":
             files = clipboard_files()
             return self.send(200, {"files": files, "names": [os.path.basename(f) for f in files]})
+        if url.path == "/api/share":
+            paths = [os.path.realpath(x) for x in data.get("paths", []) if allowed(x)]
+            via = data.get("via")
+            if not paths:
+                return self.send(404, {"error": "not found"})
+            if via == "mail":  # Mail makes a new message with the files attached
+                subprocess.Popen(["open", "-a", "Mail"] + paths)
+            elif via in ("airdrop", "messages"):
+                subprocess.Popen(["osascript", "-l", "JavaScript", "-e", SHARE_JS, via] + paths,
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                return self.send(400, {"error": "unknown way to share"})
+            return self.send(200, {"ok": True})
         if url.path == "/api/copy":
             paths = [x for x in data.get("paths", []) if allowed(x)]
             if not paths:
