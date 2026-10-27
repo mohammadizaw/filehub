@@ -409,6 +409,38 @@ select.ctl{font-weight:600}
 :root[data-font="system"] body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif}
 :root[data-font="serif"] body{font-family:"New York",ui-serif,Georgia,"Times New Roman",serif}
 @media (max-width:900px){ .appear{right:8px;left:8px;width:auto} }
+
+/* ===== Rename box ===== */
+.rn{position:fixed;inset:0;z-index:70;background:rgba(10,14,22,.35);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding-top:16vh}
+.rn.on{display:flex}
+.rn .box{width:min(440px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);padding:18px;animation:popin .14s ease-out}
+.rn h3{margin:0 0 4px;font-size:16px;font-weight:800}
+.rn p{margin:0 0 12px;color:var(--muted);font-size:12.5px;word-break:break-word}
+.rn input{width:100%;padding:10px 12px;border:2px solid var(--accent);border-radius:11px;background:var(--panel2);font-size:15px;font-weight:600;outline:none}
+.rn .err{color:#e5484d;font-size:12.5px;min-height:18px;margin:8px 0 0}
+.rn .actions{justify-content:flex-end;margin:10px 0 0}
+/* ===== Right-click menu ===== */
+.ctx{position:fixed;z-index:60;min-width:236px;max-width:300px;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg),0 0 0 .5px rgba(0,0,0,.04);padding:6px;font-size:13px;display:none;user-select:none}
+.ctx.on{display:block;animation:ctxin .1s ease-out}
+@keyframes ctxin{from{opacity:0;transform:scale(.97)}}
+.ctx .ch{display:flex;align-items:center;gap:10px;padding:8px 10px 10px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.ctx .ch .ic{width:30px;height:30px;border-radius:9px;flex:none;display:grid;place-items:center;color:#fff;font-size:8.5px;font-weight:800;text-transform:uppercase;background-image:linear-gradient(135deg,rgba(255,255,255,.3),rgba(255,255,255,0))}
+.ctx .ch .ic svg{width:16px;height:16px}
+.ctx .ch b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.ctx .ch small{color:var(--muted);font-size:11.5px}
+.ctx .ci{position:relative;display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:6px 10px;border-radius:8px;cursor:pointer;color:var(--text);white-space:nowrap}
+.ctx .ci svg{width:16px;height:16px;flex:none;color:var(--muted)}
+.ctx .ci .k{margin-left:auto;padding-left:18px;color:var(--muted);font-size:12px;letter-spacing:.04em}
+.ctx .ci .lbl{overflow:hidden;text-overflow:ellipsis}
+.ctx .ci:hover,.ctx .ci.open{background:var(--accent);color:#fff}
+.ctx .ci:hover svg,.ctx .ci:hover .k,.ctx .ci.open svg,.ctx .ci.open .k{color:#fff}
+.ctx .ci.dis{opacity:.42;pointer-events:none}
+.ctx .ci .chk{width:16px;flex:none;text-align:center}
+.ctx .sep{height:1px;background:var(--line);margin:5px 8px}
+.ctx .sub{position:absolute;left:calc(100% + 2px);top:-7px;display:none}
+.ctx .sub.left{left:auto;right:calc(100% + 2px)}
+.ctx .ci.open>.sub{display:block}
+.ctx .sub{min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px}
 </style>
 </head>
 <body>
@@ -449,6 +481,10 @@ select.ctl{font-weight:600}
   <aside class="prev" id="prev"><div class="prev-in" id="prevIn"></div></aside>
 </div>
 <div class="appear" id="appear"></div>
+<div class="ctx" id="ctx"></div>
+<div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
+  <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
+  <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
 <div class="toast" id="toast"></div>
 <div class="zoom" id="zoom">
   <div class="zbar">
@@ -511,6 +547,21 @@ const ICONS = {
   search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M11 8v6M8 11h6"/>',
   palette:'<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="14.5" cy="7" r="1.2"/><circle cx="17" cy="10.5" r="1.2"/>',
   check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  paste:'<path d="M9 4h6v3H9z"/><path d="M15 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/>',
+  dup:'<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a1 1 0 0 1 1-1h11M14.5 11.5v6M11.5 14.5h6"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  text:'<path d="M4 7V5h16v2M9 19h6M12 5v14"/>',
+  finder:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 3c-1.5 3-2 6-2 9h2c0 3 .5 6 1.5 9M8 8v1M16 8v1M8 15.5c2.5 1.8 5.5 1.8 8 0"/>',
+  launch:'<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  scissors:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.1 8.1 20 20M8.1 15.9 20 4"/>',
+  refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  sort:'<path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/>',
+  newfolder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10.5v5M9.5 13h5"/>',
+  pencil:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+  chev:'<path d="m9 6 6 6-6 6"/>',
   star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
 };
 const svg = (k, fill) => `<svg viewBox="0 0 24 24" fill="${fill||'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>`;
@@ -964,6 +1015,215 @@ $('appear').addEventListener('click', e => {
 document.addEventListener('click', e => { if(!e.target.closest('#appear,#appearBtn')) $('appear').classList.remove('on'); });
 document.addEventListener('keydown', e => { if(e.key==='Escape' && $('appear').classList.contains('on')){ $('appear').classList.remove('on'); e.stopPropagation(); } }, true);
 applyLook();
+
+// ---------- right-click menu + copy / paste ----------
+// Copy puts files on the Mac clipboard, so they can be pasted here, in Finder or in Mail.
+// Paste and Duplicate only ever make NEW copies. Nothing is moved, renamed or deleted.
+const CTX = {items: []};
+const isMac = /Mac/.test(navigator.platform);
+const K = (k, alt) => isMac ? `${alt?'⌥':''}⌘${k}` : `Ctrl+${alt?'Alt+':''}${k}`;
+let clip = {files: [], names: []};
+async function readClip(){ try{ const r = await post('/api/clipboard', {}); clip = await r.json(); }catch(e){ clip = {files:[], names:[]}; } return clip; }
+const pasteLabel = () => !clip.files.length ? 'Paste' : clip.files.length===1 ? `Paste “${clip.names[0]}”` : `Paste ${clip.files.length} items`;
+
+async function copyFiles(paths){
+  const r = await post('/api/copy', {paths}).catch(()=>null);
+  const ok = r && r.ok && (await r.json()).ok;
+  toast(ok ? (paths.length===1 ? 'Copied. Paste it in a folder here or in Finder' : `Copied ${paths.length} items`) : "Couldn't copy");
+}
+async function afterMaking(made, verb){
+  if(S.view==='browse' && S.browse){ await openFolder(S.browse); }
+  api('/api/library?refresh=1').then(fs => { S.files = fs; if(S.view!=='browse') render(); else renderNav(); }).catch(()=>{});
+  const f = made && made[0] && byPath().get(made[0]);
+  if(f) preview(f);
+  toast(made && made.length ? `${verb} “${made[0].split('/').pop()}”${made.length>1?` and ${made.length-1} more`:''}` : 'Done');
+}
+async function pasteInto(folder){
+  if(!folder){ toast('Open a folder first (Places on the left), then paste'); return; }
+  toast('Pasting…');
+  const r = await post('/api/paste', {path: folder}).catch(()=>null);
+  const d = r ? await r.json() : {error:"Couldn't paste"};
+  if(!r || !r.ok) return toast(d.error || "Couldn't paste");
+  afterMaking(d.made, 'Pasted');
+}
+async function duplicateFile(path){
+  const r = await post('/api/duplicate', {path}).catch(()=>null);
+  const d = r ? await r.json() : {};
+  if(!r || !r.ok) return toast(d.error || "Couldn't duplicate");
+  afterMaking(d.made, 'Made');
+}
+async function newFolder(folder){
+  const r = await post('/api/newfolder', {path: folder}).catch(()=>null);
+  const d = r ? await r.json() : {};
+  if(!r || !r.ok) return toast(d.error || "Couldn't make a folder");
+  await openFolder(folder); toast('New folder made');
+}
+const copyText = (t, msg) => navigator.clipboard.writeText(t).then(()=>toast(msg)).catch(()=>toast("Couldn't copy"));
+const folderName = p => p.split('/').filter(Boolean).pop() || p;
+
+// Build the menu for whatever was right-clicked.
+function menuFor(target){
+  const fileEl = target.closest('[data-path]');
+  const folderEl = target.closest('.ftile[data-browse],[data-place],.crumbs [data-browse]');
+  const sortSub = [['recent','Last opened'],['modified','Last changed'],['added','Newest first'],['used','Most used'],['name','Name A–Z'],['size','Biggest']]
+    .map(([v,t]) => ({label:t, check:S.sort===v, run:()=>{ S.sort=v; $('sort').value=v; store.set('sort',v); render(); }}));
+  const viewSub = [['grid','Grid'],['list','List']].map(([v,t]) => ({label:t, check:S.layout===v, run:()=>{ const b = document.querySelector(`#viewSeg button[data-v="${v}"]`); b && b.click(); }}));
+  const general = [
+    {icon:'grid', label:'View as', sub:viewSub},
+    {icon:'sort', label:'Sort by', sub:sortSub},
+    '-',
+    {icon:'refresh', label:'Refresh', run:()=>load(true)},
+    {icon:'palette', label:'Appearance…', run:()=>{ renderAppear(); $('appear').classList.add('on'); }},
+  ];
+  if(fileEl && !folderEl){
+    const f = byPath().get(fileEl.dataset.path); if(!f) return null;
+    const pinned = S.pins.has(f.path);
+    return {head:{color:color(f.type), ext:(f.ext||'?').slice(0,4), name:f.name, info:[f.pages?pagesText(f):'', f.size?size(f.size):'', f.folder].filter(Boolean).join(' · ')}, items:[
+      {icon:'launch', label:'Open', key:'↵', run:()=>post('/api/launch',{path:f.path})},
+      {icon:'open', label:'Quick Look', key:'Space', run:()=>post('/api/quicklook',{path:f.path})},
+      {icon:'finder', label:'Show in Finder', run:()=>{ post('/api/reveal',{path:f.path}); toast('Showing in Finder'); }},
+      {icon:'info', label:'Get info', run:()=>preview(f)},
+      '-',
+      {icon:'copy', label:'Copy', key:K('C'), run:()=>copyFiles([f.path])},
+      {icon:'pencil', label:'Rename…', run:()=>renameItem(f.path, false)},
+      {icon:'dup', label:'Duplicate', key:K('D'), run:()=>duplicateFile(f.path)},
+      {icon:'link', label:'Copy path', key:K('C',1), run:()=>copyText(f.path,'Path copied')},
+      {icon:'text', label:'Copy name', run:()=>copyText(f.name,'Name copied')},
+      '-',
+      {icon:'star', label:pinned?'Unpin':'Pin', run:()=>{ togglePin(f.path); render(); if(S.sel===f.path) preview(f); }},
+      ...(f.ext==='pdf' ? [{icon:'scissors', label:'Split pages…', run:()=>openSplit(f)}] : []),
+      {icon:'folder', label:'Open its folder', run:()=>openFolder(f.path.slice(0, f.path.lastIndexOf('/')))},
+    ]};
+  }
+  if(folderEl){
+    const path = folderEl.dataset.browse || folderEl.dataset.place;
+    return {head:{folder:true, name:folderName(path), info:path.replace(/^\/Users\/[^/]+/,'~')}, items:[
+      {icon:'folder', label:'Open', run:()=>openFolder(path)},
+      {icon:'finder', label:'Open in Finder', run:()=>post('/api/launch',{path})},
+      '-',
+      {icon:'copy', label:'Copy', run:()=>copyFiles([path])},
+      ...(folderEl.matches('.ftile') ? [{icon:'pencil', label:'Rename…', run:()=>renameItem(path, true)}] : []),
+      {icon:'paste', label:pasteLabel()+' into it', dis:!clip.files.length, run:()=>pasteInto(path)},
+      {icon:'newfolder', label:'New folder inside', run:()=>newFolder(path)},
+      {icon:'link', label:'Copy path', run:()=>copyText(path,'Path copied')},
+    ]};
+  }
+  const here = S.view==='browse' && !S.q ? S.browse : null;
+  return {items: here ? [
+      {icon:'paste', label:pasteLabel(), key:K('V'), dis:!clip.files.length, run:()=>pasteInto(here)},
+      {icon:'newfolder', label:'New folder', run:()=>newFolder(here)},
+      {icon:'finder', label:'Open in Finder', run:()=>post('/api/launch',{path:here})},
+      '-', ...general] : general};
+}
+
+function itemsHTML(items){
+  return items.map((it, i) => {
+    if(it==='-') return '<div class="sep"></div>';
+    const lead = it.sub ? svg(it.icon) : it.check!=null ? `<span class="chk">${it.check?'✓':''}</span>` : svg(it.icon||'chev');
+    return `<div class="ci ${it.dis?'dis':''}" role="menuitem" data-i="${i}">${lead}<span class="lbl">${esc(it.label)}</span>${it.sub?`<span class="k">${svg('chev')}</span><div class="sub"><div class="ctx-in">${itemsHTML(it.sub)}</div></div>`:it.key?`<span class="k">${esc(it.key)}</span>`:''}</div>`;
+  }).join('');
+}
+function openMenu(m, x, y){
+  CTX.items = m.items;
+  const h = m.head;
+  const head = h ? `<div class="ch"><span class="ic" style="background-color:${h.folder?'var(--violet)':h.color}">${h.folder?svg('folder'):esc(h.ext)}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : '';
+  const el = $('ctx'); el.innerHTML = head + itemsHTML(m.items); el.classList.add('on');
+  el.style.left = '0px'; el.style.top = '0px';
+  const w = el.offsetWidth, ht = el.offsetHeight;
+  el.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px';
+  el.style.top = Math.max(8, Math.min(y, innerHeight - ht - 8)) + 'px';
+  const flip = el.getBoundingClientRect().right + 210 > innerWidth;
+  el.querySelectorAll('.sub').forEach(s => s.classList.toggle('left', flip));
+}
+const closeMenu = () => $('ctx').classList.remove('on');
+
+document.addEventListener('contextmenu', async e => {
+  if(e.target.closest('input,textarea,select,.modal,.zoom,#appear,#ctx')) return; // keep the normal menu there
+  e.preventDefault();
+  $('appear').classList.remove('on');
+  const fileEl = e.target.closest('[data-path]');
+  if(fileEl && fileEl.matches('.card,.row')){ const f = byPath().get(fileEl.dataset.path); if(f && S.sel!==f.path){ S.sel = f.path; document.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel')); fileEl.classList.add('sel'); renderStatus(); } }
+  const m = menuFor(e.target); if(!m) return;
+  openMenu(m, e.clientX, e.clientY);
+  // Check what's on the clipboard, then refresh the Paste item.
+  const t = e.target; await readClip();
+  if($('ctx').classList.contains('on') && m.items.some(it => it.label && it.label.startsWith('Paste'))) openMenu(menuFor(t), e.clientX, e.clientY);
+});
+$('ctx').addEventListener('click', e => {
+  e.stopPropagation();
+  const b = e.target.closest('.ci'); if(!b || b.classList.contains('dis')) return;
+  const sub = b.closest('.sub');
+  let it;
+  if(sub){ const parent = sub.closest('.ci'); it = CTX.items[+parent.dataset.i].sub[+b.dataset.i]; }
+  else { it = CTX.items[+b.dataset.i]; if(it.sub){ b.classList.toggle('open'); if(b.classList.contains('open')) fitSub(b.querySelector('.sub')); return; } }
+  closeMenu(); it.run && it.run();
+});
+$('ctx').addEventListener('mouseover', e => {
+  const b = e.target.closest('.ci'); if(!b || b.closest('.sub')) return;
+  $('ctx').querySelectorAll(':scope > .ci.open').forEach(x => { if(x!==b) x.classList.remove('open'); });
+  const sub = b.querySelector('.sub');
+  if(sub && !b.classList.contains('open')){ b.classList.add('open'); fitSub(sub); }
+});
+// Keep a sub-menu inside the window.
+function fitSub(sub){
+  sub.style.top = '-7px';
+  const r = sub.getBoundingClientRect();
+  if(r.bottom > innerHeight - 8) sub.style.top = (-7 - (r.bottom - innerHeight + 8)) + 'px';
+}
+document.addEventListener('mousedown', e => { if(!e.target.closest('#ctx')) closeMenu(); }, true);
+addEventListener('blur', closeMenu); addEventListener('resize', closeMenu);
+document.addEventListener('scroll', closeMenu, true);
+
+
+// ---------- rename (same folder only; never replaces another file) ----------
+let RN = null;
+function renameItem(path, isFolder){
+  const name = path.split('/').pop();
+  RN = {path, isFolder};
+  $('rnWhere').textContent = 'In ' + path.slice(0, path.lastIndexOf('/')).replace(/^\/Users\/[^/]+/,'~');
+  $('rnErr').textContent = '';
+  const inp = $('rnInput'); inp.value = name;
+  $('rn').classList.add('on'); inp.focus();
+  const dot = name.lastIndexOf('.');
+  inp.setSelectionRange(0, !isFolder && dot > 0 ? dot : name.length); // select the name, not the .pdf
+}
+const closeRename = () => { $('rn').classList.remove('on'); RN = null; };
+async function saveRename(){
+  if(!RN) return;
+  const {path} = RN, name = $('rnInput').value.trim();
+  if(name === path.split('/').pop()){ closeRename(); return; }
+  const r = await post('/api/rename', {path, name}).catch(()=>null);
+  const d = r ? await r.json() : {error:"Couldn't rename"};
+  if(!r || !r.ok){ $('rnErr').textContent = d.error || "Couldn't rename"; return; }
+  const np = d.path, moved = p => p===path ? np : p.startsWith(path+'/') ? np + p.slice(path.length) : p;
+  S.pins = new Set([...S.pins].map(moved)); store.set('pins', [...S.pins]);
+  const wasSel = S.sel && moved(S.sel)!==S.sel;
+  if(S.browse && moved(S.browse)!==S.browse){ S.browse = moved(S.browse); store.set('browse', S.browse); }
+  closeRename(); toast(`Renamed to “${name}”`);
+  if(S.view==='browse' && S.browse) await openFolder(S.browse);
+  api('/api/library?refresh=1').then(fs => { S.files = fs; if(S.view!=='browse') render(); else renderNav();
+    const f = wasSel && byPath().get(moved(S.sel)); if(f) preview(f); }).catch(()=>{});
+  if(wasSel){ const f = byPath().get(np); if(f) preview(f); else S.sel = np; }
+}
+$('rnSave').onclick = saveRename;
+$('rnCancel').onclick = closeRename;
+$('rn').addEventListener('mousedown', e => { if(e.target.id==='rn') closeRename(); });
+$('rnInput').addEventListener('keydown', e => {
+  if(e.key==='Enter'){ e.preventDefault(); saveRename(); }
+  else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); closeRename(); }
+});
+
+// Keyboard: ⌘C copy · ⌘V paste into the open folder · ⌘D duplicate · ⌥⌘C copy path
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape' && $('ctx').classList.contains('on')){ closeMenu(); e.stopPropagation(); return; }
+  if(!(e.metaKey || e.ctrlKey) || e.shiftKey) return;
+  if(e.target.closest && e.target.closest('input,textarea,select,.modal')) return;
+  if(String(getSelection()).length) return; // let normal text copy work
+  const k = e.code;
+  if(k==='KeyC' && S.sel){ e.preventDefault(); e.altKey ? copyText(S.sel,'Path copied') : copyFiles([S.sel]); }
+  else if(k==='KeyV' && !e.altKey){ e.preventDefault(); readClip().then(() => pasteInto(S.view==='browse' && !S.q ? S.browse : null)); }
+  else if(k==='KeyD' && S.sel && !e.altKey){ e.preventDefault(); duplicateFile(S.sel); }
+}, true);
 
 
 document.addEventListener('keydown', e => {
