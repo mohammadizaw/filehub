@@ -3,3 +3,5 @@ filehub-links.json
 filehub-links.json.tmp
 __pycache__/
 .DS_Store
+# which version the running FileHub was started from (written by the launcher)
+.filehub-running-version
