@@ -25,7 +25,7 @@
   --pdf:#ff6b6b; --word:#6c8cff; --slides:#ffa046; --sheets:#34c38f; --img:#a77bf3;
   --video:#f06595; --audio:#3cc4d9; --other:#9a98b5;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+@media (prefers-color-scheme:dark){:root:not([data-theme]){
   --bg:hsl(var(--h) calc(33% * var(--sat)) 12.5%); --panel:hsl(var(--h) calc(28% * var(--sat)) 17%);
   --panel2:hsl(var(--h) calc(26% * var(--sat)) 21%); --line:hsl(var(--h) calc(27% * var(--sat)) 27%);
   --text:hsl(var(--h) calc(40% * var(--sat)) 95%); --muted:hsl(var(--h) calc(20% * var(--sat)) 70%);
@@ -47,6 +47,28 @@
   --shadow:0 1px 2px rgba(0,0,0,.25),0 8px 24px -8px rgba(0,0,0,.45);
   --shadow-lg:0 2px 4px rgba(0,0,0,.25),0 16px 40px -12px rgba(0,0,0,.6);
 }
+/* Medium: a softer, greyer light. Dim: a lighter dark. */
+:root[data-theme="medium"]{
+  --bg:hsl(var(--h) calc(26% * var(--sat)) 87%); --panel:hsl(var(--h) calc(30% * var(--sat)) 95%);
+  --panel2:hsl(var(--h) calc(26% * var(--sat)) 90.5%); --line:hsl(var(--h) calc(20% * var(--sat)) 82.5%);
+  --text:hsl(var(--h) calc(25% * var(--sat)) 22%); --muted:hsl(var(--h) calc(12% * var(--sat)) 47%);
+  --hover:hsl(var(--h) calc(26% * var(--sat)) 91.5%);
+  --accent-soft:color-mix(in srgb,var(--accent) 16%,var(--panel));
+  --folder-soft:color-mix(in srgb,var(--accent) 17%,var(--panel));
+}
+:root[data-theme="dim"]{
+  --bg:hsl(var(--h) calc(17% * var(--sat)) 23%); --panel:hsl(var(--h) calc(15% * var(--sat)) 28.5%);
+  --panel2:hsl(var(--h) calc(14% * var(--sat)) 33%); --line:hsl(var(--h) calc(13% * var(--sat)) 38%);
+  --text:hsl(var(--h) calc(30% * var(--sat)) 95%); --muted:hsl(var(--h) calc(14% * var(--sat)) 76%);
+  --hover:hsl(var(--h) calc(14% * var(--sat)) 34.5%);
+  --accent-soft:color-mix(in srgb,var(--accent) 24%,var(--panel));
+  --folder-soft:color-mix(in srgb,var(--accent) 24%,var(--panel));
+  --violet:#a497ff; --violet-soft:#3a3760;
+  --shadow:0 1px 2px rgba(0,0,0,.2),0 8px 24px -8px rgba(0,0,0,.35);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.2),0 16px 40px -12px rgba(0,0,0,.5);
+}
+:root:is([data-theme="dark"],[data-theme="dim"]){color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--text);font:14px/1.45 "Nunito",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
@@ -63,7 +85,7 @@ button,select,input{font:inherit;color:inherit}
 .nav button .n{margin-left:auto;font-size:12px;color:var(--muted);font-weight:400}
 .nav svg{width:17px;height:17px;flex:none}
 /* Main */
-.main{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;overflow:clip}
 .top{flex:none;display:flex;gap:10px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
 /* page heading: stays put while the files scroll */
 .phead{flex:none;padding:18px 22px 0;border-bottom:1px solid var(--line);background:var(--bg)}
@@ -385,8 +407,8 @@ select.ctl{font-weight:600}
   radial-gradient(900px 700px at 100% 100%,hsl(var(--h) 75% 65% / .38),transparent 65%),
   radial-gradient(700px 500px at 60% 30%,hsl(calc(var(--h) + 60) 70% 70% / .18),transparent 70%),var(--bg)}
 :root[data-style="glass"]{--glass:color-mix(in srgb,var(--panel) 58%,transparent);--glass-line:color-mix(in srgb,#fff 55%,transparent)}
-:root[data-theme="dark"][data-style="glass"]{--glass-line:color-mix(in srgb,#fff 9%,transparent)}
-@media (prefers-color-scheme:dark){:root[data-style="glass"]:not([data-theme="light"]){--glass-line:color-mix(in srgb,#fff 9%,transparent)}}
+:root:is([data-theme="dark"],[data-theme="dim"])[data-style="glass"]{--glass-line:color-mix(in srgb,#fff 9%,transparent)}
+@media (prefers-color-scheme:dark){:root[data-style="glass"]:not([data-theme]){--glass-line:color-mix(in srgb,#fff 9%,transparent)}}
 :root[data-style="glass"] :is(.side,.prev,.search,.ctl,.seg button:not(.on),.chip:not(.on),.card,.list,.ftile,.family){background:var(--glass);border:1px solid var(--glass-line)}
 :root[data-style="glass"] :is(.side,.prev,.search){backdrop-filter:blur(22px) saturate(1.5);-webkit-backdrop-filter:blur(22px) saturate(1.5)}
 :root[data-style="glass"] .seg{background:none}
@@ -396,8 +418,8 @@ select.ctl{font-weight:600}
 
 /* ===== Style: Clay (soft raised shapes, like the picture you shared) ===== */
 :root[data-style="clay"]{--clay-d:color-mix(in srgb,var(--tint) 20%,transparent);--clay-l:rgba(255,255,255,.9)}
-:root[data-theme="dark"][data-style="clay"]{--clay-d:rgba(0,0,0,.5);--clay-l:rgba(255,255,255,.045)}
-@media (prefers-color-scheme:dark){:root[data-style="clay"]:not([data-theme="light"]){--clay-d:rgba(0,0,0,.5);--clay-l:rgba(255,255,255,.045)}}
+:root:is([data-theme="dark"],[data-theme="dim"])[data-style="clay"]{--clay-d:rgba(0,0,0,.5);--clay-l:rgba(255,255,255,.045)}
+@media (prefers-color-scheme:dark){:root[data-style="clay"]:not([data-theme]){--clay-d:rgba(0,0,0,.5);--clay-l:rgba(255,255,255,.045)}}
 :root[data-style="clay"] :is(.side,.prev,.card,.list,.ftile,.family,.search,.ctl,.seg,.chip:not(.on),.sizer){background:var(--bg);border:0;box-shadow:6px 6px 14px var(--clay-d),-6px -6px 14px var(--clay-l)}
 :root[data-style="clay"] :is(.seg button:not(.on),.row.hd,.row.hd:hover){background:var(--bg)}
 :root[data-style="clay"] :is(.thumb,.stage){background:var(--bg);box-shadow:inset 3px 3px 7px var(--clay-d),inset -3px -3px 7px var(--clay-l)}
@@ -453,6 +475,45 @@ select.ctl{font-weight:600}
 :root[data-font="serif"] body{font-family:"New York",ui-serif,Georgia,"Times New Roman",serif}
 @media (max-width:900px){ .appear{right:8px;left:8px;width:auto} }
 
+/* top bar: everything fits, even with the preview panel open */
+.top{min-width:0;flex-wrap:wrap;row-gap:8px}
+.top>*{flex-shrink:0}
+.top .search{flex:1 1 auto;min-width:110px}
+.top select.ctl{flex-shrink:1;min-width:92px;max-width:150px}
+.top .sizer{flex:0 1 auto;min-width:0}
+.sizer input{flex:1 1 112px;min-width:36px}
+@media (max-width:1280px){ .prev.open ~ * .sizer button, .app:has(.prev.open) .sizer button{display:none} }
+/* ===== Sidebar: drag to reorder, drop folders, customise ===== */
+.nav button .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav button[draggable="true"],.ftile[draggable="true"]{-webkit-user-drag:element;user-select:none}
+.nav button.dragging{opacity:.35}
+.nav button.drop-before{box-shadow:inset 0 2px 0 var(--accent)}
+.nav button.drop-after{box-shadow:inset 0 -2px 0 var(--accent)}
+.nav-drop{display:none;margin:6px 4px 0;padding:10px;border:2px dashed var(--accent);border-radius:12px;color:var(--accent);font-size:12px;font-weight:700;text-align:center}
+.nav.folder-drag .nav-drop{display:block}
+.nav.folder-drag .nav-drop.hot{background:var(--accent-soft)}
+.nav-edit{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;margin-top:14px;padding:7px 12px;border-radius:10px;color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer;opacity:.75}
+.nav-edit:hover{opacity:1;background:var(--hover);color:var(--text)}
+.nav-edit svg{width:15px;height:15px}
+.sbbox .box{width:min(460px,94vw);max-height:80vh;display:flex;flex-direction:column}
+.sbbox .list2{overflow-y:auto;margin:6px -6px 0;padding:0 6px}
+.sbbox .sh{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:12px 0 4px}
+.sbbox .it{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:10px}
+.sbbox .it:hover{background:var(--hover)}
+.sbbox .it svg{width:16px;height:16px;color:var(--muted);flex:none}
+.sbbox .it .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.sbbox .it.off .nm{color:var(--muted);font-weight:500;text-decoration:line-through}
+.sbbox .it input{width:17px;height:17px;accent-color:var(--accent);margin:0;cursor:pointer}
+.sbbox .it button{border:0;background:none;cursor:pointer;color:var(--muted);border-radius:7px;width:26px;height:26px;font-size:14px}
+.sbbox .it button:hover{background:var(--panel2);color:var(--text)}
+.sbbox .it button:disabled{opacity:.25;cursor:default}
+.sbbox .row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.sbbox label.chk{display:flex;gap:7px;align-items:center;font-size:13px;margin-right:auto}
+.sbbox label.chk input{accent-color:var(--accent);width:16px;height:16px}
+/* old FileHub still running */
+.banner{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:80;max-width:min(620px,92vw);background:#3a2a10;color:#ffe7b3;border:1px solid #8a6420;border-radius:14px;padding:10px 16px;font-size:13px;box-shadow:var(--shadow-lg);display:none}
+.banner.on{display:block}
+.banner b{color:#fff}
 /* ===== Size slider (top bar) ===== */
 .sizer{display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;background:var(--panel);border-radius:12px;box-shadow:var(--shadow);color:var(--muted)}
 .sizer button{border:0;background:none;padding:2px;cursor:pointer;color:inherit;display:grid;place-items:center;border-radius:6px}
@@ -555,6 +616,12 @@ select.ctl{font-weight:600}
   </ol>
   <div class="addr">SmartDrop address: <a id="sendUrl" target="smartdrop" rel="noopener"></a><button id="sendChange">change</button></div>
   <div class="actions"><button class="btn" id="sendDone">Done</button></div></div></div>
+<div class="rn sbbox" id="sbBox"><div class="box"><h3>Customise sidebar</h3>
+  <p>Tick what to show. Use the arrows (or drag items in the sidebar) to change the order.</p>
+  <div class="list2" id="sbList"></div>
+  <div class="row2"><label class="chk"><input type="checkbox" id="sbCounts"> Show numbers</label>
+    <button class="btn" id="sbAdd">+ Add folder…</button><button class="btn" id="sbReset">Reset</button><button class="btn primary" id="sbDone">Done</button></div></div></div>
+<div class="banner" id="oldBanner"><b>FileHub needs a restart to finish updating.</b> The screen is new but the old FileHub is still running, so some buttons (Copy, Duplicate, Rename…) say "not found". Quit FileHub and open it again, or simply restart your Mac.</div>
 <div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
   <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
   <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
@@ -635,6 +702,9 @@ const ICONS = {
   newfolder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10.5v5M9.5 13h5"/>',
   pencil:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
   send:'<path d="M21 3 10 14"/><path d="m21 3-7 18-4-7-7-4z"/>',
+  sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+  up:'<path d="m6 15 6-6 6 6"/>', down:'<path d="m6 9 6 6 6-6"/>',
+  close:'<path d="M18 6 6 18M6 6l12 12"/>',
   chev:'<path d="m9 6 6 6-6 6"/>',
   star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
 };
@@ -714,25 +784,88 @@ function groupBy(list, keyFn){
 }
 
 // ---------- rendering ----------
+// ---------- sidebar: your own order, hidden items and added folders ----------
+const SB_DEFAULT = {order: [], hidden: [], added: [], counts: true};
+const sb = () => Object.assign({}, SB_DEFAULT, store.get('sidebar', {}));
+const sbSave = c => { store.set('sidebar', c); renderNav(); if($('sbBox').classList.contains('on')) renderSbBox(); };
+function sbSections(){
+  const c = sb();
+  const views = VIEWS.map(v => ({id:'v:'+v.id, kind:'view', label:v.label, icon:v.icon, v}));
+  const places = S.places.map(p => ({id:'p:'+p.path, kind:'place', label:p.name, icon:ICONS[p.icon]?p.icon:'folder', path:p.path, home:p.icon==='home'}))
+    .concat(c.added.map(a => ({id:'f:'+a.path, kind:'folder', label:a.name, icon:'folder', path:a.path})));
+  const rank = (it, i) => { const k = c.order.indexOf(it.id); return k < 0 ? 10000 + i : k; };
+  const sortIt = list => list.map((it,i)=>[rank(it,i), it]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  return [
+    {key:'main', h:'Main', items: sortIt(views.slice(0,4))},
+    {key:'org', h:'Organise by', items: sortIt(views.slice(4))},
+    {key:'places', h:'Places', items: sortIt(places)},
+  ];
+}
 function renderNav(){
+  const c = sb();
   const counts = {
     open: openNow().length, recent: S.files.length, pinned: S.pins.size,
     families: families().length,
   };
   let html = '';
-  for(const v of VIEWS){
-    if(v.h) html += `<div class="nav-h">${v.h}</div>`;
-    const n = counts[v.id];
-    html += `<button class="${S.view===v.id&&!S.q?'on':''}" data-view="${v.id}">${svg(v.icon)}${v.label}${n!=null?`<span class="n">${n}</span>`:''}</button>`;
-  }
-  if(S.places.length){
-    html += `<div class="nav-h">Places</div>`;
-    for(const p of S.places){
-      const on = S.view==='browse' && !S.q && S.browse && (S.browse===p.path || (p.icon!=='home' && S.browse.startsWith(p.path+'/')));
-      html += `<button class="${on?'on':''}" data-place="${esc(p.path)}">${svg(ICONS[p.icon]?p.icon:'folder')}${esc(p.name)}</button>`;
+  for(const sec of sbSections()){
+    const vis = sec.items.filter(it => !c.hidden.includes(it.id));
+    html += `<div class="nav-sec" data-sec="${sec.key}">`;
+    if(vis.length || sec.key==='places') html += `<div class="nav-h">${sec.h}</div>`;
+    for(const it of vis){
+      if(it.kind==='view'){
+        const n = c.counts ? counts[it.v.id] : null;
+        html += `<button draggable="true" data-sid="${esc(it.id)}" class="${S.view===it.v.id&&!S.q?'on':''}" data-view="${it.v.id}">${svg(it.icon)}${it.label}${n!=null?`<span class="n">${n}</span>`:''}</button>`;
+      } else {
+        const on = S.view==='browse' && !S.q && S.browse && (S.browse===it.path || (!it.home && S.browse.startsWith(it.path+'/')));
+        html += `<button draggable="true" data-sid="${esc(it.id)}" class="${on?'on':''}" data-place="${esc(it.path)}" title="${esc(it.path.replace(/^\/Users\/[^/]+/,'~'))}">${svg(it.icon)}<span class="lbl">${esc(it.label)}</span></button>`;
+      }
     }
+    if(sec.key==='places') html += `<div class="nav-drop">Drop a folder here to add it</div>`;
+    html += `</div>`;
   }
+  html += `<button class="nav-edit" data-sb="edit">${svg('sliders')}Customise sidebar</button>`;
   $('nav').innerHTML = html;
+}
+const sbSectionOf = id => sbSections().find(sec => sec.items.some(it => it.id===id));
+function sbSetSection(key, ids){
+  const c = sb(); const secs = sbSections();
+  c.order = secs.flatMap(sec => sec.key===key ? ids : sec.items.map(it=>it.id));
+  sbSave(c);
+}
+function sbMove(id, delta){
+  const sec = sbSectionOf(id); if(!sec) return;
+  const ids = sec.items.map(it=>it.id), i = ids.indexOf(id), j = i + delta;
+  if(j < 0 || j >= ids.length) return;
+  ids.splice(i,1); ids.splice(j,0,id); sbSetSection(sec.key, ids);
+}
+function sbToggle(id, show){
+  const c = sb(); c.hidden = c.hidden.filter(x => x!==id); if(!show) c.hidden.push(id); sbSave(c);
+}
+function sbAddFolder(path, name, beforeId){
+  path = path.replace(/\/+$/,'');
+  const home = (S.places.find(p=>p.icon==='home')||{}).path;
+  if(home && !(path===home || path.startsWith(home+'/'))){ toast('Only folders inside your home folder can be added'); return; }
+  const c = sb();
+  if(S.places.some(p=>p.path===path)){ c.hidden = c.hidden.filter(x => x!=='p:'+path); sbSave(c); toast('It is already in the sidebar'); return; }
+  if(c.added.some(a=>a.path===path)){ toast('It is already in the sidebar'); return; }
+  c.added.push({path, name: name || folderName(path)});
+  store.set('sidebar', c);
+  if(beforeId){ const sec = sbSectionOf('f:'+path); const ids = sec.items.map(it=>it.id).filter(x=>x!=='f:'+path); const k = ids.indexOf(beforeId); ids.splice(k<0?ids.length:k, 0, 'f:'+path); sbSetSection('places', ids); }
+  else sbSave(c);
+  toast(`Added “${name || folderName(path)}” to the sidebar`);
+}
+function sbRemove(id){
+  const c = sb();
+  if(id.startsWith('f:')){ c.added = c.added.filter(a => 'f:'+a.path !== id); c.order = c.order.filter(x=>x!==id); sbSave(c); }
+  else sbToggle(id, false);
+  toast('Removed from the sidebar');
+}
+const inSidebar = path => S.places.some(p=>p.path===path && !sb().hidden.includes('p:'+path)) || sb().added.some(a=>a.path===path);
+async function sbPickFolder(){
+  let r = null;
+  try{ r = await (await post('/api/choosefolder', {for:'sidebar'})).json(); }catch(e){}
+  if(r && r.path) sbAddFolder(r.path);
 }
 
 function openNow(){
@@ -1023,17 +1156,23 @@ document.querySelectorAll('#viewSeg button').forEach(b => {
 $('refresh').onclick = () => load(true);
 
 // Theme: follows the Mac unless you pick one.
+const DARKISH = ['dim','dark'];
+function isDark(){ const t = store.get('theme', null); return t ? DARKISH.includes(t) : matchMedia('(prefers-color-scheme: dark)').matches; }
 function applyTheme(){
   const t = store.get('theme', null);
   if(t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
-  const dark = t ? t==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark = isDark();
   $('theme').innerHTML = svg(dark ? 'sun' : 'moon');
   $('theme').title = dark ? 'Switch to light' : 'Switch to dark';
 }
-$('theme').onclick = () => {
-  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  store.set('theme', dark ? 'light' : 'dark'); applyTheme(); renderAppear();
-};
+function setMode(m){
+  store.set('theme', m==='auto' ? null : m);
+  if(m==='light' || m==='medium') store.set('lightKind', m);
+  if(DARKISH.includes(m)) store.set('darkKind', m);
+  applyTheme();
+}
+// Moon/sun button: switches to your favourite light or dark kind.
+$('theme').onclick = () => { setMode(isDark() ? store.get('lightKind','light') : store.get('darkKind','dark')); renderAppear(); };
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 applyTheme();
 
@@ -1085,7 +1224,7 @@ function renderAppear(){
   const L = look(), mode = store.get('theme', null) || 'auto';
   const opts = (key, list, cur) => `<div class="opts">${list.map(([v,t])=>`<button class="${cur===v?'on':''}" data-look="${key}" data-v="${v}">${t}</button>`).join('')}</div>`;
   $('appear').innerHTML = `<h3>Appearance</h3>
-    <div class="ah">Mode</div>${opts('mode', [['auto','Auto'],['light','Light'],['dark','Dark']], mode)}
+    <div class="ah">Mode</div>${opts('mode', [['auto','Auto'],['light','Light'],['medium','Medium'],['dim','Dim'],['dark','Dark']], mode)}
     <div class="ah">Theme</div><div class="swatches">${THEMES.map(t=>`<button class="sw ${L.theme===t.id?'on':''}" data-look="theme" data-v="${t.id}"><i style="background:hsl(${t.h} ${38*t.sat}% 90%)"></i>${t.name}</button>`).join('')}</div>
     <div class="ah">Accent colour</div><div class="dots">${ACCENTS.map(a=>`<button class="dot ${L.accent===a.id?'on':''}" title="${a.name}" data-look="accent" data-v="${a.id}" style="background:linear-gradient(135deg,${a.a},${a.b})">${svg('check')}</button>`).join('')}</div>
     <div class="ah">Style</div>${opts('style', [['soft','Soft'],['flat','Flat'],['glass','Glass'],['clay','Clay'],['outline','Outline']], L.style)}
@@ -1100,7 +1239,7 @@ $('appear').addEventListener('click', e => {
   const b = e.target.closest('[data-look]'); if(!b) return;
   const k = b.dataset.look, v = b.dataset.v;
   if(k==='reset'){ store.set('look', {}); store.set('theme', null); applyTheme(); applyLook(); renderAppear(); return; }
-  if(k==='mode'){ store.set('theme', v==='auto' ? null : v); applyTheme(); renderAppear(); return; }
+  if(k==='mode'){ setMode(v); renderAppear(); return; }
   setLook(k, v);
 });
 document.addEventListener('click', e => { if(!e.target.closest('#appear,#appearBtn')) $('appear').classList.remove('on'); });
@@ -1189,6 +1328,33 @@ function menuFor(target){
     {icon:'refresh', label:'Refresh', run:()=>load(true)},
     {icon:'palette', label:'Appearance…', run:()=>{ renderAppear(); $('appear').classList.add('on'); }},
   ];
+  const navEl = target.closest('#nav [data-sid]');
+  if(navEl){
+    const id = navEl.dataset.sid, sec = sbSectionOf(id), ids = sec ? sec.items.map(it=>it.id) : [], i = ids.indexOf(id);
+    const arrange = ['-',
+      {icon:'up', label:'Move up', dis:i<=0, run:()=>sbMove(id,-1)},
+      {icon:'down', label:'Move down', dis:i>=ids.length-1, run:()=>sbMove(id,1)},
+      {icon:'close', label:id.startsWith('f:')?'Remove from sidebar':'Hide from sidebar', run:()=>sbRemove(id)},
+      '-', {icon:'sliders', label:'Customise sidebar…', run:openSbBox}];
+    if(navEl.dataset.view){
+      const v = VIEWS.find(x=>x.id===navEl.dataset.view);
+      return {items:[{icon:v.icon, label:'Open '+v.label, run:()=>navEl.click()}, ...arrange]};
+    }
+    const path = navEl.dataset.place;
+    return {head:{folder:true, name:navEl.textContent.trim(), info:path.replace(/^\/Users\/[^/]+/,'~')}, items:[
+      {icon:'folder', label:'Open', run:()=>openFolder(path)},
+      {icon:'finder', label:'Open in Finder', run:()=>post('/api/launch',{path})},
+      {icon:'paste', label:pasteLabel()+' into it', dis:!clip.files.length, run:()=>pasteInto(path)},
+      {icon:'link', label:'Copy path', run:()=>copyText(path,'Path copied')},
+      ...arrange]};
+  }
+  if(target.closest('.side')){
+    return {items:[
+      {icon:'sliders', label:'Customise sidebar…', run:openSbBox},
+      {icon:'newfolder', label:'Add folder to sidebar…', run:sbPickFolder},
+      ...(S.view==='browse' && S.browse && !inSidebar(S.browse) ? [{icon:'pinned', label:`Add “${folderName(S.browse)}” to sidebar`, run:()=>sbAddFolder(S.browse)}] : []),
+    ]};
+  }
   if(fileEl && !folderEl){
     const f = byPath().get(fileEl.dataset.path); if(!f) return null;
     const pinned = S.pins.has(f.path);
@@ -1221,6 +1387,7 @@ function menuFor(target){
       {icon:'paste', label:pasteLabel()+' into it', dis:!clip.files.length, run:()=>pasteInto(path)},
       {icon:'newfolder', label:'New folder inside', run:()=>newFolder(path)},
       {icon:'link', label:'Copy path', run:()=>copyText(path,'Path copied')},
+      ...(inSidebar(path) ? [] : ['-', {icon:'pinned', label:'Add to sidebar', run:()=>sbAddFolder(path)}]),
     ]};
   }
   const here = S.view==='browse' && !S.q ? S.browse : null;
@@ -1228,6 +1395,7 @@ function menuFor(target){
       {icon:'paste', label:pasteLabel(), key:K('V'), dis:!clip.files.length, run:()=>pasteInto(here)},
       {icon:'newfolder', label:'New folder', run:()=>newFolder(here)},
       {icon:'finder', label:'Open in Finder', run:()=>post('/api/launch',{path:here})},
+      ...(inSidebar(here) ? [] : [{icon:'pinned', label:'Add this folder to sidebar', run:()=>sbAddFolder(here)}]),
       '-', ...general] : general};
 }
 
@@ -1253,7 +1421,7 @@ function openMenu(m, x, y){
 const closeMenu = () => $('ctx').classList.remove('on');
 
 document.addEventListener('contextmenu', async e => {
-  if(e.target.closest('input,textarea,select,.modal,.zoom,#appear,#ctx')) return; // keep the normal menu there
+  if(e.target.closest('input,textarea,select,.modal,.zoom,#appear,#ctx,.rn,.banner')) return; // keep the normal menu there
   e.preventDefault();
   $('appear').classList.remove('on');
   const fileEl = e.target.closest('[data-path]');
@@ -1323,6 +1491,79 @@ $('sendChange').onclick = () => {
   $('sendUrl').textContent = sendUrl().replace(/^https?:\/\//,'').replace(/\/$/,''); $('sendUrl').href = sendUrl();
 };
 
+
+// ---------- sidebar: drag to reorder, drop folders, customise window ----------
+let DRAG = null;
+document.addEventListener('dragstart', e => {
+  const nb = e.target.closest && e.target.closest('#nav [data-sid]');
+  const ft = e.target.closest && e.target.closest('.ftile[data-browse]');
+  if(nb){ DRAG = {sid: nb.dataset.sid}; nb.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', nb.dataset.sid); }
+  else if(ft){ DRAG = {folder: ft.dataset.browse, name: ft.querySelector('b') && ft.querySelector('b').textContent}; e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/plain', ft.dataset.browse); $('nav').classList.add('folder-drag'); }
+});
+const clearDrop = () => document.querySelectorAll('.drop-before,.drop-after,.dragging,.nav-drop.hot').forEach(x => x.classList.remove('drop-before','drop-after','dragging','hot'));
+document.addEventListener('dragend', () => { DRAG = null; clearDrop(); $('nav').classList.remove('folder-drag'); });
+$('nav').addEventListener('dragover', e => {
+  if(!DRAG) return;
+  const t = e.target.closest('[data-sid]'), drop = e.target.closest('.nav-drop');
+  document.querySelectorAll('.drop-before,.drop-after,.nav-drop.hot').forEach(x => x.classList.remove('drop-before','drop-after','hot'));
+  if(DRAG.sid){
+    if(!t || t.dataset.sid===DRAG.sid) return;
+    const a = sbSectionOf(DRAG.sid), b = sbSectionOf(t.dataset.sid);
+    if(!a || !b || a.key!==b.key) return;  // order is changed inside each group
+    e.preventDefault();
+    const r = t.getBoundingClientRect();
+    t.classList.add(e.clientY < r.top + r.height/2 ? 'drop-before' : 'drop-after');
+  } else if(DRAG.folder){
+    if(drop){ e.preventDefault(); drop.classList.add('hot'); }
+    else if(t && t.dataset.place){ e.preventDefault(); t.classList.add('drop-before'); }
+  }
+});
+$('nav').addEventListener('drop', e => {
+  if(!DRAG) return; e.preventDefault();
+  const t = e.target.closest('[data-sid]');
+  if(DRAG.sid && t){
+    const sec = sbSectionOf(t.dataset.sid);
+    const ids = sec.items.map(it=>it.id).filter(x => x!==DRAG.sid);
+    let k = ids.indexOf(t.dataset.sid); if(t.classList.contains('drop-after')) k++;
+    ids.splice(k, 0, DRAG.sid); sbSetSection(sec.key, ids);
+  } else if(DRAG.folder){
+    sbAddFolder(DRAG.folder, DRAG.name, t && t.dataset.place ? t.dataset.sid : null);
+  }
+  DRAG = null; clearDrop(); $('nav').classList.remove('folder-drag');
+});
+// let folder tiles be dragged to the sidebar
+new MutationObserver(() => document.querySelectorAll('.ftile[data-browse]:not([draggable])').forEach(x => x.setAttribute('draggable','true')))
+  .observe($('content'), {childList:true, subtree:true});
+
+function renderSbBox(){
+  const c = sb();
+  $('sbCounts').checked = c.counts !== false;
+  $('sbList').innerHTML = sbSections().map(sec => `<div class="sh">${sec.h}</div>` + sec.items.map((it, i, arr) => {
+    const off = c.hidden.includes(it.id);
+    return `<div class="it ${off?'off':''}" data-id="${esc(it.id)}">
+      <input type="checkbox" ${off?'':'checked'} data-sbx="toggle" title="Show in sidebar">${svg(it.icon)}<span class="nm" title="${esc(it.path||'')}">${esc(it.label)}</span>
+      <button data-sbx="up" ${i===0?'disabled':''} title="Move up">↑</button><button data-sbx="down" ${i===arr.length-1?'disabled':''} title="Move down">↓</button>
+      ${it.kind==='folder' ? `<button data-sbx="remove" title="Remove from sidebar">✕</button>` : '<button disabled style="visibility:hidden">✕</button>'}</div>`;
+  }).join('')).join('');
+}
+function openSbBox(){ renderSbBox(); $('sbBox').classList.add('on'); }
+const closeSbBox = () => $('sbBox').classList.remove('on');
+$('sbList').addEventListener('click', e => {
+  const b = e.target.closest('[data-sbx]'); if(!b) return;
+  const id = b.closest('.it').dataset.id, a = b.dataset.sbx;
+  if(a==='toggle') sbToggle(id, b.checked);
+  else if(a==='up') sbMove(id, -1);
+  else if(a==='down') sbMove(id, 1);
+  else if(a==='remove') sbRemove(id);
+});
+$('sbCounts').onchange = e => { const c = sb(); c.counts = e.target.checked; sbSave(c); };
+$('sbAdd').onclick = sbPickFolder;
+$('sbReset').onclick = () => { if(confirm('Put the sidebar back to how it was at the start? (Added folders are removed from the sidebar, not from your Mac.)')){ store.set('sidebar', {}); renderNav(); renderSbBox(); } };
+$('sbDone').onclick = closeSbBox;
+$('sbBox').addEventListener('mousedown', e => { if(e.target.id==='sbBox') closeSbBox(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape' && $('sbBox').classList.contains('on')){ closeSbBox(); e.stopPropagation(); } }, true);
+document.addEventListener('click', e => { if(e.target.closest('[data-sb="edit"]')) openSbBox(); });
+
 // ---------- rename (same folder only; never replaces another file) ----------
 let RN = null;
 function renameItem(path, isFolder){
@@ -1364,7 +1605,12 @@ $('rnInput').addEventListener('keydown', e => {
 // ---------- new version from the cloud: refresh the page by itself ----------
 let myVersion = null;
 async function checkVersion(){
-  let v; try{ v = (await api('/api/version')).version; }catch(e){ return; }  // server restarting: try again later
+  let v;
+  try{
+    const r = await fetch('/api/version');
+    if(r.status === 404){ $('oldBanner').classList.add('on'); return; }  // the old FileHub is still running
+    v = (await r.json()).version; $('oldBanner').classList.remove('on');
+  }catch(e){ return; }  // server restarting: try again later
   if(myVersion === null){ myVersion = v; return; }
   if(v && v !== myVersion){
     const busy = $('splitModal').classList.contains('open') || $('rn').classList.contains('on') || $('sendBox').classList.contains('on') || $('zoom').classList.contains('on');
