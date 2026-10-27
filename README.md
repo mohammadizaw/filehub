@@ -10,6 +10,10 @@ Double-click `Open FileHub.command`, or run:
 
     python3 filehub.py
 
+The launcher first runs `git pull` to fetch any changes made in the cloud. If there is
+no internet or the update fails, it just starts the version you already have. If an older
+FileHub is still running, it restarts it so the update takes effect.
+
 It opens http://127.0.0.1:8765 (only this computer can reach it). It never moves,
 renames or deletes your files; splitting a PDF always saves a new file.
 
