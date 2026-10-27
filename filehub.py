@@ -565,7 +565,8 @@ def browse(path):
             "folders": folders, "files": metadata(files[:600])}
 
 
-PICKER_PROMPTS = {"split": "Save the split PDF in:", "sidebar": "Add this folder to the FileHub sidebar:"}
+PICKER_PROMPTS = {"split": "Save the split PDF in:", "sidebar": "Add this folder to the FileHub sidebar:",
+                  "move": "Move the selected items to:", "copy": "Copy the selected items to:"}
 
 
 def choose_folder(purpose="split"):
@@ -672,6 +673,7 @@ def copy_into(sources, dest):
         # ditto keeps the Mac details too (where it was downloaded from, tags...)
         subprocess.run(["ditto", src, out], check=True, capture_output=True, timeout=3600)
         made.append(out)
+        CREATED.add(out)
     _library["time"] = 0  # show the new files on next refresh
     return made
 
@@ -680,6 +682,7 @@ def duplicate(path):
     path = os.path.realpath(path)
     out = free_name(os.path.dirname(path), os.path.basename(path), copy_word=True)
     subprocess.run(["ditto", path, out], check=True, capture_output=True, timeout=3600)
+    CREATED.add(out)
     _library["time"] = 0
     return out
 
@@ -694,7 +697,115 @@ def new_folder(dest):
         out = os.path.join(dest, "untitled folder %d" % i)
         i += 1
     os.mkdir(out)
+    CREATED.add(out)
     return out
+
+
+CREATED = set()  # items FileHub made while running (copies, duplicates, new folders)
+
+
+def relink(old, new):
+    """Keep the split-PDF links pointing at a renamed or moved file/folder."""
+    with _rel_lock:
+        changed = False
+
+        def moved(p):
+            if p == old:
+                return new
+            if p.startswith(old + "/"):
+                return new + p[len(old):]
+            return p
+        for child in list(_links):
+            v = _links.pop(child)
+            nc, np_ = moved(child), moved(v["parent"])
+            changed |= nc != child or np_ != v["parent"]
+            v["parent"] = np_
+            _links[nc] = v
+        if changed:
+            tmp = RELATIONS_FILE + ".tmp"
+            with open(tmp, "w") as fh:
+                json.dump(_links, fh, indent=1)
+            os.replace(tmp, RELATIONS_FILE)
+
+
+def in_home(p, allow_home=False):
+    p = os.path.realpath(p)
+    return (allow_home and p == HOME) or p.startswith(HOME + "/")
+
+
+def move_one(src, dst):
+    """Move src to the exact new path dst. Never replaces anything."""
+    src, dst = os.path.realpath(src), os.path.abspath(dst)
+    if not in_home(src) or not os.path.exists(src):
+        raise ValueError("“%s” isn't there any more." % os.path.basename(src))
+    if os.path.dirname(src) == HOME:
+        raise ValueError("Main folders like Desktop and Documents can't be moved.")
+    parent = os.path.realpath(os.path.dirname(dst))
+    if not in_home(parent, True) or not os.path.isdir(parent):
+        raise ValueError("Can't move things there.")
+    if os.path.isdir(src) and (parent == src or parent.startswith(src + "/")):
+        raise ValueError("Can't move a folder inside itself.")
+    if os.path.lexists(dst):
+        raise ValueError("“%s” already exists there." % os.path.basename(dst))
+    try:
+        os.rename(src, dst)  # same disk: instant
+    except OSError:
+        subprocess.run(["ditto", src, dst], check=True, capture_output=True, timeout=3600)
+        trash([src], force=True)  # other disk: the original goes to the Bin, never deleted
+    relink(src, dst)
+    if src in CREATED:
+        CREATED.discard(src)
+        CREATED.add(dst)
+    _library["time"] = 0
+    return [src, dst]
+
+
+def move_into(sources, dest):
+    """Move items into the folder dest; names that are taken get ' 2', ' 3'..."""
+    dest = os.path.realpath(dest)
+    if not in_home(dest, True) or not os.path.isdir(dest):
+        raise ValueError("Can't move things there.")
+    pairs = []
+    for src in sources:
+        src = os.path.realpath(src)
+        if os.path.dirname(src) == dest:
+            continue  # already there
+        name = os.path.basename(src)
+        out = os.path.join(dest, name)
+        if os.path.lexists(out):
+            stem, ext = (name, "") if os.path.isdir(src) or "." not in name.strip(".") else os.path.splitext(name)
+            i = 2
+            while os.path.lexists(out):
+                out = os.path.join(dest, "%s %d%s" % (stem, i, ext))
+                i += 1
+        pairs.append(move_one(src, out))
+    return pairs
+
+
+TRASH_JS = """ObjC.import('Foundation');
+function run(argv) {
+  const fm = $.NSFileManager.defaultManager, out = [];
+  argv.forEach(p => { if (fm.trashItemAtURLResultingItemURLError($.NSURL.fileURLWithPath(p), null, null)) out.push(p); });
+  return JSON.stringify(out);
+}"""
+
+
+def trash(paths, force=False):
+    """Put items in the Bin (they can be taken back out). Only things FileHub made, for Undo."""
+    paths = [os.path.realpath(p) for p in paths]
+    ok = [p for p in paths if os.path.exists(p) and (force or p in CREATED)]
+    if not ok:
+        return []
+    out = subprocess.run(["osascript", "-l", "JavaScript", "-e", TRASH_JS] + ok,
+                         capture_output=True, text=True, timeout=60)
+    try:
+        done = json.loads(out.stdout.strip() or "[]")
+    except ValueError:
+        done = []
+    for p in done:
+        CREATED.discard(p)
+    _library["time"] = 0
+    return done
 
 
 def rename_item(path, new_name):
@@ -713,26 +824,7 @@ def rename_item(path, new_name):
     if os.path.exists(new) and not os.path.samefile(new, path):  # same file = only the capitals changed
         raise ValueError("“%s” already exists in this folder." % new_name)
     os.rename(path, new)
-    # keep the split-PDF links pointing at the new name
-    with _rel_lock:
-        changed = False
-        def moved(p):
-            if p == path:
-                return new
-            if p.startswith(path + "/"):
-                return new + p[len(path):]
-            return p
-        for child in list(_links):
-            v = _links.pop(child)
-            nc, np_ = moved(child), moved(v["parent"])
-            changed |= nc != child or np_ != v["parent"]
-            v["parent"] = np_
-            _links[nc] = v
-        if changed:
-            tmp = RELATIONS_FILE + ".tmp"
-            with open(tmp, "w") as fh:
-                json.dump(_links, fh, indent=1)
-            os.replace(tmp, RELATIONS_FILE)
+    relink(path, new)
     _library["time"] = 0
     return new
 
@@ -822,6 +914,25 @@ class Handler(BaseHTTPRequestHandler):
             if not paths:
                 return self.send(404, {"error": "not found"})
             return self.send(200, {"ok": clipboard_set([os.path.realpath(x) for x in paths])})
+        if url.path in ("/api/move", "/api/moveto", "/api/copyto", "/api/trash", "/api/duplicate"):
+            try:
+                if url.path == "/api/move":
+                    paths = [x for x in data.get("paths", []) if allowed(x)]
+                    return self.send(200, {"pairs": move_into(paths, data.get("dest", ""))})
+                if url.path == "/api/moveto":  # exact moves, used by Undo / Redo
+                    return self.send(200, {"pairs": [move_one(a, b) for a, b in data.get("pairs", [])]})
+                if url.path == "/api/copyto":
+                    paths = [x for x in data.get("paths", []) if allowed(x)]
+                    return self.send(200, {"made": copy_into(paths, data.get("dest", "")), "sources": paths})
+                if url.path == "/api/duplicate":
+                    paths = [x for x in (data.get("paths") or [p]) if allowed(x)]
+                    if not paths:
+                        return self.send(404, {"error": "not found"})
+                    return self.send(200, {"made": [duplicate(x) for x in paths], "sources": paths})
+                done = trash(data.get("paths", []))
+                return self.send(200, {"trashed": done})
+            except (ValueError, OSError, subprocess.SubprocessError) as e:
+                return self.send(400, {"error": str(e)})
         if url.path in ("/api/paste", "/api/newfolder"):
             if not (os.path.realpath(p) == HOME or allowed(p)):
                 return self.send(404, {"error": "not found"})
@@ -831,7 +942,7 @@ class Handler(BaseHTTPRequestHandler):
                 files = clipboard_files()
                 if not files:
                     return self.send(400, {"error": "Nothing to paste. Copy a file first."})
-                return self.send(200, {"made": copy_into(files, p)})
+                return self.send(200, {"made": copy_into(files, p), "sources": files})
             except (ValueError, OSError, subprocess.SubprocessError) as e:
                 return self.send(400, {"error": str(e)})
         if url.path == "/api/choosefolder":
@@ -850,11 +961,6 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 return self.send(200, {"path": rename_item(p, data.get("name"))})
             except (ValueError, OSError) as e:
-                return self.send(400, {"error": str(e)})
-        elif url.path == "/api/duplicate":
-            try:
-                return self.send(200, {"made": [duplicate(p)]})
-            except (OSError, subprocess.SubprocessError) as e:
                 return self.send(400, {"error": str(e)})
         elif url.path == "/api/split":
             try:

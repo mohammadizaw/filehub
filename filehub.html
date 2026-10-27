@@ -146,16 +146,16 @@ button,select,input{font:inherit;color:inherit}
 .row .nm small{color:var(--muted);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .c{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Preview panel */
-.prev{width:0;overflow:hidden;min-height:0;background:var(--panel);border-left:1px solid var(--line);transition:width .2s}
-.prev.open{width:400px}
-.prev-in{width:400px;height:100%;display:flex;flex-direction:column}
+.prev{position:relative;width:0;overflow:hidden;min-height:0;background:var(--panel);border-left:1px solid var(--line);transition:width .2s}
+.prev.open{width:var(--pw,400px)}
+.prev-in{width:var(--pw,400px);height:100%;display:flex;flex-direction:column}
 .prev-top{flex:none;display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:8px}
 .prev-top b{flex:1;font-size:13px;color:var(--muted);font-weight:500}
 .x{border:0;background:none;cursor:pointer;padding:4px;border-radius:6px;color:var(--muted)}
 .x:hover{background:var(--hover)}
-.stage{height:330px;flex:none;background:var(--panel2);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);overflow:hidden}
+.stage{height:calc(var(--pw,400px) * .82);flex:none;background:var(--panel2);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);overflow:hidden}
 .stage iframe,.stage video{width:100%;height:100%;border:0;background:#fff}
-.stage img{max-width:100%;max-height:330px;object-fit:contain}
+.stage img{max-width:100%;max-height:100%;object-fit:contain}
 .pbody{padding:16px;overflow-y:auto;overscroll-behavior:contain;flex:1;min-height:0}
 .pbody h2{font-size:16px;margin:0 0 4px;word-break:break-word}
 .actions{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
@@ -309,6 +309,13 @@ select.ctl{font-weight:600}
 .title h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
 .content{padding:6px 10px 24px}
 .status{background:none;border:0;padding:6px 12px 0;min-height:24px}
+/* bottom bar: counts on the left, size slider on the right (like Finder) */
+.statusbar{flex:none;display:flex;align-items:center;gap:10px;min-width:0}
+.statusbar .status{flex:1;min-width:0}
+.statusbar .status .sel-name{max-width:none}
+.sizer.mini{height:26px;padding:4px 6px 0;background:none!important;box-shadow:none!important;border:0!important;gap:6px}
+.sizer.mini input{width:104px;flex:none}
+.sizer.mini .s svg{width:11px;height:11px}.sizer.mini .b svg{width:15px;height:15px}
 /* type filters */
 .chip{border:0;background:var(--panel);box-shadow:var(--shadow);font-weight:600;padding:6px 14px}
 .chip:hover{color:var(--accent)}
@@ -368,6 +375,13 @@ select.ctl{font-weight:600}
 ::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--muted) 40%,transparent);border-radius:10px;border:3px solid transparent;background-clip:content-box}
 ::-webkit-scrollbar-track{background:transparent}
 @media (max-width:900px){ .app{padding:0} .prev.open{margin:0;border-radius:0} }
+/* drag the preview panel's left edge to resize it */
+.prev-grip{position:absolute;left:0;top:0;bottom:0;width:9px;cursor:col-resize;z-index:3}
+.prev-grip::after{content:"";position:absolute;left:3px;top:50%;width:3px;height:44px;margin-top:-22px;border-radius:3px;background:var(--line);transition:background .15s,height .15s}
+.prev-grip:hover::after,.resizing .prev-grip::after{background:var(--accent);height:64px;margin-top:-32px}
+.resizing,.resizing *{cursor:col-resize!important;user-select:none!important}
+.resizing .prev{transition:none}
+.resizing iframe{pointer-events:none}
 
 /* ===== Appearance panel ===== */
 .appear{position:fixed;top:66px;right:22px;z-index:30;width:356px;max-height:calc(100vh - 90px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-lg);padding:16px 18px 18px;display:none}
@@ -478,7 +492,8 @@ select.ctl{font-weight:600}
 /* top bar: everything fits, even with the preview panel open */
 .top{min-width:0;flex-wrap:wrap;row-gap:8px}
 .top>*{flex-shrink:0}
-.top .search{flex:1 1 auto;min-width:110px}
+.top .search{flex:1 1 140px;min-width:110px;overflow:hidden}
+.top .search input{min-width:0}
 .top select.ctl{flex-shrink:1;min-width:92px;max-width:150px}
 .top .sizer{flex:0 1 auto;min-width:0}
 .sizer input{flex:1 1 112px;min-width:36px}
@@ -668,6 +683,23 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .ask .box{width:min(440px,92vw)}
 .ask input{width:100%;padding:10px 12px;border:2px solid var(--accent);border-radius:11px;background:var(--panel2);font-size:14px;font-weight:600;outline:none;margin-bottom:4px}
 .ask .actions{justify-content:flex-end;margin:12px 0 0}
+
+/* ===== Selecting many, moving, back/forward ===== */
+#content{position:relative}
+.navbtns button:disabled{opacity:.35;cursor:default}
+.ftile.sel{box-shadow:0 0 0 2px var(--accent),var(--shadow-lg)!important;background:var(--accent-soft)!important}
+.card.sel,.tile.sel{background:var(--accent-soft)}
+.kbf{outline:2px dashed color-mix(in srgb,var(--accent) 70%,transparent);outline-offset:3px}
+.row.kbf{outline-offset:-3px}
+.is-cut{opacity:.45}
+.drop-into{box-shadow:0 0 0 3px var(--accent),var(--accent-glow)!important;transform:scale(1.03)}
+.nav button.drop-into{transform:none;background:var(--accent-soft)}
+.marquee{position:absolute;z-index:5;border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);border-radius:6px;pointer-events:none}
+#content.marqueeing{user-select:none}
+.card,.row,.tile{-webkit-user-drag:element}
+.toast.has-undo{pointer-events:auto;display:flex;align-items:center;gap:12px}
+.toast .tu{border:0;background:color-mix(in srgb,var(--accent) 85%,#000);color:#fff;font-weight:700;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12.5px}
+.ctx .ch .ic.multi{width:30px!important;height:30px!important;border-radius:9px;background:var(--accent-grad)!important;color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center}
 </style>
 </head>
 <body>
@@ -679,6 +711,11 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 
   <main class="main">
     <div class="top">
+      <div class="seg navbtns">
+        <button id="goBack" title="Back (⌘[)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+        <button id="goFwd" title="Forward (⌘])"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+        <button id="goUp" title="Up to the enclosing folder (⌘↑)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+      </div>
       <label class="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="q" placeholder="Search names and text inside files…" autocomplete="off">
@@ -692,11 +729,6 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
         <option value="name">Name A–Z</option>
         <option value="size">Biggest</option>
       </select>
-      <div class="sizer" title="File and folder size">
-        <button class="s" id="zoomDown" title="Smaller"></button>
-        <input type="range" id="zoomR" min="0.7" max="1.8" step="0.05" aria-label="File and folder size">
-        <button class="b" id="zoomUp" title="Bigger"></button>
-      </div>
       <div class="seg" id="viewSeg">
         <button data-v="grid" title="Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
         <button data-v="tiles" title="Tiles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/><path d="M5.5 7.5h3M15.5 7.5h3M5.5 16.5h3M15.5 16.5h3"/></svg></button>
@@ -708,10 +740,16 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     </div>
     <div class="phead" id="phead"></div>
     <div class="content" id="content"></div>
-    <div class="status" id="status"></div>
+    <div class="statusbar"><div class="status" id="status"></div>
+      <div class="sizer mini" title="File and folder size">
+        <button class="s" id="zoomDown" title="Smaller"></button>
+        <input type="range" id="zoomR" min="0.7" max="1.8" step="0.05" aria-label="File and folder size">
+        <button class="b" id="zoomUp" title="Bigger"></button>
+      </div>
+    </div>
   </main>
 
-  <aside class="prev" id="prev"><div class="prev-in" id="prevIn"></div></aside>
+  <aside class="prev" id="prev"><div class="prev-grip" id="prevGrip" title="Drag to resize · double-click for normal size"></div><div class="prev-in" id="prevIn"></div></aside>
 </div>
 <div class="appear" id="appear"></div>
 <div class="ctx" id="ctx"></div>
@@ -843,6 +881,7 @@ const store = {
 const S = {
   view: store.get('view','recent'), layout: store.get('layout','grid'), sort: store.get('sort','recent'),
   pins: new Set(store.get('pins',[])), files: [], open: [], places: [], browse: store.get('browse', null), browseData: null, results: null, q:'', sel:null, typeFilter:'All',
+  selSet: new Set(), anchor: null, focus: null, cut: [], hist: [], histI: -1,
 };
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -877,6 +916,7 @@ async function load(refresh){
   }
   if(S.view==='browse' && S.browse && !S.browseData) return openFolder(S.browse);
   render();
+  if(!S.hist.length) pushLoc();
 }
 
 function byPath(){ const m = new Map(); [...S.files, ...S.open, ...(S.results||[]), ...((S.browseData&&S.browseData.files)||[])].forEach(f => m.set(f.path, f)); return m; }
@@ -1000,7 +1040,7 @@ function families(){
 function card(f){
   const pinned = S.pins.has(f.path);
   const info = S.sort==='used' ? `Opened ${f.useCount}× · ${ago(lastTouch(f))}` : `${ago(lastTouch(f))} · ${size(f.size)}`;
-  return `<div class="card ${S.sel===f.path?'sel':''}" data-path="${esc(f.path)}" title="${esc(f.folder)}">
+  return `<div class="card ${S.selSet.has(f.path)?'sel':''}" draggable="true" data-path="${esc(f.path)}" title="${esc(f.folder)}">
     <div class="thumb"><span class="badge" style="background:${color(f.type)}">${esc(f.ext||'file')}</span>
       <img loading="lazy" data-src="/api/thumb?s=${thumbSize()}&path=${encodeURIComponent(f.path)}" alt="">${fileIcon(f)}
       ${f.pages?`<span class="pages">${pagesText(f)}</span>`:''}</div>
@@ -1008,7 +1048,7 @@ function card(f){
     <div class="meta" title="${esc(f.name)}"><div class="name">${esc(f.name)}</div><div class="info">${esc(info)}</div></div></div>`;
 }
 function row(f){
-  return `<div class="row ${S.sel===f.path?'sel':''}" data-path="${esc(f.path)}">
+  return `<div class="row ${S.selSet.has(f.path)?'sel':''}" draggable="true" data-path="${esc(f.path)}">
     <div class="ic">${fileIcon(f)}</div>
     <div class="nm"><div>${S.pins.has(f.path)?'★ ':''}${esc(f.name)}</div><small>${f.pages?pagesText(f)+' · ':''}${esc(f.folder)}</small></div>
     <div class="c hide-s">${esc(f.source)}</div>
@@ -1021,7 +1061,7 @@ const fileIcon = f => `<span class="fi" style="--c:${color(f.type)}"><i>${esc((f
 const folderIcon = () => `<span class="fo">${svg('folder')}</span>`;
 function tile(f){
   const pinned = S.pins.has(f.path);
-  return `<div class="tile ${S.sel===f.path?'sel':''}" data-path="${esc(f.path)}" title="${esc(f.folder)}">${fileIcon(f)}
+  return `<div class="tile ${S.selSet.has(f.path)?'sel':''}" draggable="true" data-path="${esc(f.path)}" title="${esc(f.folder)}">${fileIcon(f)}
     <div class="tm"><b>${pinned?'★ ':''}${esc(f.name)}</b><small>${esc([f.pages?pagesText(f):'', size(f.size), ago(lastTouch(f))].filter(Boolean).join(' · '))}</small></div></div>`;
 }
 const block = list => S.layout==='grid' ? `<div class="grid">${list.map(card).join('')}</div>`
@@ -1037,7 +1077,12 @@ function renderStatus(){
   if(folders) parts.push(`${folders} folder${folders===1?'':'s'}`);
   parts.push(`${files} file${files===1?'':'s'}`);
   const f = S.sel && byPath().get(S.sel);
-  $('status').innerHTML = `<span>${parts.join(' · ')}</span>${f?`<span class="sel-name" title="${esc(f.path)}">${esc(f.name)}${f.size?' · '+size(f.size):''}</span>`:''}`;
+  let right = '';
+  if(S.selSet.size > 1){
+    const m = byPath(), total = [...S.selSet].reduce((t,p) => t + ((m.get(p)||{}).size||0), 0);
+    right = `<span class="sel-name">${S.selSet.size} selected${total?' · '+size(total):''}</span>`;
+  } else if(f && S.selSet.has(f.path)) right = `<span class="sel-name" title="${esc(f.path)}">${esc(f.name)}${f.size?' · '+size(f.size):''}</span>`;
+  $('status').innerHTML = `<span>${parts.join(' · ')}</span>${right}`;
 }
 
 function sections(groups, opts={}){
@@ -1113,7 +1158,7 @@ function render(){
       title = d.crumbs.length ? d.crumbs[d.crumbs.length-1].name : d.display; sub = d.display;
       const crumbs = `<div class="crumbs">${d.crumbs.map((c,i)=>`${i?'<span style="color:var(--muted)">›</span>':''}<button data-browse="${esc(c.path)}">${esc(c.name)}</button>`).join('')}
         <button data-reveal-folder="${esc(d.path)}" style="margin-left:auto;color:var(--accent)">Open in Finder ↗</button></div>`;
-      const folders = d.folders.length ? `<div class="section-h">Folders <span class="count">${d.folders.length}</span></div><div class="folders">${d.folders.map(f=>`<div class="ftile" data-browse="${esc(f.path)}">${folderIcon()}<div><b>${esc(f.name)}</b><small>${f.count} item${f.count===1?'':'s'}</small></div></div>`).join('')}</div>` : '';
+      const folders = d.folders.length ? `<div class="section-h">Folders <span class="count">${d.folders.length}</span></div><div class="folders">${d.folders.map(f=>`<div class="ftile ${S.selSet.has(f.path)?'sel':''}" draggable="true" data-browse="${esc(f.path)}">${folderIcon()}<div><b>${esc(f.name)}</b><small>${f.count} item${f.count===1?'':'s'}</small></div></div>`).join('')}</div>` : '';
       const fl = filt(d.files);
       const files = d.files.length ? `<div class="section-h">Files <span class="count">${d.files.length}</span></div>${fl.length?block(sorted(fl)):empty('No files of this type','')}` : '';
       tools = crumbs + (d.files.length ? typeChips(d.files) : '');
@@ -1142,9 +1187,8 @@ function loadThumbs(){ document.querySelectorAll('img[data-src]').forEach(i => i
 // ---------- preview ----------
 function preview(f){
   S.sel = f.path;
-  document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel'));
-  document.querySelectorAll(`[data-path="${CSS.escape(f.path)}"]`).forEach(e=>e.classList.add('sel'));
-  renderStatus();
+  if(!S.selSet.has(f.path)){ S.selSet = new Set([f.path]); S.anchor = S.focus = f.path; }
+  applySel();
   const raw = '/api/raw?path='+encodeURIComponent(f.path);
   let stage;
   if(f.ext==='pdf') stage = `<img src="${pageImg(1, true, f)}" alt="" onerror="this.src='/api/thumb?s=720&path=${encodeURIComponent(f.path)}'">`;
@@ -1211,15 +1255,17 @@ async function goto(path){
   if(!f){ try{ const folder = path.slice(0, path.lastIndexOf('/')); await openFolder(folder); f = byPath().get(path); }catch(e){} }
   if(f) preview(f); else toast('That file was moved or deleted');
 }
-async function openFolder(path){
-  S.view='browse'; S.browse=path; S.q=''; $('q').value=''; S.typeFilter='All'; S.browseData=null; store.set('view','browse'); store.set('browse',path);
+async function openFolder(path, fromHistory){
+  clearSel(); S.view='browse'; S.browse=path; S.q=''; $('q').value=''; S.typeFilter='All'; S.browseData=null; store.set('view','browse'); store.set('browse',path);
   render();
   try{ S.browseData = await api('/api/browse?path='+encodeURIComponent(path)); }
   catch(e){ S.browseData = {path, display:path, crumbs:[], folders:[], files:[]}; toast("Can't open that folder"); }
   if(S.browse===path) render();
   $('content').scrollTop = 0;
+  if(!fromHistory) pushLoc();
+  updNavBtns();
 }
-function closePreview(){ $('prev').classList.remove('open'); S.sel=null; document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel')); renderStatus(); }
+function closePreview(){ $('prev').classList.remove('open'); S.sel=null; S.selSet.clear(); applySel(); }
 
 function togglePin(p){
   S.pins.has(p) ? S.pins.delete(p) : S.pins.add(p);
@@ -1230,8 +1276,10 @@ function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show');
 
 // ---------- events ----------
 document.addEventListener('click', async e => {
+  const it = e.target.closest('#content .card[data-path],#content .row[data-path],#content .tile[data-path],#content .ftile[data-browse]');
+  if(it && !e.target.closest('[data-pin]')){ selectClick(it, e); return; }
   const nav = e.target.closest('[data-view]');
-  if(nav){ S.view = nav.dataset.view; S.q=''; $('q').value=''; S.typeFilter='All'; store.set('view', S.view); render(); $('content').scrollTop=0; return; }
+  if(nav){ showView(nav.dataset.view); return; }
   const pl = e.target.closest('[data-place],[data-browse]');
   if(pl && !e.target.closest('.modal')){ openFolder(pl.dataset.place || pl.dataset.browse); return; }
   const rf = e.target.closest('[data-reveal-folder]');
@@ -1259,7 +1307,10 @@ document.addEventListener('click', async e => {
   const item = e.target.closest('[data-path]');
   if(item){ const f = byPath().get(item.dataset.path); if(f) preview(f); }
 });
-document.addEventListener('dblclick', e => { const item = e.target.closest('.card,.row,.tile'); if(item) post('/api/launch',{path:item.dataset.path}); });
+document.addEventListener('dblclick', e => {
+  const fo = e.target.closest('#content .ftile[data-browse]'); if(fo){ openFolder(fo.dataset.browse); return; }
+  const item = e.target.closest('.card,.row:not(.hd),.tile'); if(item && item.dataset.path) post('/api/launch',{path:item.dataset.path});
+});
 
 let qt;
 $('q').addEventListener('input', e => {
@@ -1537,6 +1588,10 @@ function menuFor(target){
     .map(([v,t]) => ({label:t, check:S.sort===v, run:()=>{ S.sort=v; $('sort').value=v; store.set('sort',v); render(); }}));
   const viewSub = [['grid','Grid'],['tiles','Tiles'],['list','List']].map(([v,t]) => ({label:t, check:S.layout===v, run:()=>{ const b = document.querySelector(`#viewSeg button[data-v="${v}"]`); b && b.click(); }}));
   const general = [
+    {icon:'refresh', label:UNDO.length?`Undo ${UNDO[UNDO.length-1].msg.toLowerCase()}`:'Undo', key:K('Z'), dis:!UNDO.length, run:undo},
+    {icon:'refresh', label:REDO.length?`Redo ${REDO[REDO.length-1].msg.toLowerCase()}`:'Redo', key:isMac?'⇧⌘Z':'Ctrl+Y', dis:!REDO.length, run:redo},
+    {icon:'grid', label:'Select all', key:K('A'), dis:!itemEls().length, run:selectAll},
+    '-',
     {icon:'grid', label:'View as', sub:viewSub},
     {icon:'sort', label:'Sort by', sub:sortSub},
     '-',
@@ -1570,6 +1625,27 @@ function menuFor(target){
       ...(S.view==='browse' && S.browse && !inSidebar(S.browse) ? [{icon:'pinned', label:`Add “${folderName(S.browse)}” to sidebar`, run:()=>sbAddFolder(S.browse)}] : []),
     ]};
   }
+  const itEl = target.closest('#content ' + ITEM_SEL.split(',').join(',#content '));
+  if(itEl && S.selSet.size > 1 && S.selSet.has(keyOf(itEl))){
+    const ks = selKeys(), m = byPath(), files = ks.filter(k => m.get(k));
+    const total = files.reduce((t,k) => t + (m.get(k).size||0), 0);
+    const allPinned = files.length && files.every(k => S.pins.has(k));
+    return {head:{multi:true, count:ks.length, name:`${ks.length} items selected`, info:[files.length?plural(files.length,'file'):'', ks.length-files.length?plural(ks.length-files.length,'folder'):'', total?size(total):''].filter(Boolean).join(' · ')}, items:[
+      {icon:'launch', label:files.length>1?`Open ${files.length} files`:'Open', key:'↵', dis:!files.length, run:openSelected},
+      '-',
+      {icon:'copy', label:`Copy ${ks.length} items`, key:K('C'), run:()=>copySel(ks)},
+      {icon:'scissors', label:'Cut (to move)', key:K('X'), run:()=>cutSel(ks)},
+      {icon:'dup', label:'Duplicate', key:K('D'), run:()=>duplicateSel(ks)},
+      {icon:'folder', label:'Move to…', run:async()=>moveSel(ks, await pickFolderFor('move'))},
+      {icon:'newfolder', label:'Copy to…', run:async()=>copySelTo(ks, await pickFolderFor('copy'))},
+      '-',
+      {icon:'star', label:allPinned?'Unpin all':'Pin all', dis:!files.length, run:()=>{ files.forEach(k => allPinned ? S.pins.delete(k) : S.pins.add(k)); store.set('pins',[...S.pins]); render(); toast(allPinned?'Unpinned':'Pinned'); }},
+      {icon:'link', label:'Copy paths', run:()=>copyText(ks.join('\n'),'Paths copied')},
+      '-',
+      {icon:'grid', label:'Select all', key:K('A'), run:selectAll},
+      {icon:'close', label:'Deselect', key:'Esc', run:clearSel},
+    ]};
+  }
   if(fileEl && !folderEl){
     const f = byPath().get(fileEl.dataset.path); if(!f) return null;
     const pinned = S.pins.has(f.path);
@@ -1583,6 +1659,9 @@ function menuFor(target){
       {icon:'copy', label:'Copy', key:K('C'), run:()=>copyFiles([f.path])},
       {icon:'pencil', label:'Rename…', run:()=>renameItem(f.path, false)},
       {icon:'dup', label:'Duplicate', key:K('D'), run:()=>duplicateFile(f.path)},
+      {icon:'scissors', label:'Cut (to move)', key:K('X'), run:()=>cutSel([f.path])},
+      {icon:'folder', label:'Move to…', run:async()=>moveSel([f.path], await pickFolderFor('move'))},
+      {icon:'newfolder', label:'Copy to…', run:async()=>copySelTo([f.path], await pickFolderFor('copy'))},
       {icon:'link', label:'Copy path', key:K('C',1), run:()=>copyText(f.path,'Path copied')},
       {icon:'text', label:'Copy name', run:()=>copyText(f.name,'Name copied')},
       '-',
@@ -1597,7 +1676,11 @@ function menuFor(target){
       {icon:'folder', label:'Open', run:()=>openFolder(path)},
       {icon:'finder', label:'Open in Finder', run:()=>post('/api/launch',{path})},
       '-',
-      {icon:'copy', label:'Copy', run:()=>copyFiles([path])},
+      {icon:'copy', label:'Copy', run:()=>copySel([path])},
+      ...(folderEl.matches('.ftile') ? [
+        {icon:'scissors', label:'Cut (to move)', run:()=>cutSel([path])},
+        {icon:'dup', label:'Duplicate', run:()=>duplicateSel([path])},
+        {icon:'folder', label:'Move to…', run:async()=>moveSel([path], await pickFolderFor('move'))}] : []),
       ...(folderEl.matches('.ftile') ? [{icon:'pencil', label:'Rename…', run:()=>renameItem(path, true)}] : []),
       {icon:'paste', label:pasteLabel()+' into it', dis:!clip.files.length, run:()=>pasteInto(path)},
       {icon:'newfolder', label:'New folder inside', run:()=>newFolder(path)},
@@ -1624,7 +1707,7 @@ function itemsHTML(items){
 function openMenu(m, x, y){
   CTX.items = m.items;
   const h = m.head;
-  const head = h ? `<div class="ch"><span class="ic${h.folder?' isfo':''}">${h.folder?folderIcon():`<span class="fi" style="--c:${h.color}"><i>${esc(h.ext)}</i></span>`}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : '';
+  const head = h && h.multi ? `<div class="ch"><span class="ic multi">${h.count}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : h ? `<div class="ch"><span class="ic${h.folder?' isfo':''}">${h.folder?folderIcon():`<span class="fi" style="--c:${h.color}"><i>${esc(h.ext)}</i></span>`}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : '';
   const el = $('ctx'); el.innerHTML = head + itemsHTML(m.items); el.classList.add('on');
   el.style.left = '0px'; el.style.top = '0px';
   const w = el.offsetWidth, ht = el.offsetHeight;
@@ -1640,7 +1723,8 @@ document.addEventListener('contextmenu', async e => {
   e.preventDefault();
   $('appear').classList.remove('on');
   const fileEl = e.target.closest('[data-path]');
-  if(fileEl && fileEl.matches('.card,.row,.tile')){ const f = byPath().get(fileEl.dataset.path); if(f && S.sel!==f.path){ S.sel = f.path; document.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel')); fileEl.classList.add('sel'); renderStatus(); } }
+  const rc = e.target.closest('#content ' + ITEM_SEL.split(',').join(',#content '));
+  if(rc && !S.selSet.has(keyOf(rc))){ const k = keyOf(rc); S.selSet = new Set([k]); S.anchor = S.focus = k; S.sel = byPath().get(k) ? k : null; applySel(); }
   const m = menuFor(e.target); if(!m) return;
   openMenu(m, e.clientX, e.clientY);
   // Check what's on the clipboard, then refresh the Paste item.
@@ -1730,7 +1814,6 @@ $('nav').addEventListener('dragover', e => {
     t.classList.add(e.clientY < r.top + r.height/2 ? 'drop-before' : 'drop-after');
   } else if(DRAG.folder){
     if(drop){ e.preventDefault(); drop.classList.add('hot'); }
-    else if(t && t.dataset.place){ e.preventDefault(); t.classList.add('drop-before'); }
   }
 });
 $('nav').addEventListener('drop', e => {
@@ -1779,6 +1862,331 @@ $('sbBox').addEventListener('mousedown', e => { if(e.target.id==='sbBox') closeS
 document.addEventListener('keydown', e => { if(e.key==='Escape' && $('sbBox').classList.contains('on')){ closeSbBox(); e.stopPropagation(); } }, true);
 document.addEventListener('click', e => { if(e.target.closest('[data-sb="edit"]')) openSbBox(); });
 
+
+// ---------- selection: click, Ctrl/⌘-click, Shift-click, arrows, dragging a box ----------
+const ITEM_SEL = '.ftile[data-browse],.card[data-path],.row[data-path]:not(.hd),.tile[data-path]';
+const itemEls = () => [...$('content').querySelectorAll(ITEM_SEL)];
+const keyOf = el => el.dataset.path || el.dataset.browse;
+const isFolderEl = el => el.classList.contains('ftile');
+const elOf = k => itemEls().find(el => keyOf(el) === k);
+const anyOverlay = () => !!document.querySelector('.rn.on,.modal.open,.zoom.on,#appear.on,#ctx.on,#dd.on');
+function clearSel(){ S.selSet = new Set(); S.anchor = S.focus = null; applySel(); }
+function applySel(){
+  itemEls().forEach(el => { const k = keyOf(el); el.classList.toggle('sel', S.selSet.has(k)); el.classList.toggle('kbf', k === S.focus && S.selSet.size > 0); el.classList.toggle('is-cut', S.cut.includes(k)); });
+  renderStatus();
+}
+function rangeKeys(a, b){
+  const ks = itemEls().map(keyOf), i = ks.indexOf(a), j = ks.indexOf(b);
+  if(i < 0 || j < 0) return [b];
+  return ks.slice(Math.min(i,j), Math.max(i,j) + 1);
+}
+function selectClick(el, e){
+  const k = keyOf(el), multi = e.metaKey || e.ctrlKey;
+  if(e.shiftKey && S.anchor){ const r = rangeKeys(S.anchor, k); S.selSet = multi ? new Set([...S.selSet, ...r]) : new Set(r); }
+  else if(multi){ S.selSet.has(k) ? S.selSet.delete(k) : S.selSet.add(k); S.anchor = k; }
+  else { S.selSet = new Set([k]); S.anchor = k; }
+  S.focus = k;
+  const f = byPath().get(k);
+  if(!multi && !e.shiftKey && f) return preview(f);
+  if(S.selSet.size === 1 && f && S.selSet.has(k)) return preview(f);
+  if(S.selSet.size !== 1) S.sel = null;
+  applySel();
+}
+function selectAll(){ const ks = itemEls().map(keyOf); S.selSet = new Set(ks); S.anchor = ks[0] || null; S.focus = ks[ks.length-1] || null; applySel(); }
+const center = el => { const r = el.getBoundingClientRect(); return r.left + r.width/2; };
+function moveFocus(dir, extend){
+  const els = itemEls(); if(!els.length) return;
+  const cur = S.focus && els.find(el => keyOf(el) === S.focus);
+  let next;
+  if(!cur) next = els[0];
+  else if(dir==='left' || dir==='right'){ const i = els.indexOf(cur); next = els[Math.max(0, Math.min(els.length-1, i + (dir==='right'?1:-1)))]; }
+  else {
+    const r = cur.getBoundingClientRect(), cx = r.left + r.width/2;
+    const cand = els.filter(el => { const q = el.getBoundingClientRect(); return dir==='down' ? q.top >= r.bottom - 4 : q.bottom <= r.top + 4; });
+    if(!cand.length) return;
+    const tops = cand.map(el => el.getBoundingClientRect().top);
+    const rowY = dir==='down' ? Math.min(...tops) : Math.max(...tops);
+    const row = cand.filter(el => Math.abs(el.getBoundingClientRect().top - rowY) < 8);
+    next = row.reduce((a,b) => Math.abs(center(a)-cx) <= Math.abs(center(b)-cx) ? a : b);
+  }
+  const k = keyOf(next); S.focus = k;
+  if(extend){ if(!S.anchor) S.anchor = cur ? keyOf(cur) : k; S.selSet = new Set(rangeKeys(S.anchor, k)); }
+  else { S.selSet = new Set([k]); S.anchor = k; }
+  next.scrollIntoView({block:'nearest'});
+  const f = byPath().get(k);
+  if(!extend && f && $('prev').classList.contains('open')) return preview(f);
+  if(!extend) S.sel = f ? f.path : null;
+  applySel();
+}
+function openSelected(){
+  const ks = [...S.selSet]; if(!ks.length) return;
+  const el = ks.length === 1 && elOf(ks[0]);
+  if(el && isFolderEl(el)) return openFolder(ks[0]);
+  const files = ks.filter(k => byPath().get(k)).slice(0, 20);
+  files.forEach(p => post('/api/launch', {path:p}));
+  if(files.length) toast(files.length===1 ? 'Opening…' : `Opening ${files.length} files…`);
+}
+
+// drag a box on empty space to select
+let MQ = null;
+$('content').addEventListener('mousedown', e => {
+  if(e.button !== 0 || e.target.closest(ITEM_SEL + ',button,a,input,.chip,.crumbs,.csel')) return;
+  const c = $('content'), cr = c.getBoundingClientRect();
+  if(e.clientX > cr.right - 14) return;  // the scroll bar
+  e.preventDefault();
+  const add = e.metaKey || e.ctrlKey || e.shiftKey;
+  MQ = {x: e.clientX - cr.left + c.scrollLeft, y: e.clientY - cr.top + c.scrollTop, base: add ? new Set(S.selSet) : new Set(), moved:false, el:null};
+});
+document.addEventListener('mousemove', e => {
+  if(!MQ) return;
+  const c = $('content'), cr = c.getBoundingClientRect();
+  if(e.clientY > cr.bottom - 20) c.scrollTop += 14; else if(e.clientY < cr.top + 20) c.scrollTop -= 14;
+  const x = e.clientX - cr.left + c.scrollLeft, y = e.clientY - cr.top + c.scrollTop;
+  if(!MQ.moved && Math.hypot(x - MQ.x, y - MQ.y) < 4) return;
+  if(!MQ.el){ MQ.el = document.createElement('div'); MQ.el.className = 'marquee'; c.appendChild(MQ.el); c.classList.add('marqueeing'); }
+  MQ.moved = true;
+  const L = Math.min(x, MQ.x), T = Math.min(y, MQ.y), W = Math.abs(x - MQ.x), H = Math.abs(y - MQ.y);
+  Object.assign(MQ.el.style, {left:L+'px', top:T+'px', width:W+'px', height:H+'px'});
+  const box = {l: L + cr.left - c.scrollLeft, t: T + cr.top - c.scrollTop}; box.r = box.l + W; box.b = box.t + H;
+  const hit = new Set(MQ.base);
+  itemEls().forEach(el => { const q = el.getBoundingClientRect(); if(q.left < box.r && q.right > box.l && q.top < box.b && q.bottom > box.t) hit.add(keyOf(el)); });
+  S.selSet = hit; const ks = [...hit]; S.focus = ks[ks.length-1] || null; if(!S.anchor && ks.length) S.anchor = ks[0];
+  applySel();
+});
+document.addEventListener('mouseup', e => {
+  if(e.button === 3){ e.preventDefault(); goBack(); return; }   // mouse side buttons
+  if(e.button === 4){ e.preventDefault(); goFwd(); return; }
+  if(!MQ) return;
+  if(MQ.el){ MQ.el.remove(); $('content').classList.remove('marqueeing'); }
+  if(!MQ.moved && !(e.metaKey || e.ctrlKey || e.shiftKey)) clearSel();
+  else if(S.selSet.size === 1){ const f = byPath().get([...S.selSet][0]); if(f) S.sel = f.path; }
+  MQ = null;
+});
+
+// ---------- back / forward / up ----------
+const curLoc = () => S.view==='browse' ? {view:'browse', browse:S.browse} : {view:S.view};
+function pushLoc(){
+  const l = curLoc(), top = S.hist[S.histI];
+  if(top && top.view===l.view && top.browse===l.browse) return updNavBtns();
+  S.hist = S.hist.slice(0, S.histI + 1); S.hist.push(l); S.histI = S.hist.length - 1; updNavBtns();
+}
+function showView(v, fromHistory){
+  clearSel(); S.view = v; S.q=''; $('q').value=''; S.typeFilter='All'; store.set('view', v); render(); $('content').scrollTop = 0;
+  if(!fromHistory) pushLoc(); updNavBtns();
+}
+const goLoc = l => l.view==='browse' ? openFolder(l.browse, true) : showView(l.view, true);
+function goBack(){ if(S.histI > 0){ S.histI--; goLoc(S.hist[S.histI]); } }
+function goFwd(){ if(S.histI < S.hist.length - 1){ S.histI++; goLoc(S.hist[S.histI]); } }
+function parentFolder(){
+  if(S.view!=='browse' || !S.browse) return null;
+  const d = S.browseData;
+  if(d && d.crumbs && d.crumbs.length > 1) return d.crumbs[d.crumbs.length-2].path;
+  return null;
+}
+function goUp(){ const p = parentFolder(); if(p) openFolder(p); }
+function updNavBtns(){
+  $('goBack').disabled = S.histI <= 0;
+  $('goFwd').disabled = S.histI >= S.hist.length - 1;
+  $('goUp').disabled = !parentFolder();
+}
+$('goBack').onclick = goBack; $('goFwd').onclick = goFwd; $('goUp').onclick = goUp;
+const _render = render;
+render = function(){ _render(); applySelQuiet(); updNavBtns(); };
+function applySelQuiet(){ itemEls().forEach(el => { const k = keyOf(el); el.classList.toggle('sel', S.selSet.has(k)); el.classList.toggle('kbf', k === S.focus && S.selSet.size > 0); el.classList.toggle('is-cut', S.cut.includes(k)); }); }
+
+// ---------- copy / cut / paste / duplicate / move many, with Undo and Redo ----------
+const UNDO = [], REDO = [];
+const plural = (n, w) => `${n} ${w}${n===1?'':'s'}`;
+const selKeys = () => [...S.selSet];
+const movedPath = (pairs, p) => { for(const [a,b] of pairs){ if(p===a) return b; if(p.startsWith(a+'/')) return b + p.slice(a.length); } return p; };
+function did(op){ UNDO.push(op); REDO.length = 0; toast(op.msg, true); }
+async function call(url, body){
+  const r = await post(url, body).catch(() => null);
+  const d = r ? await r.json().catch(() => ({})) : {};
+  if(!r || !r.ok) throw new Error(d.error === 'not found' ? 'FileHub needs a restart to do this (see the note at the bottom)' : (d.error || "Couldn't do that"));
+  return d;
+}
+async function refreshHere(select){
+  if(S.view==='browse' && S.browse){
+    try{ S.browseData = await api('/api/browse?path='+encodeURIComponent(S.browse)); }catch(e){}
+  }
+  try{ S.files = await api('/api/library?refresh=1'); }catch(e){}
+  if(select && select.length){ S.selSet = new Set(select); S.focus = select[select.length-1]; S.anchor = select[0]; }
+  render();
+}
+function followPins(pairs){
+  S.pins = new Set([...S.pins].map(p => movedPath(pairs, p))); store.set('pins', [...S.pins]);
+  if(S.sel) S.sel = movedPath(pairs, S.sel);
+}
+async function copySel(keys = selKeys()){ if(!keys.length) return; S.cut = []; await copyFiles(keys); applySel(); }
+async function cutSel(keys = selKeys()){
+  if(!keys.length) return;
+  await post('/api/copy', {paths: keys}).catch(()=>{});
+  S.cut = keys; applySel();
+  toast(`${plural(keys.length,'item')} ready to move: open a folder and paste (${K('V')})`);
+}
+async function pasteHere(folder){
+  if(!folder){ toast('Open a folder first (Places on the left), then paste'); return; }
+  await readClip();
+  const same = S.cut.length && clip.files.length === S.cut.length && S.cut.every(p => clip.files.includes(p));
+  try{
+    if(same){
+      const d = await call('/api/move', {paths:S.cut, dest:folder});
+      S.cut = []; followPins(d.pairs);
+      did({type:'move', pairs:d.pairs, msg:`Moved ${plural(d.pairs.length,'item')}`});
+      return refreshHere(d.pairs.map(x=>x[1]));
+    }
+    if(!clip.files.length){ toast('Nothing to paste. Copy something first.'); return; }
+    toast('Pasting…');
+    const d = await call('/api/paste', {path:folder});
+    did({type:'copy', sources:d.sources||clip.files, dest:folder, made:d.made, msg:`Pasted ${plural(d.made.length,'item')}`});
+    refreshHere(d.made);
+  }catch(e){ toast(e.message); }
+}
+pasteInto = pasteHere;
+async function duplicateSel(keys = selKeys()){
+  if(!keys.length) return;
+  try{
+    const d = await call('/api/duplicate', {paths:keys});
+    did({type:'dup', sources:keys, made:d.made, msg:`Made ${plural(d.made.length,'copy')}`.replace('copys','copies')});
+    refreshHere(d.made);
+  }catch(e){ toast(e.message); }
+}
+duplicateFile = p => duplicateSel([p]);
+async function moveSel(keys, dest){
+  if(!keys.length || !dest) return;
+  try{
+    const d = await call('/api/move', {paths:keys, dest});
+    if(!d.pairs.length){ toast('Already in that folder'); return; }
+    followPins(d.pairs);
+    did({type:'move', pairs:d.pairs, msg:`Moved ${plural(d.pairs.length,'item')} to “${folderName(dest)}”`});
+    refreshHere();
+  }catch(e){ toast(e.message); }
+}
+async function copySelTo(keys, dest){
+  if(!keys.length || !dest) return;
+  try{
+    const d = await call('/api/copyto', {paths:keys, dest});
+    did({type:'copy', sources:keys, dest, made:d.made, msg:`Copied ${plural(d.made.length,'item')} to “${folderName(dest)}”`});
+    refreshHere();
+  }catch(e){ toast(e.message); }
+}
+async function pickFolderFor(purpose){
+  try{ const r = await (await post('/api/choosefolder', {for:purpose})).json(); return r && r.path; }catch(e){ return null; }
+}
+async function undo(){
+  const op = UNDO.pop(); if(!op){ toast('Nothing to undo'); return; }
+  try{
+    if(op.type==='move' || op.type==='rename'){
+      const back = op.pairs.map(([a,b]) => [b,a]).reverse();
+      await call('/api/moveto', {pairs:back}); followPins(back);
+    } else {
+      const d = await call('/api/trash', {paths:op.made});
+      if(d.trashed.length < op.made.length) throw new Error("Some copies were changed or FileHub restarted, so they were left alone");
+    }
+    REDO.push(op); toast('Undone: ' + op.msg.toLowerCase());
+    refreshHere(op.type==='move' || op.type==='rename' ? op.pairs.map(x=>x[0]) : op.sources);
+  }catch(e){ toast(e.message); }
+}
+async function redo(){
+  const op = REDO.pop(); if(!op){ toast('Nothing to redo'); return; }
+  try{
+    if(op.type==='move' || op.type==='rename'){ await call('/api/moveto', {pairs:op.pairs}); followPins(op.pairs); }
+    else if(op.type==='dup'){ op.made = (await call('/api/duplicate', {paths:op.sources})).made; }
+    else if(op.type==='newfolder'){ op.made = (await call('/api/newfolder', {path:op.dest})).made; }
+    else { op.made = (await call('/api/copyto', {paths:op.sources, dest:op.dest})).made; }
+    UNDO.push(op); toast('Redone: ' + op.msg.toLowerCase());
+    refreshHere(op.made || op.pairs.map(x=>x[1]));
+  }catch(e){ toast(e.message); }
+}
+newFolder = async function(folder){
+  try{ const d = await call('/api/newfolder', {path:folder}); did({type:'newfolder', dest:folder, made:d.made, msg:'Made a new folder'}); if(S.view==='browse' && S.browse===folder) refreshHere(d.made); else openFolder(folder); }
+  catch(e){ toast(e.message); }
+};
+
+// toast with an Undo button
+const _toast = toast;
+toast = function(m, withUndo){
+  const t = $('toast');
+  if(!withUndo){ t.classList.remove('has-undo'); return _toast(m); }
+  t.innerHTML = `<span>${esc(m)}</span><button class="tu">Undo</button>`;
+  t.classList.add('show','has-undo'); clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show','has-undo'), 6000);
+  t.querySelector('.tu').onclick = () => { t.classList.remove('show','has-undo'); undo(); };
+};
+
+// drag files onto a folder (or a sidebar folder) to move them; hold ⌥ (Alt) to copy instead
+document.addEventListener('dragstart', e => {
+  const it = e.target.closest && e.target.closest('#content ' + ITEM_SEL.split(',').join(',#content '));
+  if(!it) return;
+  const k = keyOf(it);
+  if(!S.selSet.has(k)){ S.selSet = new Set([k]); S.anchor = S.focus = k; applySel(); }
+  DRAG = Object.assign(DRAG || {}, {paths: selKeys()});
+  e.dataTransfer.effectAllowed = 'copyMove';
+  if(!isFolderEl(it)) e.dataTransfer.setData('text/plain', k);
+  if(S.selSet.size > 1){ const g = document.createElement('div'); g.className = 'toast show'; g.style.cssText = 'position:fixed;top:-100px;left:-100px'; g.textContent = plural(S.selSet.size,'item'); document.body.appendChild(g); e.dataTransfer.setDragImage(g, 20, 14); setTimeout(() => g.remove(), 0); }
+});
+const dropTarget = e => {
+  const t = e.target.closest && e.target.closest('#content .ftile[data-browse],#nav [data-place]');
+  if(!t || !DRAG || !DRAG.paths) return null;
+  const dest = t.dataset.browse || t.dataset.place;
+  if(DRAG.paths.includes(dest)) return null;
+  return {t, dest};
+};
+document.addEventListener('dragover', e => {
+  document.querySelectorAll('.drop-into').forEach(x => x.classList.remove('drop-into'));
+  const d = dropTarget(e); if(!d) return;
+  e.preventDefault(); e.dataTransfer.dropEffect = e.altKey ? 'copy' : 'move';
+  d.t.classList.add('drop-into');
+});
+document.addEventListener('drop', e => {
+  const d = dropTarget(e);
+  document.querySelectorAll('.drop-into').forEach(x => x.classList.remove('drop-into'));
+  if(!d) return;
+  e.preventDefault(); e.stopPropagation();
+  const paths = DRAG.paths; DRAG = null; $('nav').classList.remove('folder-drag');
+  e.altKey ? copySelTo(paths, d.dest) : moveSel(paths, d.dest);
+}, true);
+
+// keyboard
+document.addEventListener('keydown', e => {
+  if(anyOverlay() || DDsel || ASK) return;
+  const t = e.target;
+  if(t.closest && t.closest('input,textarea,select,[contenteditable]')) return;
+  const cmd = e.metaKey || e.ctrlKey, k = e.key;
+  const here = S.view==='browse' && !S.q ? S.browse : null;
+  if(cmd && !e.altKey && k.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if(cmd && k.toLowerCase()==='y'){ e.preventDefault(); redo(); return; }
+  if((cmd && k==='[') || (e.altKey && k==='ArrowLeft') || (!cmd && k==='Backspace')){ e.preventDefault(); goBack(); return; }
+  if((cmd && k===']') || (e.altKey && k==='ArrowRight')){ e.preventDefault(); goFwd(); return; }
+  if((cmd || e.altKey) && k==='ArrowUp'){ e.preventDefault(); goUp(); return; }
+  if(cmd && k==='ArrowDown'){ e.preventDefault(); openSelected(); return; }
+  if(cmd && !e.shiftKey && k.toLowerCase()==='a'){ e.preventDefault(); selectAll(); return; }
+  if(cmd && !e.shiftKey && String(getSelection()).length) return;  // normal text copy
+  if(cmd && !e.shiftKey && e.code==='KeyC'){ e.preventDefault(); const ks = selKeys(); if(!ks.length) return; e.altKey ? copyText(ks.join('\n'), ks.length>1?'Paths copied':'Path copied') : copySel(ks); return; }
+  if(cmd && !e.shiftKey && e.code==='KeyX'){ e.preventDefault(); cutSel(); return; }
+  if(cmd && !e.shiftKey && e.code==='KeyV'){ e.preventDefault(); pasteHere(here); return; }
+  if(cmd && !e.shiftKey && e.code==='KeyD'){ e.preventDefault(); duplicateSel(); return; }
+  if(!cmd && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(k) && !e.altKey){
+    e.preventDefault(); moveFocus(k.slice(5).toLowerCase(), e.shiftKey); return;
+  }
+}, true);
+
+
+// ---------- resize the preview panel by dragging its left edge ----------
+const setPrevW = w => { w = Math.round(Math.max(300, Math.min(w, Math.max(320, innerWidth - 560)))); document.documentElement.style.setProperty('--pw', w + 'px'); return w; };
+setPrevW(store.get('prevW', 400));
+$('prevGrip').addEventListener('mousedown', e => {
+  e.preventDefault(); e.stopPropagation();
+  const right = $('prev').getBoundingClientRect().right;
+  document.body.classList.add('resizing');
+  const mv = ev => setPrevW(right - ev.clientX);
+  const up = ev => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.body.classList.remove('resizing'); store.set('prevW', setPrevW(right - ev.clientX)); };
+  document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+});
+$('prevGrip').addEventListener('dblclick', () => store.set('prevW', setPrevW(400)));
+addEventListener('resize', () => setPrevW(store.get('prevW', 400)));
+
 // ---------- rename (same folder only; never replaces another file) ----------
 let RN = null;
 function renameItem(path, isFolder){
@@ -1803,7 +2211,7 @@ async function saveRename(){
   S.pins = new Set([...S.pins].map(moved)); store.set('pins', [...S.pins]);
   const wasSel = S.sel && moved(S.sel)!==S.sel;
   if(S.browse && moved(S.browse)!==S.browse){ S.browse = moved(S.browse); store.set('browse', S.browse); }
-  closeRename(); toast(`Renamed to “${name}”`);
+  closeRename(); did({type:'rename', pairs:[[path, np]], msg:`Renamed to “${name}”`});
   if(S.view==='browse' && S.browse) await openFolder(S.browse);
   api('/api/library?refresh=1').then(fs => { S.files = fs; if(S.view!=='browse') render(); else renderNav();
     const f = wasSel && byPath().get(moved(S.sel)); if(f) preview(f); }).catch(()=>{});
@@ -1837,17 +2245,7 @@ async function checkVersion(){
 checkVersion(); setInterval(checkVersion, 60000);
 addEventListener('focus', checkVersion);
 
-// Keyboard: ⌘C copy · ⌘V paste into the open folder · ⌘D duplicate · ⌥⌘C copy path
-document.addEventListener('keydown', e => {
-  if(e.key==='Escape' && $('ctx').classList.contains('on')){ closeMenu(); e.stopPropagation(); return; }
-  if(!(e.metaKey || e.ctrlKey) || e.shiftKey) return;
-  if(e.target.closest && e.target.closest('input,textarea,select,.modal')) return;
-  if(String(getSelection()).length) return; // let normal text copy work
-  const k = e.code;
-  if(k==='KeyC' && S.sel){ e.preventDefault(); e.altKey ? copyText(S.sel,'Path copied') : copyFiles([S.sel]); }
-  else if(k==='KeyV' && !e.altKey){ e.preventDefault(); readClip().then(() => pasteInto(S.view==='browse' && !S.q ? S.browse : null)); }
-  else if(k==='KeyD' && S.sel && !e.altKey){ e.preventDefault(); duplicateFile(S.sel); }
-}, true);
+// (keyboard shortcuts for files live in the 'selection' section)
 
 
 document.addEventListener('keydown', e => {
@@ -1860,9 +2258,9 @@ document.addEventListener('keydown', e => {
     else if(e.key==='+' || e.key==='=') zoomW(250);
     else if(e.key==='-') zoomW(-250);
   }
-  else if(e.key==='Escape'){ if($('splitModal').classList.contains('open')) closeSplit(); else if(typing){ e.target.blur(); } else closePreview(); }
+  else if(e.key==='Escape'){ if($('splitModal').classList.contains('open')) closeSplit(); else if(typing){ e.target.blur(); } else if(S.selSet.size > 1){ clearSel(); } else closePreview(); }
   else if(e.key===' ' && !typing && S.sel){ e.preventDefault(); post('/api/quicklook',{path:S.sel}); }
-  else if(e.key==='Enter' && !typing && S.sel){ post('/api/launch',{path:S.sel}); }
+  else if(e.key==='Enter' && !typing && !anyOverlay()){ e.preventDefault(); openSelected(); }
 });
 
 // ---------- split PDF ----------
