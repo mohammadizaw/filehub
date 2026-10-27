@@ -1,0 +1,5 @@
+# personal data: links between your split files and their originals
+filehub-links.json
+filehub-links.json.tmp
+__pycache__/
+.DS_Store

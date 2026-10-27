@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FileHub</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --panel2:#f1f3f6; --line:#e3e6eb; --text:#1c2230;
+  --muted:#6b7385; --accent:#3b6cf6; --accent-soft:#e8eefe; --hover:#eef1f6;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.05);
+  --pdf:#e5484d; --word:#3b6cf6; --slides:#f08c2b; --sheets:#2f9e5b; --img:#a35bd6;
+  --video:#d6458f; --audio:#0f9fb3; --other:#7b8394;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121418; --panel:#1a1d23; --panel2:#21252c; --line:#2c313a; --text:#e7e9ee;
+  --muted:#9097a6; --accent:#6d93ff; --accent-soft:#232c44; --hover:#252a33;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  --bg:#121418; --panel:#1a1d23; --panel2:#21252c; --line:#2c313a; --text:#e7e9ee;
+  --muted:#9097a6; --accent:#6d93ff; --accent-soft:#232c44; --hover:#252a33;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:230px 1fr auto;height:100vh}
+/* Sidebar */
+.side{background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:16px;padding:0 8px 16px}
+.brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#8f6bff);display:grid;place-items:center;color:#fff}
+.nav-h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:14px 10px 6px}
+.nav button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;cursor:pointer;color:var(--text)}
+.nav button:hover{background:var(--hover)}
+.nav button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav button .n{margin-left:auto;font-size:12px;color:var(--muted);font-weight:400}
+.nav svg{width:17px;height:17px;flex:none}
+/* Main */
+.main{display:flex;flex-direction:column;min-width:0}
+.top{display:flex;gap:10px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+.search{flex:1;display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:0 12px;max-width:560px}
+.search input{flex:1;border:0;background:none;outline:none;padding:9px 0}
+.search kbd{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.ctl{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 10px;cursor:pointer}
+.ctl:hover{background:var(--hover)}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;background:var(--panel2);padding:7px 10px;cursor:pointer;display:grid;place-items:center}
+.seg button.on{background:var(--accent-soft);color:var(--accent)}
+.seg svg,.ctl svg{width:16px;height:16px;display:block}
+.content{flex:1;overflow:auto;padding:20px 22px 40px}
+.title{display:flex;align-items:baseline;gap:12px;margin:0 0 4px}
+.title h1{font-size:22px;margin:0;font-weight:650}
+.sub{color:var(--muted);margin:0 0 18px}
+.section{margin-bottom:26px}
+.section-h{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-weight:600}
+.section-h .count{color:var(--muted);font-weight:400;font-size:13px}
+.section-h .folder{color:var(--muted);font-weight:400;font-size:12px;margin-left:auto;cursor:pointer}
+.family{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(164px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s;position:relative}
+.family .card{background:var(--panel2)}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.thumb{height:118px;background:var(--panel2);display:grid;place-items:center;overflow:hidden;border-bottom:1px solid var(--line)}
+.thumb img{max-width:100%;max-height:100%;object-fit:contain;opacity:0;transition:opacity .2s}
+.thumb img.ok{opacity:1}
+.badge{font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#fff;border-radius:5px;padding:2px 6px}
+.thumb .badge{position:absolute;top:8px;left:8px}
+.pages{position:absolute;top:92px;right:8px;font-size:11px;font-weight:650;background:rgba(20,24,32,.78);color:#fff;border-radius:6px;padding:2px 7px;backdrop-filter:blur(4px)}
+.meta{padding:9px 11px 11px}
+.name{font-weight:550;font-size:13px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:2.9em;word-break:break-word}
+.info{font-size:12px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pin{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:7px;border:0;background:var(--panel);display:none;place-items:center;cursor:pointer;box-shadow:var(--shadow)}
+.card:hover .pin,.pin.on{display:grid}
+.pin.on{color:#f0a500}
+.pin svg{width:15px;height:15px}
+/* list view */
+.list{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.family .list{border:0;background:none}
+.row{display:grid;grid-template-columns:34px 1fr 200px 110px 70px;gap:12px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--hover)}
+.row.sel{background:var(--accent-soft)}
+.row .ic{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:9.5px;font-weight:700;text-transform:uppercase}
+.row .nm{min-width:0}
+.row .nm div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .nm small{color:var(--muted);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .c{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Preview panel */
+.prev{width:0;overflow:hidden;background:var(--panel);border-left:1px solid var(--line);transition:width .2s}
+.prev.open{width:400px}
+.prev-in{width:400px;height:100%;display:flex;flex-direction:column}
+.prev-top{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:8px}
+.prev-top b{flex:1;font-size:13px;color:var(--muted);font-weight:500}
+.x{border:0;background:none;cursor:pointer;padding:4px;border-radius:6px;color:var(--muted)}
+.x:hover{background:var(--hover)}
+.stage{height:330px;flex:none;background:var(--panel2);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);overflow:hidden}
+.stage iframe,.stage video{width:100%;height:100%;border:0;background:#fff}
+.stage img{max-width:100%;max-height:330px;object-fit:contain}
+.pbody{padding:16px;overflow:auto;flex:1}
+.pbody h2{font-size:16px;margin:0 0 4px;word-break:break-word}
+.actions{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:7px 12px;cursor:pointer;font-weight:550;font-size:13px}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+dl{display:grid;grid-template-columns:96px 1fr;gap:7px 10px;margin:0;font-size:13px}
+dt{color:var(--muted)} dd{margin:0;word-break:break-word}
+dd a{color:var(--accent)}
+.rel{margin-top:18px}
+.rel h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 8px}
+.rel button{all:unset;box-sizing:border-box;display:flex;gap:9px;align-items:center;width:100%;padding:6px 8px;border-radius:7px;cursor:pointer;font-size:13px}
+.rel button:hover{background:var(--hover)}
+.rel .ic{width:22px;height:22px;border-radius:5px;flex:none;font-size:8px;font-weight:700;color:#fff;display:grid;place-items:center;text-transform:uppercase}
+.rel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);padding:60px 20px}
+.empty b{display:block;color:var(--text);font-size:16px;margin-bottom:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 12px;cursor:pointer;font-size:13px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.loading{display:flex;align-items:center;gap:10px;color:var(--muted);padding:40px 0;justify-content:center}
+.spin{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s 0.8s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:13px}
+.toast.show{opacity:1;transform:translateX(-50%)}
+/* Split window */
+.modal{position:fixed;inset:0;background:rgba(10,14,22,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:20;padding:24px}
+.modal.open{display:flex}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:min(1180px,100%);height:min(820px,100%);display:flex;flex-direction:column;overflow:hidden}
+.mhead{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.mhead h2{font-size:16px;margin:0}
+.mhead .fn{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.mbody{flex:1;display:grid;grid-template-columns:1fr 340px;min-height:0}
+.pages-grid{overflow:auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--tile,170px),1fr));align-items:start;gap:14px;align-content:start;background:var(--panel2)}
+.pg{cursor:pointer;border-radius:10px;padding:6px;border:2px solid transparent;transition:opacity .15s,border-color .15s;user-select:none}
+.pg .im{background:#fff;border-radius:5px;box-shadow:var(--shadow);overflow:hidden;min-height:80px;position:relative}
+.pg img{width:100%;height:auto;display:block}
+.pg .zm{position:absolute;right:6px;bottom:6px;width:28px;height:28px;border-radius:8px;border:0;background:rgba(20,24,32,.75);color:#fff;display:none;place-items:center;cursor:zoom-in}
+.pg:hover .zm{display:grid}
+.pg .zm svg{width:15px;height:15px}
+.pg .no{text-align:center;font-size:12px;font-weight:600;margin-top:5px;color:var(--muted)}
+.pg.in{border-color:var(--accent);background:var(--accent-soft)}
+.pg.in .no{color:var(--accent)}
+.pg.out{opacity:.7}
+.pg.edge .no::after{content:" ●";color:var(--accent)}
+.mside{border-left:1px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.big{min-height:200px;max-height:46vh;background:var(--panel2);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in;position:relative}
+.big img{max-width:100%;max-height:46vh;object-fit:contain;background:#fff;display:block}
+.big .lbl{position:absolute;left:8px;top:8px;font-size:11px;font-weight:650;background:rgba(20,24,32,.75);color:#fff;border-radius:6px;padding:2px 7px}
+.tsize{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:12px;color:var(--muted)}
+.tsize .seg button{padding:4px 9px;font-size:12px}
+.zoom{position:fixed;inset:0;z-index:40;background:rgba(8,10,16,.92);display:none;flex-direction:column}
+.zoom.on{display:flex}
+.zbar{display:flex;align-items:center;gap:10px;padding:12px 16px;color:#fff}
+.zbar b{font-weight:600}
+.zbar .sp{flex:1}
+.zbar .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.18);color:#fff}
+.zbar .btn:hover{background:rgba(255,255,255,.2)}
+.zbar .btn.primary{background:var(--accent);border-color:var(--accent)}
+.zstage{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:0 60px 30px}
+.zstage img{width:min(100%,var(--zw,1100px));height:auto;background:#fff;border-radius:4px;box-shadow:0 10px 40px rgba(0,0,0,.5);transition:width .15s}
+.znav{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;font-size:26px;cursor:pointer}
+.znav:hover{background:rgba(255,255,255,.25)}
+.znav.l{left:10px}.znav.r{right:10px}
+.pager{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+.pager button{border:1px solid var(--line);background:var(--panel2);border-radius:7px;width:30px;height:28px;cursor:pointer}
+.pager button:disabled{opacity:.4;cursor:default}
+.stage.pdf{cursor:zoom-in}
+.range{display:flex;gap:10px;align-items:end}
+.range label{flex:1;font-size:12px;color:var(--muted);font-weight:600}
+.range input{width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);font-size:15px;font-weight:600}
+.range input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+.summary{font-size:14px;font-weight:600}
+.quick{display:flex;gap:6px;flex-wrap:wrap}
+.quick .chip{font-size:12px;padding:4px 10px}
+.done{background:var(--accent-soft);border-radius:10px;padding:12px;font-size:13px}
+.done b{display:block;margin-bottom:6px;word-break:break-word}
+/* saving + result */
+.mbox{position:relative}
+.busy,.mresult{position:absolute;inset:0;background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:5}
+.busy.on,.mresult.on{display:flex}
+.busy .bx{display:flex;flex-direction:column;align-items:center;gap:14px;font-weight:600}
+.busy .spin{width:42px;height:42px;border-width:4px}
+.rcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.18);padding:26px;width:min(440px,92%);text-align:center}
+.rcard .ok{width:58px;height:58px;border-radius:50%;background:#2f9e5b;color:#fff;display:grid;place-items:center;margin:0 auto 12px;font-size:30px;animation:pop .35s ease-out}
+@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.rcard h3{margin:0 0 4px;font-size:18px}
+.rcard .rthumb{height:170px;margin:14px auto;display:grid;place-items:center}
+.rcard .rthumb img{max-height:170px;max-width:100%;border-radius:6px;box-shadow:var(--shadow);background:#fff}
+.rcard .where{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;text-align:left;margin:10px 0 4px;word-break:break-word}
+.rcard .where small{display:block;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.rcard .actions{justify-content:center}
+.dest select{width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel2)}
+.dest label{font-size:12px;color:var(--muted);font-weight:600;display:block}
+.dest .path{font-size:12px;color:var(--muted);margin-top:5px;word-break:break-word}
+/* browse */
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:0 0 16px;font-size:13px}
+.crumbs button{all:unset;cursor:pointer;padding:3px 8px;border-radius:6px;color:var(--muted)}
+.crumbs button:hover{background:var(--hover);color:var(--text)}
+.crumbs button:last-child{color:var(--text);font-weight:600}
+.folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:22px}
+.ftile{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 12px;cursor:pointer;min-width:0}
+.ftile:hover{background:var(--hover)}
+.ftile svg{width:28px;height:28px;flex:none;color:var(--accent)}
+.ftile div{min-width:0}
+.ftile b{display:block;font-weight:550;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ftile small{color:var(--muted);font-size:12px}
+.linkbox{margin-top:16px;background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:13px}
+.linkbox h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);margin:0 0 6px}
+.linkbox button{all:unset;cursor:pointer;display:flex;justify-content:space-between;gap:8px;width:100%;padding:4px 0;box-sizing:border-box}
+.linkbox button:hover span:first-child{text-decoration:underline}
+.linkbox span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.linkbox span:last-child{color:var(--muted);flex:none}
+@media (max-width:900px){
+  .mbody{grid-template-columns:1fr}
+  .mside{border-left:0;border-top:1px solid var(--line)}
+  .big{display:none}
+}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{display:none}
+  .prev.open{position:fixed;inset:0;width:100%;z-index:10}
+  .prev-in{width:100%}
+  .row{grid-template-columns:34px 1fr 90px}
+  .row .c.hide-s{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>FileHub</div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <label class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" placeholder="Search names and text inside files…" autocomplete="off">
+        <kbd>/</kbd>
+      </label>
+      <select class="ctl" id="sort" title="Sort">
+        <option value="recent">Last opened</option>
+        <option value="modified">Last changed</option>
+        <option value="added">Newest first</option>
+        <option value="used">Most used</option>
+        <option value="name">Name A–Z</option>
+        <option value="size">Biggest</option>
+      </select>
+      <div class="seg" id="viewSeg">
+        <button data-v="grid" title="Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+        <button data-v="list" title="List"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+      </div>
+      <button class="ctl" id="refresh" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+      <button class="ctl" id="theme" title="Light / dark"></button>
+    </div>
+    <div class="content" id="content"></div>
+  </main>
+
+  <aside class="prev" id="prev"><div class="prev-in" id="prevIn"></div></aside>
+</div>
+<div class="toast" id="toast"></div>
+<div class="zoom" id="zoom">
+  <div class="zbar">
+    <b id="zLabel"></b><span class="sp"></span>
+    <span id="zRangeBtns"><button class="btn" id="zFrom">Start split here</button> <button class="btn" id="zTo">End split here</button></span>
+    <button class="btn" id="zOut" title="Zoom out (−)">−</button><button class="btn" id="zIn" title="Zoom in (+)">+</button>
+    <button class="btn primary" id="zClose">Close</button>
+  </div>
+  <button class="znav l" id="zPrev" title="Previous page (←)">‹</button>
+  <div class="zstage" id="zStage"><img id="zImg" alt=""></div>
+  <button class="znav r" id="zNext" title="Next page (→)">›</button>
+</div>
+<div class="modal" id="splitModal">
+  <div class="mbox">
+    <div class="mhead"><h2>Split PDF</h2><span class="fn" id="spName"></span>
+      <div class="tsize">Page size <div class="seg" id="spSize"><button data-t="130px">S</button><button data-t="190px">M</button><button data-t="280px">L</button></div></div>
+      <button class="x" id="spClose" title="Close (Esc)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="mbody">
+      <div class="pages-grid" id="spGrid"></div>
+      <div class="mside">
+        <div class="big" id="spBig"></div>
+        <div class="range">
+          <label>From page<input type="number" id="spFrom" min="1" value="1"></label>
+          <label>To page<input type="number" id="spTo" min="1" value="1"></label>
+        </div>
+        <p class="hint">Click a page to start, then click another page to end. Shift‑click also sets the end.</p>
+        <div class="quick" id="spQuick"></div>
+        <div class="summary" id="spSum"></div>
+        <div class="dest"><label>Save to
+          <select id="spDest"></select></label>
+          <div class="path" id="spDestPath"></div></div>
+        <button class="btn primary" id="spSave">Save as new PDF</button>
+        <p class="hint">Your original file is not changed. The new PDF is saved in the same folder.</p>
+      </div>
+    </div>
+    <div class="busy" id="spBusy"><div class="bx"><div class="spin"></div><span id="spBusyText">Saving…</span></div></div>
+    <div class="mresult" id="spResult"></div>
+  </div>
+</div>
+
+<script>
+const ICONS = {
+  open:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  recent:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  used:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  pinned:'<path d="M12 17v5M9 3h6l-1 6 4 4H6l4-4z"/>',
+  families:'<rect x="3" y="4" width="13" height="16" rx="2"/><path d="M8 2h11a2 2 0 0 1 2 2v14"/>',
+  sources:'<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>',
+  folders:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  types:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  desktop:'<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  documents:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+  downloads:'<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/>',
+  icloud:'<path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1 0 9z"/>',
+  pictures:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
+  home:'<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M11 8v6M8 11h6"/>',
+  star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+};
+const svg = (k, fill) => `<svg viewBox="0 0 24 24" fill="${fill||'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>`;
+const VIEWS = [
+  {id:'open',label:'Open now',icon:'open',h:'Main'},
+  {id:'recent',label:'Recent',icon:'recent'},
+  {id:'used',label:'Most used',icon:'used'},
+  {id:'pinned',label:'Pinned',icon:'pinned'},
+  {id:'families',label:'Related files',icon:'families',h:'Organise by'},
+  {id:'sources',label:'Where it came from',icon:'sources'},
+  {id:'folders',label:'Folders',icon:'folders'},
+  {id:'types',label:'File types',icon:'types'},
+];
+const TYPE_COLOR = {PDF:'--pdf',Word:'--word',Slides:'--slides',Sheets:'--sheets',Images:'--img',Video:'--video',Audio:'--audio',Archives:'--other',Other:'--other'};
+const color = t => `var(${TYPE_COLOR[t]||'--other'})`;
+
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('filehub.'+k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k, v){ try{ localStorage.setItem('filehub.'+k, JSON.stringify(v)); }catch(e){} },
+};
+const S = {
+  view: store.get('view','recent'), layout: store.get('layout','grid'), sort: store.get('sort','recent'),
+  pins: new Set(store.get('pins',[])), files: [], open: [], places: [], browse: store.get('browse', null), browseData: null, results: null, q:'', sel:null, typeFilter:'All',
+};
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ---------- formatting ----------
+function ago(t){
+  if(!t) return '—';
+  const s = Date.now()/1000 - t;
+  if(s < 60) return 'just now';
+  if(s < 3600) return Math.floor(s/60)+' min ago';
+  if(s < 86400) return Math.floor(s/3600)+' h ago';
+  if(s < 86400*2) return 'yesterday';
+  if(s < 86400*7) return Math.floor(s/86400)+' days ago';
+  return new Date(t*1000).toLocaleDateString(undefined,{day:'numeric',month:'short',year: s>86400*300?'numeric':undefined});
+}
+function size(b){ if(b<1024) return b+' B'; const u=['KB','MB','GB']; let i=-1; do{b/=1024;i++;}while(b>=1024&&i<2); return b.toFixed(b<10?1:0)+' '+u[i]; }
+const lastTouch = f => f.lastUsed || f.modified;
+const pagesText = f => f.pages ? `${f.pages} ${f.pages===1 ? f.pageWord.replace(/s$/,'') : f.pageWord}` : '';
+
+// ---------- data ----------
+async function api(path){ const r = await fetch(path); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function post(path, body){ return fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }
+
+async function load(refresh){
+  $('content').innerHTML = '<div class="loading"><div class="spin"></div>Reading your files…</div>';
+  try{
+    const [files, open] = await Promise.all([api('/api/library'+(refresh?'?refresh=1':'')), api('/api/open')]);
+    S.files = files; S.open = open;
+  }catch(e){
+    $('content').innerHTML = `<div class="empty"><b>Couldn't read your files</b>${esc(e.message)}</div>`;
+    return;
+  }
+  if(S.view==='browse' && S.browse && !S.browseData) return openFolder(S.browse);
+  render();
+}
+
+function byPath(){ const m = new Map(); [...S.files, ...S.open, ...(S.results||[]), ...((S.browseData&&S.browseData.files)||[])].forEach(f => m.set(f.path, f)); return m; }
+
+function sorted(list){
+  const k = S.sort, a = [...list];
+  const fns = {
+    recent:(x,y)=>lastTouch(y)-lastTouch(x), modified:(x,y)=>y.modified-x.modified,
+    added:(x,y)=>y.created-x.created, used:(x,y)=>(y.useCount-x.useCount)||(lastTouch(y)-lastTouch(x)),
+    name:(x,y)=>x.name.localeCompare(y.name,undefined,{numeric:true}), size:(x,y)=>y.size-x.size,
+  };
+  return a.sort(fns[k]);
+}
+
+function groupBy(list, keyFn){
+  const m = new Map();
+  for(const f of list){ const k = keyFn(f); if(!k) continue; if(!m.has(k)) m.set(k, []); m.get(k).push(f); }
+  return m;
+}
+
+// ---------- rendering ----------
+function renderNav(){
+  const counts = {
+    open: openNow().length, recent: S.files.length, pinned: S.pins.size,
+    families: families().length,
+  };
+  let html = '';
+  for(const v of VIEWS){
+    if(v.h) html += `<div class="nav-h">${v.h}</div>`;
+    const n = counts[v.id];
+    html += `<button class="${S.view===v.id&&!S.q?'on':''}" data-view="${v.id}">${svg(v.icon)}${v.label}${n!=null?`<span class="n">${n}</span>`:''}</button>`;
+  }
+  if(S.places.length){
+    html += `<div class="nav-h">Places</div>`;
+    for(const p of S.places){
+      const on = S.view==='browse' && !S.q && S.browse && (S.browse===p.path || (p.icon!=='home' && S.browse.startsWith(p.path+'/')));
+      html += `<button class="${on?'on':''}" data-place="${esc(p.path)}">${svg(ICONS[p.icon]?p.icon:'folder')}${esc(p.name)}</button>`;
+    }
+  }
+  $('nav').innerHTML = html;
+}
+
+function openNow(){
+  // Files held open by apps, plus anything opened in the last 3 hours.
+  const m = new Map(S.open.map(f => [f.path, f]));
+  const cut = Date.now()/1000 - 3*3600;
+  S.files.filter(f => f.lastUsed && f.lastUsed > cut).forEach(f => { if(!m.has(f.path)) m.set(f.path, f); });
+  return [...m.values()];
+}
+
+function families(){
+  const g = groupBy(S.files, f => f.family);
+  return [...g.entries()].filter(([k, v]) => v.length > 1)
+    .map(([k, v]) => ({key:k, files: v.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}))}))
+    .sort((a,b) => Math.max(...b.files.map(lastTouch)) - Math.max(...a.files.map(lastTouch)));
+}
+
+function card(f){
+  const pinned = S.pins.has(f.path);
+  const info = S.sort==='used' ? `Opened ${f.useCount}× · ${ago(lastTouch(f))}` : `${ago(lastTouch(f))} · ${size(f.size)}`;
+  return `<div class="card ${S.sel===f.path?'sel':''}" data-path="${esc(f.path)}" title="${esc(f.folder)}">
+    <div class="thumb"><span class="badge" style="background:${color(f.type)}">${esc(f.ext||'file')}</span>
+      <img loading="lazy" data-src="/api/thumb?s=240&path=${encodeURIComponent(f.path)}" alt="">
+      ${f.pages?`<span class="pages">${pagesText(f)}</span>`:''}</div>
+    <button class="pin ${pinned?'on':''}" data-pin="${esc(f.path)}" title="${pinned?'Unpin':'Pin'}">${svg('star', pinned?'currentColor':'none')}</button>
+    <div class="meta" title="${esc(f.name)}"><div class="name">${esc(f.name)}</div><div class="info">${esc(info)}</div></div></div>`;
+}
+function row(f){
+  return `<div class="row ${S.sel===f.path?'sel':''}" data-path="${esc(f.path)}">
+    <div class="ic" style="background:${color(f.type)}">${esc((f.ext||'?').slice(0,4))}</div>
+    <div class="nm"><div>${S.pins.has(f.path)?'★ ':''}${esc(f.name)}</div><small>${f.pages?pagesText(f)+' · ':''}${esc(f.folder)}</small></div>
+    <div class="c hide-s">${esc(f.source)}</div>
+    <div class="c">${ago(lastTouch(f))}</div>
+    <div class="c hide-s">${f.useCount?f.useCount+'×':''}</div></div>`;
+}
+const block = list => S.layout==='grid' ? `<div class="grid">${list.map(card).join('')}</div>` : `<div class="list">${list.map(row).join('')}</div>`;
+
+function sections(groups, opts={}){
+  if(!groups.length) return empty('Nothing here yet', opts.emptyMsg||'');
+  return groups.map(g => `<div class="section ${opts.boxed?'family':''}">
+    <div class="section-h">${opts.dot?`<span class="badge" style="background:${color(g.key)}">${esc(g.key)}</span>`:esc(opts.label?opts.label(g):g.key)}
+      <span class="count">${g.files.length} file${g.files.length>1?'s':''}</span>
+      ${opts.folderLink && g.files[0] ? `<span class="folder" data-reveal="${esc(g.files[0].path)}">${esc(commonFolder(g.files))} ↗</span>`:''}</div>
+    ${block(opts.noSort?g.files:sorted(g.files).slice(0, opts.max||200))}</div>`).join('');
+}
+function commonFolder(files){ const fs = [...new Set(files.map(f=>f.folder))]; return fs.length===1 ? fs[0] : fs.length+' folders'; }
+function titleCase(s){ return s.replace(/\b\w/g, c => c.toUpperCase()); }
+const empty = (t, m) => `<div class="empty"><b>${esc(t)}</b>${esc(m)}</div>`;
+
+function typeChips(list){
+  const types = ['All', ...new Set(list.map(f => f.type))];
+  return `<div class="chips">${types.map(t=>`<button class="chip ${S.typeFilter===t?'on':''}" data-type="${t}">${t}</button>`).join('')}</div>`;
+}
+const filt = list => S.typeFilter==='All' ? list : list.filter(f => f.type===S.typeFilter);
+
+function render(){
+  renderNav();
+  let title, sub, body;
+  if(S.q){
+    title = `Results for “${S.q}”`;
+    if(!S.results){ body = '<div class="loading"><div class="spin"></div>Searching…</div>'; sub=''; }
+    else { const r = filt(S.results); sub = `${r.length} files found across your Mac`; body = typeChips(S.results) + (r.length?block(sorted(r)):empty('No files found','Try a shorter word, or part of the name.')); }
+  } else switch(S.view){
+    case 'open': {
+      const l = openNow();
+      title='Open now'; sub='Files open in your apps, and files you opened in the last 3 hours.';
+      body = l.length ? block(sorted(l)) : empty('No open files','Files you open will show up here.');
+      break; }
+    case 'recent': {
+      title='Recent'; sub='Everything you opened, changed or downloaded in the last 60 days.';
+      const l = filt(S.files);
+      const now = Date.now()/1000, day = 86400;
+      const buckets = [['Today',day],['This week',7*day],['This month',31*day],['Earlier',1e12]];
+      const groups = []; let prev = 0;
+      for(const [k, lim] of buckets){ const fs = l.filter(f => { const a = now-lastTouch(f); return a>=prev && a<lim; }); if(fs.length) groups.push({key:k, files:fs}); prev = lim; }
+      body = typeChips(S.files) + (S.sort==='recent' ? sections(groups, {max:120}) : block(sorted(l).slice(0,400)));
+      break; }
+    case 'used': {
+      title='Most used'; sub='The files you come back to the most.';
+      const l = filt(S.files).filter(f => f.useCount > 1).sort((a,b)=>(b.useCount-a.useCount)||(lastTouch(b)-lastTouch(a))).slice(0,120);
+      body = typeChips(S.files) + (l.length?block(l):empty('Nothing yet','Open some files a few times and they will appear here.'));
+      break; }
+    case 'pinned': {
+      const m = byPath(); const l = [...S.pins].map(p => m.get(p)).filter(Boolean);
+      title='Pinned'; sub='Your important files, always one click away. Hover a file and press ☆ to pin it.';
+      body = l.length ? block(sorted(l)) : empty('No pinned files yet','Hover any file and press the star.');
+      break; }
+    case 'families': {
+      const fams = families().filter(g => S.typeFilter==='All' || g.files.some(f=>f.type===S.typeFilter));
+      title='Related files'; sub='Files that belong together: the original lesson, its split parts, copies, marked and answer versions.';
+      body = typeChips(S.files) + sections(fams.slice(0,80), {boxed:true, noSort:true, folderLink:true, label:g=>titleCase(g.key)});
+      break; }
+    case 'sources': {
+      const g = groupBy(filt(S.files), f => f.source);
+      const groups = [...g.entries()].map(([key,files])=>({key,files})).sort((a,b)=>b.files.length-a.files.length);
+      title='Where it came from'; sub='Grouped by the website you downloaded it from, or the folder it lives in.';
+      body = typeChips(S.files) + sections(groups, {max:24});
+      break; }
+    case 'folders': {
+      const g = groupBy(filt(S.files), f => f.folder);
+      const groups = [...g.entries()].map(([key,files])=>({key,files})).sort((a,b)=>Math.max(...b.files.map(lastTouch))-Math.max(...a.files.map(lastTouch)));
+      title='Folders'; sub='Your busiest folders, most recently used first.';
+      body = typeChips(S.files) + sections(groups.slice(0,40), {max:24, folderLink:true});
+      break; }
+    case 'browse': {
+      const d = S.browseData;
+      if(!d){ title='Loading…'; sub=''; body='<div class="loading"><div class="spin"></div>Opening folder…</div>'; break; }
+      title = d.crumbs.length ? d.crumbs[d.crumbs.length-1].name : d.display; sub = d.display;
+      const crumbs = `<div class="crumbs">${d.crumbs.map((c,i)=>`${i?'<span style="color:var(--muted)">›</span>':''}<button data-browse="${esc(c.path)}">${esc(c.name)}</button>`).join('')}
+        <button data-reveal-folder="${esc(d.path)}" style="margin-left:auto;color:var(--accent)">Open in Finder ↗</button></div>`;
+      const folders = d.folders.length ? `<div class="section-h">Folders <span class="count">${d.folders.length}</span></div><div class="folders">${d.folders.map(f=>`<div class="ftile" data-browse="${esc(f.path)}">${svg('folder')}<div><b>${esc(f.name)}</b><small>${f.count} item${f.count===1?'':'s'}</small></div></div>`).join('')}</div>` : '';
+      const fl = filt(d.files);
+      const files = d.files.length ? `<div class="section-h">Files <span class="count">${d.files.length}</span></div>${typeChips(d.files)}${fl.length?block(sorted(fl)):''}` : '';
+      body = crumbs + folders + files + (!d.folders.length && !d.files.length ? empty('This folder is empty','') : '');
+      break; }
+    case 'types': {
+      const g = groupBy(S.files, f => f.type);
+      const groups = [...g.entries()].map(([key,files])=>({key,files})).sort((a,b)=>b.files.length-a.files.length);
+      title='File types'; sub='PDFs, slides, sheets, images and more.';
+      body = sections(groups, {dot:true, max:24});
+      break; }
+  }
+  $('content').innerHTML = `<div class="title"><h1>${esc(title)}</h1></div><p class="sub">${esc(sub)}</p>${body}`;
+  loadThumbs();
+}
+
+// Thumbnails load as they scroll into view.
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if(!e.isIntersecting) return; const img = e.target; io.unobserve(img);
+  img.onload = () => img.classList.add('ok'); img.onerror = () => img.remove(); img.src = img.dataset.src;
+}), {rootMargin:'300px'});
+function loadThumbs(){ document.querySelectorAll('img[data-src]').forEach(i => io.observe(i)); }
+
+// ---------- preview ----------
+function preview(f){
+  S.sel = f.path;
+  document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel'));
+  document.querySelectorAll(`[data-path="${CSS.escape(f.path)}"]`).forEach(e=>e.classList.add('sel'));
+  const raw = '/api/raw?path='+encodeURIComponent(f.path);
+  let stage;
+  if(f.ext==='pdf') stage = `<img src="${pageImg(1, true, f)}" alt="" onerror="this.src='/api/thumb?s=720&path=${encodeURIComponent(f.path)}'">`;
+  else if(['png','jpg','jpeg','gif','webp','svg'].includes(f.ext)) stage = `<img src="${raw}">`;
+  else if(['mp4','m4v','mov'].includes(f.ext) && f.size < 300e6) stage = `<video src="${raw}" controls></video>`;
+  else stage = `<img src="/api/thumb?s=720&path=${encodeURIComponent(f.path)}" onerror="this.outerHTML='<span style=\\'color:var(--muted)\\'>No preview — press Quick Look</span>'">`;
+  const rel = f.family ? S.files.filter(x => x.family===f.family && x.path!==f.path) : [];
+  const sameFolder = S.files.filter(x => x.folder===f.folder && x.path!==f.path && !rel.includes(x)).sort((a,b)=>lastTouch(b)-lastTouch(a)).slice(0,6);
+  const relList = (h, l) => l.length ? `<div class="rel"><h3>${h}</h3>${l.map(x=>`<button data-path="${esc(x.path)}"><span class="ic" style="background:${color(x.type)}">${esc(x.ext.slice(0,3))}</span><span>${esc(x.name)}</span></button>`).join('')}</div>` : '';
+  const pinned = S.pins.has(f.path);
+  $('prevIn').innerHTML = `
+    <div class="prev-top"><b>Preview</b><button class="x" id="closePrev" title="Close (Esc)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    ${f.ext==='pdf' && f.pages>1 ? `<div class="pager"><button id="pgPrev" disabled>‹</button><span id="pgLbl">Page 1 of ${f.pages}</span><button id="pgNext">›</button></div>` : ''}<div class="stage ${f.ext==='pdf'?'pdf':''}" id="pStage">${stage}</div>
+    <div class="pbody">
+      <h2>${esc(f.name)}</h2>
+      <div class="info">${esc(f.kind || f.type)} · ${f.pages?pagesText(f)+' · ':''}${size(f.size)}</div>
+      <div class="actions">
+        <button class="btn primary" data-act="launch">Open</button>
+        <button class="btn" data-act="reveal">Show in Finder</button>
+        <button class="btn" data-act="quicklook" title="Space">Quick Look</button>
+        ${f.ext==='pdf'?`<button class="btn" data-act="read">Read here</button><button class="btn" data-act="split">✂︎ Split pages</button>`:''}
+        <button class="btn" data-act="pin">${pinned?'★ Pinned':'☆ Pin'}</button>
+        <button class="btn" data-act="copy">Copy path</button>
+      </div>
+      <dl>
+        <dt>Last opened</dt><dd>${f.lastUsed?ago(f.lastUsed):'Not recorded'}</dd>
+        <dt>Times opened</dt><dd>${f.useCount||'—'}</dd>
+        <dt>Changed</dt><dd>${ago(f.modified)}</dd>
+        <dt>Created</dt><dd>${ago(f.created)}</dd>
+        <dt>Came from</dt><dd>${f.url?`<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.source)}</a>`:esc(f.source)}</dd>
+        <dt>Folder</dt><dd>${esc(f.folder)}</dd>
+        ${f.app?`<dt>Open in</dt><dd>${esc(f.app)}</dd>`:''}
+      </dl>
+      ${splitLinks(f)}
+      ${relList('Belongs with ('+rel.length+')', rel.slice(0,15))}
+      ${relList('Same folder', sameFolder)}
+    </div>`;
+  $('prev').classList.add('open');
+  if(f.ext==='pdf'){
+    let cur = 1; const n = f.pages || 1;
+    const go = d => { cur = Math.max(1, Math.min(n, cur+d)); const im = $('pStage').querySelector('img'); if(im) im.src = pageImg(cur, true, f);
+      if($('pgLbl')){ $('pgLbl').textContent = `Page ${cur} of ${n}`; $('pgPrev').disabled = cur<=1; $('pgNext').disabled = cur>=n; } };
+    if($('pgPrev')){ $('pgPrev').onclick = () => go(-1); $('pgNext').onclick = () => go(1); }
+    $('pStage').onclick = () => openZoom(cur, f, n, false);
+  }
+}
+function splitLinks(f){
+  let h = '';
+  if(f.splitFrom){
+    const r = f.splitFrom.from===f.splitFrom.to ? `page ${f.splitFrom.from}` : `pages ${f.splitFrom.from}–${f.splitFrom.to}`;
+    h += `<div class="linkbox"><h3>✂︎ Split from</h3><button data-goto="${esc(f.splitFrom.path)}"><span>${esc(f.splitFrom.name)}</span><span>${r}</span></button></div>`;
+  }
+  const kids = new Map((f.splitInto||[]).map(c => [c.path, c]));
+  S.files.forEach(x => { if(x.splitFrom && x.splitFrom.path===f.path && !kids.has(x.path)) kids.set(x.path, {path:x.path, from:x.splitFrom.from, to:x.splitFrom.to}); });
+  if(kids.size){
+    const list = [...kids.values()].sort((a,b)=>a.from-b.from);
+    h += `<div class="linkbox"><h3>✂︎ Split into ${list.length} file${list.length>1?'s':''}</h3>${list.map(c=>`<button data-goto="${esc(c.path)}"><span>${esc(c.path.split('/').pop())}</span><span>${c.from===c.to?'p. '+c.from:'pp. '+c.from+'–'+c.to}</span></button>`).join('')}</div>`;
+  }
+  return h;
+}
+async function goto(path){
+  let f = byPath().get(path);
+  if(!f){ try{ const folder = path.slice(0, path.lastIndexOf('/')); await openFolder(folder); f = byPath().get(path); }catch(e){} }
+  if(f) preview(f); else toast('That file was moved or deleted');
+}
+async function openFolder(path){
+  S.view='browse'; S.browse=path; S.q=''; $('q').value=''; S.typeFilter='All'; S.browseData=null; store.set('view','browse'); store.set('browse',path);
+  render();
+  try{ S.browseData = await api('/api/browse?path='+encodeURIComponent(path)); }
+  catch(e){ S.browseData = {path, display:path, crumbs:[], folders:[], files:[]}; toast("Can't open that folder"); }
+  if(S.browse===path) render();
+  $('content').scrollTop = 0;
+}
+function closePreview(){ $('prev').classList.remove('open'); S.sel=null; document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel')); }
+
+function togglePin(p){
+  S.pins.has(p) ? S.pins.delete(p) : S.pins.add(p);
+  store.set('pins', [...S.pins]);
+  toast(S.pins.has(p) ? 'Pinned' : 'Unpinned');
+}
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1600); }
+
+// ---------- events ----------
+document.addEventListener('click', async e => {
+  const nav = e.target.closest('[data-view]');
+  if(nav){ S.view = nav.dataset.view; S.q=''; $('q').value=''; S.typeFilter='All'; store.set('view', S.view); render(); $('content').scrollTop=0; return; }
+  const pl = e.target.closest('[data-place],[data-browse]');
+  if(pl && !e.target.closest('.modal')){ openFolder(pl.dataset.place || pl.dataset.browse); return; }
+  const rf = e.target.closest('[data-reveal-folder]');
+  if(rf){ post('/api/launch',{path:rf.dataset.revealFolder}); return; }
+  const gt = e.target.closest('[data-goto]');
+  if(gt){ goto(gt.dataset.goto); return; }
+  const pin = e.target.closest('[data-pin]');
+  if(pin){ e.stopPropagation(); togglePin(pin.dataset.pin); render(); return; }
+  const chip = e.target.closest('[data-type]');
+  if(chip){ S.typeFilter = chip.dataset.type; render(); return; }
+  const rv = e.target.closest('[data-reveal]');
+  if(rv){ post('/api/reveal',{path:rv.dataset.reveal}); return; }
+  const act = e.target.closest('[data-act]');
+  if(act && S.sel){
+    const a = act.dataset.act;
+    if(a==='pin'){ togglePin(S.sel); preview(byPath().get(S.sel)); renderNav(); }
+    else if(a==='split'){ openSplit(byPath().get(S.sel)); }
+    else if(a==='read'){ document.querySelector('.stage').innerHTML = `<iframe src="/api/raw?path=${encodeURIComponent(S.sel)}#view=FitH"></iframe>`; }
+    else if(a==='copy'){ navigator.clipboard.writeText(S.sel).then(()=>toast('Path copied')); }
+    else { post('/api/'+a, {path:S.sel}); toast(a==='launch'?'Opening…':a==='reveal'?'Showing in Finder':'Quick Look'); }
+    return;
+  }
+  if(e.target.closest('#closePrev')){ closePreview(); return; }
+  const item = e.target.closest('[data-path]');
+  if(item){ const f = byPath().get(item.dataset.path); if(f) preview(f); }
+});
+document.addEventListener('dblclick', e => { const item = e.target.closest('.card,.row'); if(item) post('/api/launch',{path:item.dataset.path}); });
+
+let qt;
+$('q').addEventListener('input', e => {
+  clearTimeout(qt); const q = e.target.value.trim();
+  qt = setTimeout(async () => {
+    S.q = q; S.results = null; S.typeFilter='All'; render();
+    if(!q) return;
+    const r = await api('/api/search?q='+encodeURIComponent(q)).catch(()=>[]);
+    if(S.q===q){ S.results = r; render(); }
+  }, 300);
+});
+$('sort').value = S.sort;
+$('sort').addEventListener('change', e => { S.sort = e.target.value; store.set('sort', S.sort); render(); });
+document.querySelectorAll('#viewSeg button').forEach(b => {
+  b.classList.toggle('on', b.dataset.v===S.layout);
+  b.onclick = () => { S.layout = b.dataset.v; store.set('layout', S.layout); document.querySelectorAll('#viewSeg button').forEach(x=>x.classList.toggle('on', x===b)); render(); };
+});
+$('refresh').onclick = () => load(true);
+
+// Theme: follows the Mac unless you pick one.
+function applyTheme(){
+  const t = store.get('theme', null);
+  if(t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  const dark = t ? t==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  $('theme').innerHTML = svg(dark ? 'sun' : 'moon');
+  $('theme').title = dark ? 'Switch to light' : 'Switch to dark';
+}
+$('theme').onclick = () => {
+  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  store.set('theme', dark ? 'light' : 'dark'); applyTheme();
+};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+applyTheme();
+
+document.addEventListener('keydown', e => {
+  const typing = !!(e.target.matches && e.target.matches('input,select,textarea'));
+  if(e.key==='/' && !typing){ e.preventDefault(); $('q').focus(); }
+  else if($('zoom').classList.contains('on')){
+    if(e.key==='Escape') closeZoom();
+    else if(e.key==='ArrowRight' || e.key==='PageDown') { e.preventDefault(); zoomTo(Z.p+1); }
+    else if(e.key==='ArrowLeft' || e.key==='PageUp') { e.preventDefault(); zoomTo(Z.p-1); }
+    else if(e.key==='+' || e.key==='=') zoomW(250);
+    else if(e.key==='-') zoomW(-250);
+  }
+  else if(e.key==='Escape'){ if($('splitModal').classList.contains('open')) closeSplit(); else if(typing){ e.target.blur(); } else closePreview(); }
+  else if(e.key===' ' && !typing && S.sel){ e.preventDefault(); post('/api/quicklook',{path:S.sel}); }
+  else if(e.key==='Enter' && !typing && S.sel){ post('/api/launch',{path:S.sel}); }
+});
+
+// ---------- split PDF ----------
+const SP = {file:null, n:0, from:1, to:1, anchor:null};
+const pageImg = (n, big, file) => `/api/pdfpage?n=${n}${big?'&size=big':''}&path=${encodeURIComponent((file||SP.file).path)}&v=${Math.floor((file||SP.file).modified)}`;
+let bigTimer;
+function showBig(p){
+  // Show the small picture at once, then swap in the sharp one.
+  SP.bigPage = p;
+  $('spBig').innerHTML = `<img src="${pageImg(p)}" alt="Page ${p}"><span class="lbl">Page ${p}</span>`;
+  clearTimeout(bigTimer);
+  bigTimer = setTimeout(() => { const im = new Image(); im.onload = () => { if(SP.bigPage===p){ const cur = $('spBig').querySelector('img'); if(cur) cur.src = im.src; } }; im.src = pageImg(p, true); }, 120);
+}
+async function openSplit(f){
+  if(!f) return;
+  Object.assign(SP, {file:f, n:0, from:1, to:1, anchor:null});
+  $('spName').textContent = f.name;
+  $('spBusy').classList.remove('on'); $('spResult').classList.remove('on');
+  fillDest(f);
+  $('spGrid').innerHTML = '<div class="loading" style="grid-column:1/-1"><div class="spin"></div>Making page previews…</div>';
+  $('spBig').innerHTML = ''; $('spSum').textContent = ''; $('spQuick').innerHTML = '';
+  $('splitModal').classList.add('open');
+  try{ SP.n = (await api('/api/pdfpages?path='+encodeURIComponent(f.path))).pages; }
+  catch(e){ $('spGrid').innerHTML = empty("Can't read this PDF", 'It may be locked with a password.'); return; }
+  SP.to = SP.n;
+  $('spFrom').max = $('spTo').max = SP.n;
+  const shown = Math.min(SP.n, 400);
+  $('spGrid').innerHTML = Array.from({length:shown}, (_, i) => `<div class="pg" data-pg="${i+1}"><div class="im"><img loading="lazy" src="${pageImg(i+1)}" alt=""><button class="zm" data-zoom="${i+1}" title="View full size">${svg('search')}</button></div><div class="no">${i+1}</div></div>`).join('')
+    + (SP.n>shown ? `<p class="hint" style="grid-column:1/-1">Showing the first ${shown} of ${SP.n} pages. Type page numbers to pick later pages.</p>` : '');
+  const half = Math.ceil(SP.n/2);
+  $('spQuick').innerHTML = SP.n>1 ? [
+    ['All pages',1,SP.n], ['First half',1,half], ['Second half',half+1,SP.n], ['First page',1,1], ['Last page',SP.n,SP.n]
+  ].filter(q=>q[1]<=q[2]).map(q=>`<button class="chip" data-q="${q[1]}-${q[2]}">${q[0]}</button>`).join('') : '';
+  updateSplit(1);
+}
+function updateSplit(focusPage){
+  const a = SP.from, b = SP.to;
+  $('spFrom').value = a; $('spTo').value = b;
+  document.querySelectorAll('.pg').forEach(el => {
+    const p = +el.dataset.pg, inside = p>=a && p<=b;
+    el.classList.toggle('in', inside); el.classList.toggle('out', !inside);
+    el.classList.toggle('edge', p===a || p===b);
+  });
+  const c = b-a+1;
+  $('spSum').textContent = `Pages ${a}–${b} · ${c} page${c>1?'s':''} of ${SP.n}`;
+  if(a===b) $('spSum').textContent = `Page ${a} only · 1 page of ${SP.n}`;
+  const p = focusPage || a;
+  showBig(p);
+}
+function setRange(a, b, focus){
+  a = Math.max(1, Math.min(SP.n, a|0 || 1)); b = Math.max(1, Math.min(SP.n, b|0 || 1));
+  if(a > b) [a, b] = [b, a];
+  SP.from = a; SP.to = b; updateSplit(focus);
+}
+function fillDest(f){
+  const same = f.path.slice(0, f.path.lastIndexOf('/'));
+  const opts = [{v:'', t:'Same folder as the original'}]
+    .concat(S.places.filter(p=>p.icon!=='home' && p.icon!=='pictures').map(p=>({v:p.path, t:p.name})))
+    .concat(SP.custom ? [{v:SP.custom.path, t:SP.custom.display}] : [])
+    .concat([{v:'__choose', t:'Choose another folder…'}]);
+  const keep = store.get('splitDest','');
+  $('spDest').innerHTML = opts.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+  $('spDest').value = opts.some(o=>o.v===keep) ? keep : '';
+  SP.same = same; showDest();
+}
+function showDest(){
+  const v = $('spDest').value;
+  const p = v || SP.same;
+  $('spDestPath').textContent = p.replace(/^\/Users\/[^/]+/, '~');
+}
+$('spDest').addEventListener('change', async () => {
+  if($('spDest').value === '__choose'){
+    $('spDestPath').textContent = 'Pick a folder in the window that opened…';
+    let r = null;
+    try{ r = await (await post('/api/choosefolder', {})).json(); }catch(e){}
+    if(r && r.path){ SP.custom = r; fillDest(SP.file); $('spDest').value = r.path; }
+    else $('spDest').value = store.get('splitDest','') || '';
+  }
+  store.set('splitDest', $('spDest').value); showDest();
+});
+const Z = {file:null, n:0, p:1, split:false, w:1100};
+function openZoom(p, file, n, split){
+  Object.assign(Z, {file, n, split}); $('zRangeBtns').style.display = split ? '' : 'none';
+  $('zoom').classList.add('on'); zoomTo(p);
+}
+function zoomTo(p){
+  Z.p = Math.max(1, Math.min(Z.n, p));
+  $('zLabel').textContent = `${Z.file.name} — page ${Z.p} of ${Z.n}`;
+  $('zImg').src = pageImg(Z.p, true, Z.file);
+  $('zPrev').disabled = Z.p<=1; $('zNext').disabled = Z.p>=Z.n;
+  $('zStage').scrollTop = 0;
+  if(Z.p < Z.n){ new Image().src = pageImg(Z.p+1, true, Z.file); }  // get the next page ready
+}
+function zoomW(d){ Z.w = Math.max(500, Math.min(2400, Z.w + d)); document.documentElement.style.setProperty('--zw', Z.w+'px'); }
+function closeZoom(){ $('zoom').classList.remove('on'); }
+$('zPrev').onclick = () => zoomTo(Z.p-1);
+$('zNext').onclick = () => zoomTo(Z.p+1);
+$('zIn').onclick = () => zoomW(250); $('zOut').onclick = () => zoomW(-250);
+$('zClose').onclick = closeZoom;
+$('zFrom').onclick = () => { SP.anchor=null; setRange(Z.p, Math.max(Z.p, SP.to), Z.p); toast(`Split starts at page ${Z.p}`); };
+$('zTo').onclick = () => { SP.anchor=null; setRange(Math.min(SP.from, Z.p), Z.p, Z.p); toast(`Split ends at page ${Z.p}`); };
+function closeSplit(){ $('splitModal').classList.remove('open'); }
+$('spClose').onclick = closeSplit;
+$('splitModal').addEventListener('click', e => { if(e.target.id==='splitModal') closeSplit(); });
+$('spGrid').addEventListener('click', e => {
+  const z = e.target.closest('[data-zoom]'); if(z){ e.stopPropagation(); openZoom(+z.dataset.zoom, SP.file, SP.n, true); return; }
+  const el = e.target.closest('.pg'); if(!el) return;
+  const p = +el.dataset.pg;
+  if(e.shiftKey || SP.anchor !== null){ setRange(SP.anchor ?? SP.from, p, p); SP.anchor = null; }
+  else { SP.anchor = p; setRange(p, p, p); }
+});
+$('spGrid').addEventListener('mouseover', e => { const el = e.target.closest('.pg'); if(el && +el.dataset.pg !== SP.bigPage) showBig(+el.dataset.pg); });
+$('spGrid').addEventListener('dblclick', e => { const el = e.target.closest('.pg'); if(el) openZoom(+el.dataset.pg, SP.file, SP.n, true); });
+$('spBig').addEventListener('click', () => SP.bigPage && openZoom(SP.bigPage, SP.file, SP.n, true));
+function setTile(t){ document.documentElement.style.setProperty('--tile', t); store.set('tile', t); document.querySelectorAll('#spSize button').forEach(b => b.classList.toggle('on', b.dataset.t===t)); }
+document.querySelectorAll('#spSize button').forEach(b => b.onclick = () => setTile(b.dataset.t));
+setTile(store.get('tile', '190px'));
+$('spFrom').addEventListener('change', () => { SP.anchor = null; setRange($('spFrom').value, Math.max($('spFrom').value, SP.to)); });
+$('spTo').addEventListener('change', () => { SP.anchor = null; setRange(Math.min(SP.from, $('spTo').value), $('spTo').value, +$('spTo').value); });
+$('spQuick').addEventListener('click', e => { const q = e.target.closest('[data-q]'); if(!q) return; const [a,b] = q.dataset.q.split('-').map(Number); SP.anchor=null; setRange(a,b); });
+$('spSave').onclick = async () => {
+  const btn = $('spSave'); btn.disabled = true;
+  const c = SP.to-SP.from+1;
+  $('spBusyText').textContent = `Saving ${c} page${c>1?'s':''} as a new PDF…`;
+  $('spBusy').classList.add('on');
+  const started = Date.now();
+  try{
+    const r = await post('/api/split', {path:SP.file.path, from:SP.from, to:SP.to, dest:$('spDest').value || null});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error);
+    await new Promise(res => setTimeout(res, Math.max(0, 600-(Date.now()-started))));  // let the loader be seen
+    $('spResult').innerHTML = `<div class="rcard">
+      <div class="ok">✓</div>
+      <h3>New PDF saved</h3>
+      <div class="info">${d.pages} page${d.pages>1?'s':''} · from “${esc(SP.file.name)}”</div>
+      <div class="rthumb"><img src="/api/thumb?s=360&path=${encodeURIComponent(d.path)}&t=${Date.now()}" alt="" onerror="this.remove()"></div>
+      <div class="where"><small>File name</small>${esc(d.name)}</div>
+      <div class="where"><small>Saved in</small>${esc(d.folder)}</div>
+      <div class="actions">
+        <button class="btn primary" data-newfile="${esc(d.path)}" data-do="launch">Open</button>
+        <button class="btn" data-newfile="${esc(d.path)}" data-do="reveal">Show in Finder</button>
+        <button class="btn" id="spAgain">Split another range</button>
+        <button class="btn" id="spFinish">Done</button>
+      </div></div>`;
+    $('spResult').classList.add('on');
+    api('/api/library?refresh=1').then(fs => { S.files = fs; render(); const cur = byPath().get(SP.file.path); if(cur && S.sel===cur.path) preview(cur); }).catch(()=>{});
+  }catch(e){ toast('Could not split: '+e.message); }
+  $('spBusy').classList.remove('on');
+  btn.disabled = false;
+};
+$('spResult').addEventListener('click', e => {
+  const b = e.target.closest('[data-newfile]'); if(b){ post('/api/'+b.dataset.do, {path:b.dataset.newfile}); return; }
+  if(e.target.id==='spAgain') $('spResult').classList.remove('on');
+  if(e.target.id==='spFinish') closeSplit();
+});
+
+api('/api/places').then(p => { S.places = p; renderNav(); }).catch(()=>{});
+if(S.view==='browse' && S.browse) openFolder(S.browse);
+load();
+setInterval(async () => { try{ S.open = await api('/api/open'); if(S.view==='open' && !S.q) render(); else renderNav(); }catch(e){} }, 30000);
+</script>
+</body>
+</html>
