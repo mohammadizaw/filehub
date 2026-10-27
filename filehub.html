@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FileHub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Patrick+Hand&display=swap">
 <style>
 :root{
   /* Theme = hue + colour strength. Accent = two colours for the gradient. */
@@ -261,7 +261,7 @@ dd a{color:var(--accent)}
 .folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:22px}
 .ftile{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 12px;cursor:pointer;min-width:0}
 .ftile:hover{background:var(--hover)}
-.ftile svg{width:28px;height:28px;flex:none;color:var(--accent)}
+.ftile .fo{width:28px;height:28px;flex:none;color:var(--accent)}
 .ftile div{min-width:0}
 .ftile b{display:block;font-weight:550;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ftile small{color:var(--muted);font-size:12px}
@@ -338,7 +338,7 @@ select.ctl{font-weight:600}
 .folders{gap:12px;grid-template-columns:repeat(auto-fill,minmax(calc(190px * var(--zoom,1)),1fr))}
 .ftile{border:0;border-radius:16px;box-shadow:var(--shadow);padding:12px;transition:transform .15s,box-shadow .15s}
 .ftile:hover{background:var(--panel);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
-.ftile svg{width:calc(40px * var(--zoom,1));height:calc(40px * var(--zoom,1));padding:calc(9px * var(--zoom,1));border-radius:12px;background:var(--folder-soft);color:var(--folder);fill:color-mix(in srgb,var(--folder) 22%,transparent)}
+.ftile .fo{--s:calc(40px * var(--zoom,1));width:var(--s);height:var(--s);border-radius:12px;background:var(--folder-soft);color:var(--folder)}
 .ftile b{font-weight:700}
 .crumbs button{border-radius:9px;font-weight:600}
 /* preview panel */
@@ -375,8 +375,8 @@ select.ctl{font-weight:600}
 @keyframes popin{from{opacity:0;transform:translateY(-6px)}}
 .appear h3{margin:0 0 2px;font-size:16px;font-weight:800}
 .appear .ah{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:16px 0 8px}
-.appear .opts{display:flex;gap:6px;background:var(--panel2);border-radius:12px;padding:4px}
-.appear .opts button{flex:1;border:0;background:none;border-radius:9px;padding:7px 6px;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--muted)}
+.appear .opts{display:flex;flex-wrap:wrap;gap:4px;background:var(--panel2);border-radius:12px;padding:4px}
+.appear .opts button{flex:1 1 0;min-width:52px;border:0;background:none;border-radius:9px;padding:7px 6px;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--muted)}
 .appear .opts button.on{background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
 .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .sw{border:2px solid transparent;border-radius:13px;padding:6px;cursor:pointer;background:var(--panel2);text-align:center;font-size:12px;font-weight:600;color:var(--muted)}
@@ -391,7 +391,7 @@ select.ctl{font-weight:600}
 .appear .reset{margin-top:16px;width:100%}
 
 /* ===== Style: Flat (clean lines, like Finder) ===== */
-:root[data-style="flat"] :is(.side,.prev,.card,.list,.ftile,.family,.search,.ctl,.seg,.chip,.mbox,.rcard){box-shadow:none;border:1px solid var(--line)}
+:root[data-style="flat"] :is(.side,.prev,.card,.tile,.list,.ftile,.family,.search,.ctl,.seg,.chip,.mbox,.rcard){box-shadow:none;border:1px solid var(--line)}
 :root[data-style="flat"] :is(.side,.prev){border-radius:14px}
 :root[data-style="flat"] :is(.card,.list,.family,.ftile){border-radius:10px}
 :root[data-style="flat"] .thumb{border-radius:7px}
@@ -420,26 +420,26 @@ select.ctl{font-weight:600}
 :root[data-style="clay"]{--clay-d:color-mix(in srgb,var(--tint) 20%,transparent);--clay-l:rgba(255,255,255,.9)}
 :root:is([data-theme="dark"],[data-theme="dim"])[data-style="clay"]{--clay-d:rgba(0,0,0,.5);--clay-l:rgba(255,255,255,.045)}
 @media (prefers-color-scheme:dark){:root[data-style="clay"]:not([data-theme]){--clay-d:rgba(0,0,0,.5);--clay-l:rgba(255,255,255,.045)}}
-:root[data-style="clay"] :is(.side,.prev,.card,.list,.ftile,.family,.search,.ctl,.seg,.chip:not(.on),.sizer){background:var(--bg);border:0;box-shadow:6px 6px 14px var(--clay-d),-6px -6px 14px var(--clay-l)}
+:root[data-style="clay"] :is(.side,.prev,.card,.tile,.list,.ftile,.family,.search,.ctl,.seg,.chip:not(.on),.sizer){background:var(--bg);border:0;box-shadow:6px 6px 14px var(--clay-d),-6px -6px 14px var(--clay-l)}
 :root[data-style="clay"] :is(.seg button:not(.on),.row.hd,.row.hd:hover){background:var(--bg)}
 :root[data-style="clay"] :is(.thumb,.stage){background:var(--bg);box-shadow:inset 3px 3px 7px var(--clay-d),inset -3px -3px 7px var(--clay-l)}
 :root[data-style="clay"] .family .card{background:var(--bg);box-shadow:4px 4px 10px var(--clay-d),-4px -4px 10px var(--clay-l)}
-:root[data-style="clay"] :is(.card,.ftile):hover{box-shadow:9px 9px 20px var(--clay-d),-7px -7px 18px var(--clay-l)}
+:root[data-style="clay"] :is(.card,.tile,.ftile):hover{box-shadow:9px 9px 20px var(--clay-d),-7px -7px 18px var(--clay-l)}
 :root[data-style="clay"] .card.sel{box-shadow:0 0 0 2px var(--accent),6px 6px 14px var(--clay-d),-6px -6px 14px var(--clay-l)}
-:root[data-style="clay"] .ftile svg{box-shadow:inset 2px 2px 5px var(--clay-d),inset -2px -2px 5px var(--clay-l)}
+:root[data-style="clay"] .ftile .fo{box-shadow:inset 2px 2px 5px var(--clay-d),inset -2px -2px 5px var(--clay-l)}
 :root[data-style="clay"] .row{border-bottom-color:color-mix(in srgb,var(--tint) 8%,transparent)}
 
 /* ===== Style: Outline (crisp lines, high contrast) ===== */
 :root[data-style="outline"]{--ol:color-mix(in srgb,var(--text) 24%,transparent)}
-:root[data-style="outline"] :is(.side,.prev,.card,.list,.ftile,.family,.search,.ctl,.seg,.chip,.sizer){box-shadow:none;border:1.5px solid var(--ol)}
+:root[data-style="outline"] :is(.side,.prev,.card,.tile,.list,.ftile,.family,.search,.ctl,.seg,.chip,.sizer){box-shadow:none;border:1.5px solid var(--ol)}
 :root[data-style="outline"] .thumb{border:1px solid var(--line)}
-:root[data-style="outline"] :is(.card,.ftile):hover{transform:none;box-shadow:none;border-color:var(--accent)}
+:root[data-style="outline"] :is(.card,.tile,.ftile):hover{transform:none;box-shadow:none;border-color:var(--accent)}
 :root[data-style="outline"] .card.sel{box-shadow:0 0 0 1.5px var(--accent);border-color:var(--accent)}
 :root[data-style="outline"] .nav button.on{background:none;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
 :root[data-style="outline"] .nav button.on svg,:root[data-style="outline"] .nav button.on .n{color:var(--accent)}
 :root[data-style="outline"] :is(.chip.on,.btn.primary){background:var(--accent);box-shadow:none}
 :root[data-style="outline"] :is(.row .ic,.badge){background-image:none;box-shadow:none}
-:root[data-style="outline"] .ftile svg{background:none;box-shadow:inset 0 0 0 1.5px var(--folder)}
+:root[data-style="outline"] .ftile .fo{background:none;box-shadow:inset 0 0 0 1.5px var(--folder)}
 
 /* ===== Send with SmartDrop ===== */
 .send .box{width:min(480px,94vw)}
@@ -467,7 +467,7 @@ select.ctl{font-weight:600}
 :root[data-density="compact"] .nav button{padding:6px 12px}
 :root[data-density="compact"] .section{margin-bottom:18px}
 :root[data-density="compact"] .ftile{padding:8px 10px}
-:root[data-density="compact"] .ftile svg{width:calc(32px * var(--zoom,1));height:calc(32px * var(--zoom,1));padding:calc(7px * var(--zoom,1))}
+:root[data-density="compact"] .ftile .fo{--s:calc(32px * var(--zoom,1))}
 :root[data-density="compact"] .title h1{font-size:22px}
 
 /* ===== Font ===== */
@@ -511,9 +511,11 @@ select.ctl{font-weight:600}
 .sbbox label.chk{display:flex;gap:7px;align-items:center;font-size:13px;margin-right:auto}
 .sbbox label.chk input{accent-color:var(--accent);width:16px;height:16px}
 /* old FileHub still running */
-.banner{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:80;max-width:min(620px,92vw);background:#3a2a10;color:#ffe7b3;border:1px solid #8a6420;border-radius:14px;padding:10px 16px;font-size:13px;box-shadow:var(--shadow-lg);display:none}
+.banner{position:fixed;bottom:44px;left:50%;padding-right:40px!important;transform:translateX(-50%);z-index:80;max-width:min(620px,92vw);background:#3a2a10;color:#ffe7b3;border:1px solid #8a6420;border-radius:14px;padding:10px 16px;font-size:13px;box-shadow:var(--shadow-lg);display:none}
 .banner.on{display:block}
 .banner b{color:#fff}
+.banner .bx{position:absolute;top:8px;right:8px;border:0;background:none;color:#ffe7b3;font-size:16px;cursor:pointer;border-radius:6px;width:24px;height:24px}
+.banner .bx:hover{background:rgba(255,255,255,.12)}
 /* ===== Size slider (top bar) ===== */
 .sizer{display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;background:var(--panel);border-radius:12px;box-shadow:var(--shadow);color:var(--muted)}
 .sizer button{border:0;background:none;padding:2px;cursor:pointer;color:inherit;display:grid;place-items:center;border-radius:6px}
@@ -559,6 +561,113 @@ select.ctl{font-weight:600}
 .ctx .sub.left{left:auto;right:calc(100% + 2px)}
 .ctx .ci.open>.sub{display:block}
 .ctx .sub{min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px}
+
+/* ===== Tiles view ===== */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(250px * var(--zoom,1)),1fr));gap:12px}
+.tile{display:flex;align-items:center;gap:14px;min-width:0;padding:calc(12px * var(--zoom,1)) 16px;background:var(--panel);border:1px solid transparent;border-radius:16px;box-shadow:var(--shadow);cursor:pointer;position:relative;transition:transform .15s,box-shadow .15s}
+.tile:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.tile.sel{box-shadow:0 0 0 2px var(--accent),var(--shadow-lg)}
+.tile .fi{--s:calc(46px * var(--zoom,1))}
+.tile .tm{min-width:0}
+.tile b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile small{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+
+/* ===== File icons (style picked in Appearance) ===== */
+.fi{--s:32px;--c:var(--other);position:relative;flex:none;display:inline-grid;place-items:center;width:var(--s);height:var(--s);border-radius:calc(var(--s) * .3);background:var(--c);color:#fff;background-image:linear-gradient(135deg,rgba(255,255,255,.3),rgba(255,255,255,0))}
+.fi i{font-style:normal;font-weight:800;text-transform:uppercase;font-size:calc(var(--s) * .27);letter-spacing:.02em;line-height:1;position:relative;z-index:1}
+.row .ic{background:none!important;box-shadow:none!important;width:auto!important;height:auto!important;display:grid;place-items:center}
+.row .ic .fi{--s:calc(32px * var(--lzoom,1))}
+:root[data-density="compact"] .row .ic .fi{--s:calc(26px * var(--lzoom,1))}
+.rel .ic,.ctx .ch .ic,.send .file .ic{background:none!important;width:auto!important;height:auto!important}
+.rel .ic .fi{--s:24px}.ctx .ch .ic .fi{--s:30px}.send .file .ic .fi{--s:42px}
+.ctx .ch .ic.isfo .fo{--s:30px}
+.thumb{position:relative}
+.thumb .fi{--s:calc(54px * var(--zoom,1));position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.thumb img{position:relative;z-index:1}
+.thumb img.ok ~ .fi{display:none}
+.thumb .badge{z-index:2}
+/* Paper: a document with a folded corner */
+:root[data-icons="paper"] .fi{width:calc(var(--s) * .8);border-radius:calc(var(--s) * .06);background-image:none;clip-path:polygon(0 0,66% 0,100% 27%,100% 100%,0 100%);place-items:end center;padding-bottom:calc(var(--s) * .2)}
+:root[data-icons="paper"] .fi::after{content:"";position:absolute;top:0;right:0;width:34%;height:27%;background:color-mix(in srgb,var(--c) 68%,#000);clip-path:polygon(0 0,100% 100%,0 100%)}
+:root[data-icons="paper"] .fi i{text-transform:lowercase;font-weight:700;font-size:calc(var(--s) * .22)}
+:root[data-icons="paper"] .fi i::before{content:"."}
+/* Line: line-art on a soft colour */
+:root[data-icons="line"] .fi{background:color-mix(in srgb,var(--c) 18%,var(--panel));background-image:none;color:color-mix(in srgb,var(--c) 80%,#000);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--c) 75%,#000)}
+:root[data-icons="line"] .fi::before{content:"";position:absolute;inset:22% 30% 38% 30%;border:2px solid currentColor;border-radius:2px 7px 2px 2px;opacity:.55}
+:root[data-icons="line"] .fi i{align-self:end;margin-bottom:12%}
+/* 3D: glossy, raised */
+:root[data-icons="3d"] .fi{border-radius:calc(var(--s) * .32);background:radial-gradient(circle at 30% 22%,color-mix(in srgb,var(--c) 45%,#fff) 0,var(--c) 52%,color-mix(in srgb,var(--c) 72%,#000) 100%);box-shadow:inset 0 calc(var(--s) * -.08) calc(var(--s) * .14) rgba(0,0,0,.22),inset 0 calc(var(--s) * .06) calc(var(--s) * .1) rgba(255,255,255,.5),0 calc(var(--s) * .14) calc(var(--s) * .22) calc(var(--s) * -.08) color-mix(in srgb,var(--c) 75%,transparent)}
+:root[data-icons="3d"] .fi i{text-shadow:0 1px 2px rgba(0,0,0,.3)}
+/* Hexagon */
+:root[data-icons="hex"] .fi{width:calc(var(--s) * 1.08);border-radius:0;background-image:none;clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%)}
+/* Folder icons */
+.fo{--s:32px;display:grid;place-items:center;flex:none;width:var(--s);height:var(--s)}
+.fo svg{width:58%;height:58%;color:var(--folder);fill:color-mix(in srgb,var(--folder) 22%,transparent)}
+:root:is([data-icons="paper"],[data-icons="3d"]) .ftile .fo{background:none!important;box-shadow:none!important}
+:root:is([data-icons="paper"],[data-icons="3d"]) .fo svg{display:none}
+:root:is([data-icons="paper"],[data-icons="3d"]) .fo::before{content:"";width:94%;height:68%;margin-top:14%;border-radius:calc(var(--s) * .08);background:color-mix(in srgb,var(--folder) 45%,#fff);box-shadow:0 calc(var(--s) * -.13) 0 calc(var(--s) * -.06) color-mix(in srgb,var(--folder) 70%,#fff),inset 0 calc(var(--s) * .07) 0 color-mix(in srgb,#fff 55%,transparent)}
+:root[data-icons="3d"] .fo::before{background:linear-gradient(170deg,color-mix(in srgb,var(--folder) 35%,#fff),var(--folder));box-shadow:0 calc(var(--s) * -.13) 0 calc(var(--s) * -.06) color-mix(in srgb,var(--folder) 80%,#000),0 calc(var(--s) * .12) calc(var(--s) * .2) calc(var(--s) * -.06) color-mix(in srgb,var(--folder) 60%,transparent),inset 0 calc(var(--s) * .07) calc(var(--s) * .08) rgba(255,255,255,.55)}
+:root[data-icons="line"] .ftile .fo{background:color-mix(in srgb,var(--folder) 16%,var(--panel))!important;box-shadow:inset 0 0 0 2px var(--folder)!important}
+:root[data-icons="line"] .fo svg{fill:none;stroke-width:1.6}
+:root[data-icons="hex"] .ftile .fo{background:var(--folder)!important;border-radius:0!important;clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%);width:calc(var(--s) * 1.08)}
+:root[data-icons="hex"] .fo svg{color:#fff;fill:rgba(255,255,255,.3)}
+:root:not([data-icons="badge"]) .ctx .ch .ic.isfo .fo{background:none}
+
+/* ===== Style: Sketch (pencil on paper; chalk in dark modes) ===== */
+:root[data-style="sketch"]{--ink:color-mix(in srgb,var(--text) 80%,transparent);--wob:255px 16px 225px 16px/16px 225px 16px 255px;--hard:3px 4px 0 color-mix(in srgb,var(--text) 16%,transparent)}
+:root[data-style="sketch"] body{font-family:"Patrick Hand","Chalkboard SE","Comic Sans MS",cursive;font-size:15.5px;
+  background-color:var(--bg);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+  repeating-linear-gradient(transparent 0 31px,color-mix(in srgb,var(--accent) 13%,transparent) 31px 32px)}
+:root[data-style="sketch"] :is(.side,.prev,.card,.tile,.list,.ftile,.family,.search,.ctl,.seg,.chip,.sizer,.btn,.appear,.ctx,.rn .box,.mbox,.csel){border:2px solid var(--ink)!important;border-radius:var(--wob)!important;box-shadow:var(--hard)!important}
+:root[data-style="sketch"] :is(.card,.tile,.ftile):nth-child(3n+1){transform:rotate(-.5deg)}
+:root[data-style="sketch"] :is(.card,.tile,.ftile):nth-child(3n+2){transform:rotate(.4deg)}
+:root[data-style="sketch"] :is(.card,.tile,.ftile):hover{transform:rotate(0) scale(1.02)}
+:root[data-style="sketch"] :is(.card.sel,.tile.sel){border-color:var(--accent)!important;box-shadow:4px 5px 0 color-mix(in srgb,var(--accent) 45%,transparent)!important}
+:root[data-style="sketch"] .thumb{border:1.5px dashed color-mix(in srgb,var(--text) 40%,transparent);border-radius:14px 5px 12px 6px;background:transparent}
+:root[data-style="sketch"] .nav button.on{background:linear-gradient(100deg,transparent 2%,color-mix(in srgb,var(--accent) 42%,transparent) 4%,color-mix(in srgb,var(--accent) 30%,transparent) 94%,transparent 97%);color:var(--text);box-shadow:none;border-radius:4px 14px 6px 12px}
+:root[data-style="sketch"] .nav button.on :is(svg,.n){color:var(--text)}
+:root[data-style="sketch"] :is(.chip.on,.btn.primary){background:color-mix(in srgb,var(--accent) 88%,transparent)!important;color:#fff}
+:root[data-style="sketch"] .title h1{text-decoration:underline wavy color-mix(in srgb,var(--accent) 70%,transparent) 2px;text-underline-offset:7px;font-weight:400;font-size:30px}
+:root[data-style="sketch"] :is(.name,.tile b,.ftile b,.section-h,.pbody h2,.brand){font-weight:400}
+:root[data-style="sketch"] .row{border-bottom:1.5px dashed color-mix(in srgb,var(--text) 22%,transparent)}
+:root[data-style="sketch"] :is(.badge,.fi,.pages){box-shadow:none}
+:root[data-style="sketch"] .badge{background-image:none;border:1.5px solid color-mix(in srgb,#000 25%,transparent)}
+:root[data-style="sketch"] :is(.side,.prev,.list,.card,.tile,.ftile,.family){background:color-mix(in srgb,var(--panel) 86%,transparent)}
+:root[data-font="hand"] body{font-family:"Patrick Hand","Chalkboard SE","Comic Sans MS",cursive;font-size:15px}
+
+/* ===== Custom tick boxes and switches ===== */
+input[type=checkbox]{-webkit-appearance:none;appearance:none;width:18px;height:18px;margin:0;flex:none;display:inline-grid;place-items:center;cursor:pointer;border-radius:6px;border:2px solid color-mix(in srgb,var(--muted) 55%,transparent);background:var(--panel);transition:background .15s,border-color .15s,box-shadow .15s;vertical-align:middle}
+input[type=checkbox]::after{content:"";width:8px;height:4.5px;margin-top:-2px;border:solid #fff;border-width:0 0 2.3px 2.3px;transform:rotate(-45deg) scale(0);transition:transform .15s cubic-bezier(.5,1.8,.5,1)}
+input[type=checkbox]:hover{border-color:var(--accent)}
+input[type=checkbox]:checked{background:var(--accent-grad);border-color:transparent;box-shadow:var(--accent-glow)}
+input[type=checkbox]:checked::after{transform:rotate(-45deg) scale(1)}
+input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input.switch,.sbbox .it input.switch{width:38px;height:22px;border-radius:999px;border:0;background:color-mix(in srgb,var(--muted) 35%,transparent);place-items:center start;padding:0 3px;box-shadow:inset 0 1px 3px rgba(0,0,0,.15)}
+input.switch::after{width:16px;height:16px;margin:0;border:0;border-radius:50%;background:#fff;transform:none;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s cubic-bezier(.4,1.4,.5,1)}
+input.switch:checked{background:var(--accent-grad);box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}
+input.switch:checked::after{transform:translateX(16px)}
+/* number boxes without the little Mac arrows */
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+
+/* ===== Our own drop-down menus (no Mac menus) ===== */
+.csel-native{display:none!important}
+.csel{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;font-weight:600;text-align:left}
+.csel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.csel svg{width:14px;height:14px;flex:none;color:var(--muted);transition:transform .15s}
+.csel.open svg{transform:rotate(180deg)}
+.dest .csel{width:100%;margin-top:4px;padding:10px 12px;border:0;border-radius:12px;background:var(--panel2);font-size:13.5px;color:var(--text)}
+.dd{min-width:180px;max-height:60vh;overflow-y:auto;z-index:65}
+.dd .ci .chk{width:16px;flex:none;text-align:center;color:var(--accent);font-weight:800}
+.dd .ci.kb{background:var(--hover)}
+.dd .ci:hover .chk,.dd .ci.kb:hover .chk{color:#fff}
+
+/* ===== Our own tooltips and message boxes ===== */
+.tip{position:fixed;z-index:90;pointer-events:none;max-width:280px;padding:6px 10px;border-radius:9px;background:var(--text);color:var(--bg);font-size:12px;font-weight:600;line-height:1.35;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(3px);transition:opacity .12s,transform .12s;word-break:break-word}
+.tip.on{opacity:1;transform:none}
+.ask .box{width:min(440px,92vw)}
+.ask input{width:100%;padding:10px 12px;border:2px solid var(--accent);border-radius:11px;background:var(--panel2);font-size:14px;font-weight:600;outline:none;margin-bottom:4px}
+.ask .actions{justify-content:flex-end;margin:12px 0 0}
 </style>
 </head>
 <body>
@@ -590,6 +699,7 @@ select.ctl{font-weight:600}
       </div>
       <div class="seg" id="viewSeg">
         <button data-v="grid" title="Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+        <button data-v="tiles" title="Tiles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/><path d="M5.5 7.5h3M15.5 7.5h3M5.5 16.5h3M15.5 16.5h3"/></svg></button>
         <button data-v="list" title="List"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
       </div>
       <button class="ctl" id="refresh" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
@@ -619,9 +729,13 @@ select.ctl{font-weight:600}
 <div class="rn sbbox" id="sbBox"><div class="box"><h3>Customise sidebar</h3>
   <p>Tick what to show. Use the arrows (or drag items in the sidebar) to change the order.</p>
   <div class="list2" id="sbList"></div>
-  <div class="row2"><label class="chk"><input type="checkbox" id="sbCounts"> Show numbers</label>
+  <div class="row2"><label class="chk"><input type="checkbox" class="switch" id="sbCounts"> Show numbers</label>
     <button class="btn" id="sbAdd">+ Add folder…</button><button class="btn" id="sbReset">Reset</button><button class="btn primary" id="sbDone">Done</button></div></div></div>
-<div class="banner" id="oldBanner"><b>FileHub needs a restart to finish updating.</b> The screen is new but the old FileHub is still running, so some buttons (Copy, Duplicate, Rename…) say "not found". Quit FileHub and open it again, or simply restart your Mac.</div>
+<div class="banner" id="oldBanner"><button class="bx" title="Hide" onclick="this.parentNode.classList.remove('on');window.oldBannerHidden=1">✕</button><b>FileHub needs a restart to finish updating.</b> The screen is new but the old FileHub is still running, so some buttons (Copy, Duplicate, Rename…) say "not found". Quit FileHub and open it again, or simply restart your Mac.</div>
+<div class="ctx dd" id="dd"></div>
+<div class="rn ask" id="ask"><div class="box"><h3 id="askTitle"></h3><p id="askText"></p><input id="askInput" spellcheck="false" autocomplete="off">
+  <div class="actions"><button class="btn" id="askNo">Cancel</button><button class="btn primary" id="askYes">OK</button></div></div></div>
+<div class="tip" id="tip"></div>
 <div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
   <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
   <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
@@ -888,26 +1002,36 @@ function card(f){
   const info = S.sort==='used' ? `Opened ${f.useCount}× · ${ago(lastTouch(f))}` : `${ago(lastTouch(f))} · ${size(f.size)}`;
   return `<div class="card ${S.sel===f.path?'sel':''}" data-path="${esc(f.path)}" title="${esc(f.folder)}">
     <div class="thumb"><span class="badge" style="background:${color(f.type)}">${esc(f.ext||'file')}</span>
-      <img loading="lazy" data-src="/api/thumb?s=${thumbSize()}&path=${encodeURIComponent(f.path)}" alt="">
+      <img loading="lazy" data-src="/api/thumb?s=${thumbSize()}&path=${encodeURIComponent(f.path)}" alt="">${fileIcon(f)}
       ${f.pages?`<span class="pages">${pagesText(f)}</span>`:''}</div>
     <button class="pin ${pinned?'on':''}" data-pin="${esc(f.path)}" title="${pinned?'Unpin':'Pin'}">${svg('star', pinned?'currentColor':'none')}</button>
     <div class="meta" title="${esc(f.name)}"><div class="name">${esc(f.name)}</div><div class="info">${esc(info)}</div></div></div>`;
 }
 function row(f){
   return `<div class="row ${S.sel===f.path?'sel':''}" data-path="${esc(f.path)}">
-    <div class="ic" style="background:${color(f.type)}">${esc((f.ext||'?').slice(0,4))}</div>
+    <div class="ic">${fileIcon(f)}</div>
     <div class="nm"><div>${S.pins.has(f.path)?'★ ':''}${esc(f.name)}</div><small>${f.pages?pagesText(f)+' · ':''}${esc(f.folder)}</small></div>
     <div class="c hide-s">${esc(f.source)}</div>
     <div class="c">${ago(lastTouch(f))}</div>
     <div class="c hide-s">${f.useCount?f.useCount+'×':''}</div></div>`;
 }
 const LIST_HEAD = `<div class="row hd"><div></div><div>Name</div><div class="c hide-s">Came from</div><div class="c">Last used</div><div class="c hide-s">Opened</div></div>`;
-const block = list => S.layout==='grid' ? `<div class="grid">${list.map(card).join('')}</div>` : `<div class="list">${LIST_HEAD}${list.map(row).join('')}</div>`;
+// File and folder icons: drawn in the icon style chosen in Appearance (badge, paper, line, 3D, hexagon).
+const fileIcon = f => `<span class="fi" style="--c:${color(f.type)}"><i>${esc((f.ext||'?').slice(0,4))}</i></span>`;
+const folderIcon = () => `<span class="fo">${svg('folder')}</span>`;
+function tile(f){
+  const pinned = S.pins.has(f.path);
+  return `<div class="tile ${S.sel===f.path?'sel':''}" data-path="${esc(f.path)}" title="${esc(f.folder)}">${fileIcon(f)}
+    <div class="tm"><b>${pinned?'★ ':''}${esc(f.name)}</b><small>${esc([f.pages?pagesText(f):'', size(f.size), ago(lastTouch(f))].filter(Boolean).join(' · '))}</small></div></div>`;
+}
+const block = list => S.layout==='grid' ? `<div class="grid">${list.map(card).join('')}</div>`
+  : S.layout==='tiles' ? `<div class="tiles">${list.map(tile).join('')}</div>`
+  : `<div class="list">${LIST_HEAD}${list.map(row).join('')}</div>`;
 
 // Status bar: how many items are shown, and which file is selected.
 function renderStatus(){
   const c = $('content');
-  const files = new Set([...c.querySelectorAll('.card[data-path],.row[data-path]')].map(e => e.dataset.path)).size;
+  const files = new Set([...c.querySelectorAll('.card[data-path],.row[data-path],.tile[data-path]')].map(e => e.dataset.path)).size;
   const folders = c.querySelectorAll('.ftile').length;
   const parts = [];
   if(folders) parts.push(`${folders} folder${folders===1?'':'s'}`);
@@ -989,7 +1113,7 @@ function render(){
       title = d.crumbs.length ? d.crumbs[d.crumbs.length-1].name : d.display; sub = d.display;
       const crumbs = `<div class="crumbs">${d.crumbs.map((c,i)=>`${i?'<span style="color:var(--muted)">›</span>':''}<button data-browse="${esc(c.path)}">${esc(c.name)}</button>`).join('')}
         <button data-reveal-folder="${esc(d.path)}" style="margin-left:auto;color:var(--accent)">Open in Finder ↗</button></div>`;
-      const folders = d.folders.length ? `<div class="section-h">Folders <span class="count">${d.folders.length}</span></div><div class="folders">${d.folders.map(f=>`<div class="ftile" data-browse="${esc(f.path)}">${svg('folder')}<div><b>${esc(f.name)}</b><small>${f.count} item${f.count===1?'':'s'}</small></div></div>`).join('')}</div>` : '';
+      const folders = d.folders.length ? `<div class="section-h">Folders <span class="count">${d.folders.length}</span></div><div class="folders">${d.folders.map(f=>`<div class="ftile" data-browse="${esc(f.path)}">${folderIcon()}<div><b>${esc(f.name)}</b><small>${f.count} item${f.count===1?'':'s'}</small></div></div>`).join('')}</div>` : '';
       const fl = filt(d.files);
       const files = d.files.length ? `<div class="section-h">Files <span class="count">${d.files.length}</span></div>${fl.length?block(sorted(fl)):empty('No files of this type','')}` : '';
       tools = crumbs + (d.files.length ? typeChips(d.files) : '');
@@ -1029,7 +1153,7 @@ function preview(f){
   else stage = `<img src="/api/thumb?s=720&path=${encodeURIComponent(f.path)}" onerror="this.outerHTML='<span style=\\'color:var(--muted)\\'>No preview — press Quick Look</span>'">`;
   const rel = f.family ? S.files.filter(x => x.family===f.family && x.path!==f.path) : [];
   const sameFolder = S.files.filter(x => x.folder===f.folder && x.path!==f.path && !rel.includes(x)).sort((a,b)=>lastTouch(b)-lastTouch(a)).slice(0,6);
-  const relList = (h, l) => l.length ? `<div class="rel"><h3>${h}</h3>${l.map(x=>`<button data-path="${esc(x.path)}"><span class="ic" style="background:${color(x.type)}">${esc(x.ext.slice(0,3))}</span><span>${esc(x.name)}</span></button>`).join('')}</div>` : '';
+  const relList = (h, l) => l.length ? `<div class="rel"><h3>${h}</h3>${l.map(x=>`<button data-path="${esc(x.path)}"><span class="ic">${fileIcon(x)}</span><span>${esc(x.name)}</span></button>`).join('')}</div>` : '';
   const pinned = S.pins.has(f.path);
   $('prevIn').innerHTML = `
     <div class="prev-top"><b>Preview</b><button class="x" id="closePrev" title="Close (Esc)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
@@ -1135,7 +1259,7 @@ document.addEventListener('click', async e => {
   const item = e.target.closest('[data-path]');
   if(item){ const f = byPath().get(item.dataset.path); if(f) preview(f); }
 });
-document.addEventListener('dblclick', e => { const item = e.target.closest('.card,.row'); if(item) post('/api/launch',{path:item.dataset.path}); });
+document.addEventListener('dblclick', e => { const item = e.target.closest('.card,.row,.tile'); if(item) post('/api/launch',{path:item.dataset.path}); });
 
 let qt;
 $('q').addEventListener('input', e => {
@@ -1209,7 +1333,7 @@ const ACCENTS = [
   {id:'mocha',    name:'Mocha',    c:'#9a6b4f', a:'#b5876a', b:'#835a41'},
   {id:'graphite', name:'Graphite', c:'#4b5568', a:'#64748b', b:'#334155'},
 ];
-const LOOK_DEFAULT = {theme:'lavender', accent:'orange', style:'soft', density:'comfortable', font:'rounded'};
+const LOOK_DEFAULT = {theme:'lavender', accent:'orange', style:'soft', density:'comfortable', font:'rounded', icons:'badge'};
 const look = () => Object.assign({}, LOOK_DEFAULT, store.get('look', {}));
 function applyLook(){
   const L = look(), r = document.documentElement;
@@ -1217,7 +1341,7 @@ function applyLook(){
   const a = ACCENTS.find(x=>x.id===L.accent) || ACCENTS[0];
   r.style.setProperty('--h', t.h); r.style.setProperty('--sat', t.sat);
   r.style.setProperty('--accent', a.c); r.style.setProperty('--accent1', a.a); r.style.setProperty('--accent2', a.b);
-  r.dataset.style = L.style; r.dataset.density = L.density; r.dataset.font = L.font;
+  r.dataset.style = L.style; r.dataset.density = L.density; r.dataset.font = L.font; r.dataset.icons = L.icons;
 }
 function setLook(k, v){ const L = look(); L[k] = v; store.set('look', L); applyLook(); renderAppear(); }
 function renderAppear(){
@@ -1227,9 +1351,10 @@ function renderAppear(){
     <div class="ah">Mode</div>${opts('mode', [['auto','Auto'],['light','Light'],['medium','Medium'],['dim','Dim'],['dark','Dark']], mode)}
     <div class="ah">Theme</div><div class="swatches">${THEMES.map(t=>`<button class="sw ${L.theme===t.id?'on':''}" data-look="theme" data-v="${t.id}"><i style="background:hsl(${t.h} ${38*t.sat}% 90%)"></i>${t.name}</button>`).join('')}</div>
     <div class="ah">Accent colour</div><div class="dots">${ACCENTS.map(a=>`<button class="dot ${L.accent===a.id?'on':''}" title="${a.name}" data-look="accent" data-v="${a.id}" style="background:linear-gradient(135deg,${a.a},${a.b})">${svg('check')}</button>`).join('')}</div>
-    <div class="ah">Style</div>${opts('style', [['soft','Soft'],['flat','Flat'],['glass','Glass'],['clay','Clay'],['outline','Outline']], L.style)}
+    <div class="ah">Style</div>${opts('style', [['soft','Soft'],['flat','Flat'],['glass','Glass'],['clay','Clay'],['outline','Outline'],['sketch','Sketch']], L.style)}
+    <div class="ah">File icons</div>${opts('icons', [['badge','Badge'],['paper','Paper'],['line','Line'],['3d','3D'],['hex','Hexagon']], L.icons)}
     <div class="ah">Size</div>${opts('density', [['comfortable','Comfortable'],['compact','Compact']], L.density)}
-    <div class="ah">Font</div>${opts('font', [['rounded','Rounded'],['system','Mac'],['serif','Classic']], L.font)}
+    <div class="ah">Font</div>${opts('font', [['rounded','Rounded'],['system','Mac'],['serif','Classic'],['hand','Hand']], L.font)}
     <button class="btn reset" data-look="reset">Back to the original look</button>`;
 }
 $('appearBtn').innerHTML = svg('palette');
@@ -1245,6 +1370,96 @@ $('appear').addEventListener('click', e => {
 document.addEventListener('click', e => { if(!e.target.closest('#appear,#appearBtn')) $('appear').classList.remove('on'); });
 document.addEventListener('keydown', e => { if(e.key==='Escape' && $('appear').classList.contains('on')){ $('appear').classList.remove('on'); e.stopPropagation(); } }, true);
 applyLook();
+
+// ---------- our own drop-down menus, message boxes and tooltips (no Mac menus) ----------
+const _selValue = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+Object.defineProperty(HTMLSelectElement.prototype, 'value', {
+  get(){ return _selValue.get.call(this); },
+  set(v){ _selValue.set.call(this, v); if(this._cs) this._cs.sync(); },
+});
+let DDsel = null;
+function enhanceSelect(sel){
+  if(sel._cs) return;
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'csel ' + (sel.className||'');
+  if(sel.title) btn.title = sel.title;
+  sel.after(btn); sel.classList.add('csel-native');
+  sel._cs = {btn, sync(){ const o = sel.options[sel.selectedIndex]; btn.innerHTML = `<span>${esc(o ? o.text : '')}</span>${svg('down')}`; }};
+  btn.addEventListener('click', e => { e.stopPropagation(); DDsel===sel ? closeDD() : openDD(sel); });
+  btn.addEventListener('keydown', e => { if(['ArrowDown','ArrowUp',' ','Enter'].includes(e.key)){ e.preventDefault(); openDD(sel); } });
+  new MutationObserver(() => sel._cs.sync()).observe(sel, {childList:true, subtree:true, characterData:true});
+  sel.addEventListener('change', () => sel._cs.sync());
+  sel._cs.sync();
+}
+function openDD(sel){
+  closeMenu(); DDsel = sel;
+  const dd = $('dd'), btn = sel._cs.btn;
+  dd.innerHTML = [...sel.options].map((o,i) => `<div class="ci ${i===sel.selectedIndex?'kb':''}" data-i="${i}"><span class="chk">${i===sel.selectedIndex?'✓':''}</span><span class="lbl">${esc(o.text)}</span></div>`).join('');
+  dd.classList.add('on'); btn.classList.add('open');
+  const r = btn.getBoundingClientRect();
+  dd.style.minWidth = Math.max(180, r.width) + 'px';
+  const h = dd.offsetHeight, w = dd.offsetWidth;
+  dd.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+  dd.style.top = (r.bottom + 6 + h > innerHeight - 8 ? Math.max(8, r.top - h - 6) : r.bottom + 6) + 'px';
+}
+function closeDD(){ if(!DDsel) return; DDsel._cs.btn.classList.remove('open'); DDsel = null; $('dd').classList.remove('on'); }
+function pickDD(i){ const sel = DDsel; if(!sel) return; closeDD(); if(i !== sel.selectedIndex){ sel.selectedIndex = i; sel._cs.sync(); sel.dispatchEvent(new Event('change', {bubbles:true})); } sel._cs.btn.focus(); }
+$('dd').addEventListener('click', e => { e.stopPropagation(); const c = e.target.closest('.ci'); if(c) pickDD(+c.dataset.i); });
+$('dd').addEventListener('mousemove', e => { const c = e.target.closest('.ci'); if(c){ $('dd').querySelectorAll('.kb').forEach(x=>x.classList.remove('kb')); c.classList.add('kb'); } });
+document.addEventListener('mousedown', e => { if(DDsel && !e.target.closest('#dd,.csel')) closeDD(); }, true);
+document.addEventListener('scroll', e => { if(DDsel && !e.target.closest?.('#dd')) closeDD(); }, true);
+addEventListener('resize', closeDD); addEventListener('blur', closeDD);
+document.addEventListener('keydown', e => {
+  if(!DDsel) return;
+  const items = [...$('dd').querySelectorAll('.ci')]; let k = items.findIndex(x => x.classList.contains('kb'));
+  if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); const s = DDsel; closeDD(); s._cs.btn.focus(); }
+  else if(e.key==='ArrowDown' || e.key==='ArrowUp'){ e.preventDefault(); e.stopPropagation(); k = Math.max(0, Math.min(items.length-1, k + (e.key==='ArrowDown'?1:-1))); items.forEach(x=>x.classList.remove('kb')); items[k].classList.add('kb'); items[k].scrollIntoView({block:'nearest'}); }
+  else if(e.key==='Enter' || e.key===' '){ e.preventDefault(); e.stopPropagation(); if(k>=0) pickDD(k); }
+}, true);
+document.querySelectorAll('select').forEach(enhanceSelect);
+
+// Message box instead of the browser's own pop-ups. Returns the typed text / true, or null when cancelled.
+let ASK = null;
+function ask({title, text='', value=null, ok='OK', cancel='Cancel'}){
+  return new Promise(res => {
+    ASK = res;
+    $('askTitle').textContent = title; $('askText').textContent = text;
+    $('askYes').textContent = ok; $('askNo').textContent = cancel;
+    const inp = $('askInput'); inp.style.display = value===null ? 'none' : ''; inp.value = value ?? '';
+    $('ask').classList.add('on');
+    setTimeout(() => (value===null ? $('askYes') : inp).focus(), 30);
+    if(value!==null) inp.select();
+  });
+}
+function answer(v){ if(!ASK) return; const r = ASK; ASK = null; $('ask').classList.remove('on'); r(v); }
+$('askYes').onclick = () => answer($('askInput').style.display==='none' ? true : $('askInput').value);
+$('askNo').onclick = () => answer(null);
+$('ask').addEventListener('mousedown', e => { if(e.target.id==='ask') answer(null); });
+document.addEventListener('keydown', e => {
+  if(!ASK) return;
+  if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); answer(null); }
+  else if(e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); $('askYes').click(); }
+}, true);
+
+// Tooltips: our own little labels instead of the Mac's yellow ones.
+let tipT = null, tipFor = null;
+function hideTip(){ clearTimeout(tipT); tipFor = null; $('tip').classList.remove('on'); }
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest && e.target.closest('[title],[data-tip]');
+  if(!el || el === tipFor) return;
+  if(el.hasAttribute('title')){ const t = el.getAttribute('title'); el.removeAttribute('title'); if(t) el.dataset.tip = t; else delete el.dataset.tip; }
+  if(!el.dataset.tip) return;
+  hideTip(); tipFor = el;
+  tipT = setTimeout(() => {
+    if(tipFor !== el || !el.isConnected) return;
+    const tip = $('tip'); tip.textContent = el.dataset.tip; tip.classList.add('on');
+    const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(r.left + r.width/2 - w/2, innerWidth - w - 8)) + 'px';
+    tip.style.top = (r.bottom + 8 + h > innerHeight - 8 ? r.top - h - 8 : r.bottom + 8) + 'px';
+  }, 500);
+});
+document.addEventListener('mouseout', e => { if(tipFor && !tipFor.contains(e.relatedTarget)) hideTip(); });
+['mousedown','keydown','wheel'].forEach(t => document.addEventListener(t, hideTip, true));
 
 // ---------- size slider: makes file cards and folder tiles smaller or bigger ----------
 const thumbSize = () => (S.zoom||1) > 1.25 ? 480 : 240;   // sharper pictures on big cards
@@ -1320,7 +1535,7 @@ function menuFor(target){
   const folderEl = target.closest('.ftile[data-browse],[data-place],.crumbs [data-browse]');
   const sortSub = [['recent','Last opened'],['modified','Last changed'],['added','Newest first'],['used','Most used'],['name','Name A–Z'],['size','Biggest']]
     .map(([v,t]) => ({label:t, check:S.sort===v, run:()=>{ S.sort=v; $('sort').value=v; store.set('sort',v); render(); }}));
-  const viewSub = [['grid','Grid'],['list','List']].map(([v,t]) => ({label:t, check:S.layout===v, run:()=>{ const b = document.querySelector(`#viewSeg button[data-v="${v}"]`); b && b.click(); }}));
+  const viewSub = [['grid','Grid'],['tiles','Tiles'],['list','List']].map(([v,t]) => ({label:t, check:S.layout===v, run:()=>{ const b = document.querySelector(`#viewSeg button[data-v="${v}"]`); b && b.click(); }}));
   const general = [
     {icon:'grid', label:'View as', sub:viewSub},
     {icon:'sort', label:'Sort by', sub:sortSub},
@@ -1409,7 +1624,7 @@ function itemsHTML(items){
 function openMenu(m, x, y){
   CTX.items = m.items;
   const h = m.head;
-  const head = h ? `<div class="ch"><span class="ic" style="background-color:${h.folder?'var(--folder)':h.color}">${h.folder?svg('folder'):esc(h.ext)}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : '';
+  const head = h ? `<div class="ch"><span class="ic${h.folder?' isfo':''}">${h.folder?folderIcon():`<span class="fi" style="--c:${h.color}"><i>${esc(h.ext)}</i></span>`}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : '';
   const el = $('ctx'); el.innerHTML = head + itemsHTML(m.items); el.classList.add('on');
   el.style.left = '0px'; el.style.top = '0px';
   const w = el.offsetWidth, ht = el.offsetHeight;
@@ -1425,7 +1640,7 @@ document.addEventListener('contextmenu', async e => {
   e.preventDefault();
   $('appear').classList.remove('on');
   const fileEl = e.target.closest('[data-path]');
-  if(fileEl && fileEl.matches('.card,.row')){ const f = byPath().get(fileEl.dataset.path); if(f && S.sel!==f.path){ S.sel = f.path; document.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel')); fileEl.classList.add('sel'); renderStatus(); } }
+  if(fileEl && fileEl.matches('.card,.row,.tile')){ const f = byPath().get(fileEl.dataset.path); if(f && S.sel!==f.path){ S.sel = f.path; document.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel')); fileEl.classList.add('sel'); renderStatus(); } }
   const m = menuFor(e.target); if(!m) return;
   openMenu(m, e.clientX, e.clientY);
   // Check what's on the clipboard, then refresh the Paste item.
@@ -1467,7 +1682,7 @@ let SENDING = null;
 async function sendFile(f){
   if(!f) return;
   SENDING = f;
-  $('sendFile').innerHTML = `<span class="ic" style="background-color:${color(f.type)}">${esc((f.ext||'?').slice(0,4))}</span><div style="min-width:0"><b>${esc(f.name)}</b><small>${esc([f.pages?pagesText(f):'', f.size?size(f.size):''].filter(Boolean).join(' · '))}</small></div>`;
+  $('sendFile').innerHTML = `<span class="ic">${fileIcon(f)}</span><div style="min-width:0"><b>${esc(f.name)}</b><small>${esc([f.pages?pagesText(f):'', f.size?size(f.size):''].filter(Boolean).join(' · '))}</small></div>`;
   $('sendUrl').textContent = sendUrl().replace(/^https?:\/\//,'').replace(/\/$/,''); $('sendUrl').href = sendUrl();
   $('sendCopied').textContent = 'Copying…';
   $('sendBox').classList.add('on');
@@ -1482,8 +1697,8 @@ $('sendCopy').onclick = () => SENDING && copyFiles([SENDING.path]);
 $('sendDone').onclick = closeSend;
 $('sendBox').addEventListener('mousedown', e => { if(e.target.id==='sendBox') closeSend(); });
 document.addEventListener('keydown', e => { if(e.key==='Escape' && $('sendBox').classList.contains('on')){ closeSend(); e.stopPropagation(); } }, true);
-$('sendChange').onclick = () => {
-  const v = prompt('SmartDrop web address:', sendUrl());
+$('sendChange').onclick = async () => {
+  const v = await ask({title:'SmartDrop address', text:'The web address FileHub opens when you send a file.', value:sendUrl(), ok:'Save'});
   if(v===null) return;
   const u = v.trim();
   if(u && !/^https?:\/\//i.test(u)){ toast('Please use an address that starts with https://'); return; }
@@ -1541,7 +1756,7 @@ function renderSbBox(){
   $('sbList').innerHTML = sbSections().map(sec => `<div class="sh">${sec.h}</div>` + sec.items.map((it, i, arr) => {
     const off = c.hidden.includes(it.id);
     return `<div class="it ${off?'off':''}" data-id="${esc(it.id)}">
-      <input type="checkbox" ${off?'':'checked'} data-sbx="toggle" title="Show in sidebar">${svg(it.icon)}<span class="nm" title="${esc(it.path||'')}">${esc(it.label)}</span>
+      <input type="checkbox" class="switch" ${off?'':'checked'} data-sbx="toggle" title="Show in sidebar">${svg(it.icon)}<span class="nm" title="${esc(it.path||'')}">${esc(it.label)}</span>
       <button data-sbx="up" ${i===0?'disabled':''} title="Move up">↑</button><button data-sbx="down" ${i===arr.length-1?'disabled':''} title="Move down">↓</button>
       ${it.kind==='folder' ? `<button data-sbx="remove" title="Remove from sidebar">✕</button>` : '<button disabled style="visibility:hidden">✕</button>'}</div>`;
   }).join('')).join('');
@@ -1558,7 +1773,7 @@ $('sbList').addEventListener('click', e => {
 });
 $('sbCounts').onchange = e => { const c = sb(); c.counts = e.target.checked; sbSave(c); };
 $('sbAdd').onclick = sbPickFolder;
-$('sbReset').onclick = () => { if(confirm('Put the sidebar back to how it was at the start? (Added folders are removed from the sidebar, not from your Mac.)')){ store.set('sidebar', {}); renderNav(); renderSbBox(); } };
+$('sbReset').onclick = async () => { if(await ask({title:'Reset the sidebar?', text:'It goes back to how it was at the start. Added folders are only removed from the sidebar, never from your Mac.', ok:'Reset'})){ store.set('sidebar', {}); renderNav(); renderSbBox(); } };
 $('sbDone').onclick = closeSbBox;
 $('sbBox').addEventListener('mousedown', e => { if(e.target.id==='sbBox') closeSbBox(); });
 document.addEventListener('keydown', e => { if(e.key==='Escape' && $('sbBox').classList.contains('on')){ closeSbBox(); e.stopPropagation(); } }, true);
@@ -1608,7 +1823,7 @@ async function checkVersion(){
   let v;
   try{
     const r = await fetch('/api/version');
-    if(r.status === 404){ $('oldBanner').classList.add('on'); return; }  // the old FileHub is still running
+    if(r.status === 404){ if(!window.oldBannerHidden) $('oldBanner').classList.add('on'); return; }  // the old FileHub is still running
     v = (await r.json()).version; $('oldBanner').classList.remove('on');
   }catch(e){ return; }  // server restarting: try again later
   if(myVersion === null){ myVersion = v; return; }
