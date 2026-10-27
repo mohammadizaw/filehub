@@ -23,12 +23,12 @@
   --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%}
+html,body{margin:0;height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
 button,select,input{font:inherit;color:inherit}
-.app{display:grid;grid-template-columns:230px 1fr auto;height:100vh}
+.app{display:grid;grid-template-columns:230px minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr);height:100vh;height:100dvh;overflow:hidden}
 /* Sidebar */
-.side{background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow:auto}
+.side{background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow-y:auto;overscroll-behavior:contain;min-height:0}
 .brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:16px;padding:0 8px 16px}
 .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#8f6bff);display:grid;place-items:center;color:#fff}
 .nav-h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:14px 10px 6px}
@@ -38,8 +38,16 @@ button,select,input{font:inherit;color:inherit}
 .nav button .n{margin-left:auto;font-size:12px;color:var(--muted);font-weight:400}
 .nav svg{width:17px;height:17px;flex:none}
 /* Main */
-.main{display:flex;flex-direction:column;min-width:0}
-.top{display:flex;gap:10px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.top{flex:none;display:flex;gap:10px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+/* page heading: stays put while the files scroll */
+.phead{flex:none;padding:18px 22px 0;border-bottom:1px solid var(--line);background:var(--bg)}
+.phead .chips{margin:0 0 14px}
+.phead .crumbs{margin:0 0 12px}
+.phead:empty{display:none}
+/* status bar at the bottom, like Finder */
+.status{flex:none;display:flex;gap:14px;align-items:center;padding:6px 22px;border-top:1px solid var(--line);background:var(--panel);font-size:12px;color:var(--muted);min-height:30px}
+.status .sel-name{margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%;color:var(--text)}
 .search{flex:1;display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:0 12px;max-width:560px}
 .search input{flex:1;border:0;background:none;outline:none;padding:9px 0}
 .search kbd{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
@@ -49,10 +57,10 @@ button,select,input{font:inherit;color:inherit}
 .seg button{border:0;background:var(--panel2);padding:7px 10px;cursor:pointer;display:grid;place-items:center}
 .seg button.on{background:var(--accent-soft);color:var(--accent)}
 .seg svg,.ctl svg{width:16px;height:16px;display:block}
-.content{flex:1;overflow:auto;padding:20px 22px 40px}
+.content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 22px 30px}
 .title{display:flex;align-items:baseline;gap:12px;margin:0 0 4px}
 .title h1{font-size:22px;margin:0;font-weight:650}
-.sub{color:var(--muted);margin:0 0 18px}
+.sub{color:var(--muted);margin:0 0 14px}
 .section{margin-bottom:26px}
 .section-h{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-weight:600}
 .section-h .count{color:var(--muted);font-weight:400;font-size:13px}
@@ -77,10 +85,12 @@ button,select,input{font:inherit;color:inherit}
 .pin.on{color:#f0a500}
 .pin svg{width:15px;height:15px}
 /* list view */
-.list{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:clip}
 .family .list{border:0;background:none}
 .row{display:grid;grid-template-columns:34px 1fr 200px 110px 70px;gap:12px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);cursor:pointer}
 .row:last-child{border-bottom:0}
+.row.hd{position:sticky;top:-18px;z-index:2;background:var(--panel2);cursor:default;padding-top:7px;padding-bottom:7px;font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.row.hd:hover{background:var(--panel2)}
 .row:hover{background:var(--hover)}
 .row.sel{background:var(--accent-soft)}
 .row .ic{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:9.5px;font-weight:700;text-transform:uppercase}
@@ -89,17 +99,17 @@ button,select,input{font:inherit;color:inherit}
 .row .nm small{color:var(--muted);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .c{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Preview panel */
-.prev{width:0;overflow:hidden;background:var(--panel);border-left:1px solid var(--line);transition:width .2s}
+.prev{width:0;overflow:hidden;min-height:0;background:var(--panel);border-left:1px solid var(--line);transition:width .2s}
 .prev.open{width:400px}
 .prev-in{width:400px;height:100%;display:flex;flex-direction:column}
-.prev-top{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:8px}
+.prev-top{flex:none;display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:8px}
 .prev-top b{flex:1;font-size:13px;color:var(--muted);font-weight:500}
 .x{border:0;background:none;cursor:pointer;padding:4px;border-radius:6px;color:var(--muted)}
 .x:hover{background:var(--hover)}
 .stage{height:330px;flex:none;background:var(--panel2);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);overflow:hidden}
 .stage iframe,.stage video{width:100%;height:100%;border:0;background:#fff}
 .stage img{max-width:100%;max-height:330px;object-fit:contain}
-.pbody{padding:16px;overflow:auto;flex:1}
+.pbody{padding:16px;overflow-y:auto;overscroll-behavior:contain;flex:1;min-height:0}
 .pbody h2{font-size:16px;margin:0 0 4px;word-break:break-word}
 .actions{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
 .btn{border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:7px 12px;cursor:pointer;font-weight:550;font-size:13px}
@@ -258,7 +268,9 @@ dd a{color:var(--accent)}
       <button class="ctl" id="refresh" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
       <button class="ctl" id="theme" title="Light / dark"></button>
     </div>
+    <div class="phead" id="phead"></div>
     <div class="content" id="content"></div>
+    <div class="status" id="status"></div>
   </main>
 
   <aside class="prev" id="prev"><div class="prev-in" id="prevIn"></div></aside>
@@ -455,7 +467,20 @@ function row(f){
     <div class="c">${ago(lastTouch(f))}</div>
     <div class="c hide-s">${f.useCount?f.useCount+'×':''}</div></div>`;
 }
-const block = list => S.layout==='grid' ? `<div class="grid">${list.map(card).join('')}</div>` : `<div class="list">${list.map(row).join('')}</div>`;
+const LIST_HEAD = `<div class="row hd"><div></div><div>Name</div><div class="c hide-s">Came from</div><div class="c">Last used</div><div class="c hide-s">Opened</div></div>`;
+const block = list => S.layout==='grid' ? `<div class="grid">${list.map(card).join('')}</div>` : `<div class="list">${LIST_HEAD}${list.map(row).join('')}</div>`;
+
+// Status bar: how many items are shown, and which file is selected.
+function renderStatus(){
+  const c = $('content');
+  const files = new Set([...c.querySelectorAll('.card[data-path],.row[data-path]')].map(e => e.dataset.path)).size;
+  const folders = c.querySelectorAll('.ftile').length;
+  const parts = [];
+  if(folders) parts.push(`${folders} folder${folders===1?'':'s'}`);
+  parts.push(`${files} file${files===1?'':'s'}`);
+  const f = S.sel && byPath().get(S.sel);
+  $('status').innerHTML = `<span>${parts.join(' · ')}</span>${f?`<span class="sel-name" title="${esc(f.path)}">${esc(f.name)}${f.size?' · '+size(f.size):''}</span>`:''}`;
+}
 
 function sections(groups, opts={}){
   if(!groups.length) return empty('Nothing here yet', opts.emptyMsg||'');
@@ -477,11 +502,11 @@ const filt = list => S.typeFilter==='All' ? list : list.filter(f => f.type===S.t
 
 function render(){
   renderNav();
-  let title, sub, body;
+  let title, sub, body, tools = '';
   if(S.q){
     title = `Results for “${S.q}”`;
     if(!S.results){ body = '<div class="loading"><div class="spin"></div>Searching…</div>'; sub=''; }
-    else { const r = filt(S.results); sub = `${r.length} files found across your Mac`; body = typeChips(S.results) + (r.length?block(sorted(r)):empty('No files found','Try a shorter word, or part of the name.')); }
+    else { const r = filt(S.results); sub = `${r.length} files found across your Mac`; tools = typeChips(S.results); body = (r.length?block(sorted(r)):empty('No files found','Try a shorter word, or part of the name.')); }
   } else switch(S.view){
     case 'open': {
       const l = openNow();
@@ -495,12 +520,12 @@ function render(){
       const buckets = [['Today',day],['This week',7*day],['This month',31*day],['Earlier',1e12]];
       const groups = []; let prev = 0;
       for(const [k, lim] of buckets){ const fs = l.filter(f => { const a = now-lastTouch(f); return a>=prev && a<lim; }); if(fs.length) groups.push({key:k, files:fs}); prev = lim; }
-      body = typeChips(S.files) + (S.sort==='recent' ? sections(groups, {max:120}) : block(sorted(l).slice(0,400)));
+      tools = typeChips(S.files); body = (S.sort==='recent' ? sections(groups, {max:120}) : block(sorted(l).slice(0,400)));
       break; }
     case 'used': {
       title='Most used'; sub='The files you come back to the most.';
       const l = filt(S.files).filter(f => f.useCount > 1).sort((a,b)=>(b.useCount-a.useCount)||(lastTouch(b)-lastTouch(a))).slice(0,120);
-      body = typeChips(S.files) + (l.length?block(l):empty('Nothing yet','Open some files a few times and they will appear here.'));
+      tools = typeChips(S.files); body = (l.length?block(l):empty('Nothing yet','Open some files a few times and they will appear here.'));
       break; }
     case 'pinned': {
       const m = byPath(); const l = [...S.pins].map(p => m.get(p)).filter(Boolean);
@@ -510,19 +535,19 @@ function render(){
     case 'families': {
       const fams = families().filter(g => S.typeFilter==='All' || g.files.some(f=>f.type===S.typeFilter));
       title='Related files'; sub='Files that belong together: the original lesson, its split parts, copies, marked and answer versions.';
-      body = typeChips(S.files) + sections(fams.slice(0,80), {boxed:true, noSort:true, folderLink:true, label:g=>titleCase(g.key)});
+      tools = typeChips(S.files); body = sections(fams.slice(0,80), {boxed:true, noSort:true, folderLink:true, label:g=>titleCase(g.key)});
       break; }
     case 'sources': {
       const g = groupBy(filt(S.files), f => f.source);
       const groups = [...g.entries()].map(([key,files])=>({key,files})).sort((a,b)=>b.files.length-a.files.length);
       title='Where it came from'; sub='Grouped by the website you downloaded it from, or the folder it lives in.';
-      body = typeChips(S.files) + sections(groups, {max:24});
+      tools = typeChips(S.files); body = sections(groups, {max:24});
       break; }
     case 'folders': {
       const g = groupBy(filt(S.files), f => f.folder);
       const groups = [...g.entries()].map(([key,files])=>({key,files})).sort((a,b)=>Math.max(...b.files.map(lastTouch))-Math.max(...a.files.map(lastTouch)));
       title='Folders'; sub='Your busiest folders, most recently used first.';
-      body = typeChips(S.files) + sections(groups.slice(0,40), {max:24, folderLink:true});
+      tools = typeChips(S.files); body = sections(groups.slice(0,40), {max:24, folderLink:true});
       break; }
     case 'browse': {
       const d = S.browseData;
@@ -532,8 +557,9 @@ function render(){
         <button data-reveal-folder="${esc(d.path)}" style="margin-left:auto;color:var(--accent)">Open in Finder ↗</button></div>`;
       const folders = d.folders.length ? `<div class="section-h">Folders <span class="count">${d.folders.length}</span></div><div class="folders">${d.folders.map(f=>`<div class="ftile" data-browse="${esc(f.path)}">${svg('folder')}<div><b>${esc(f.name)}</b><small>${f.count} item${f.count===1?'':'s'}</small></div></div>`).join('')}</div>` : '';
       const fl = filt(d.files);
-      const files = d.files.length ? `<div class="section-h">Files <span class="count">${d.files.length}</span></div>${typeChips(d.files)}${fl.length?block(sorted(fl)):''}` : '';
-      body = crumbs + folders + files + (!d.folders.length && !d.files.length ? empty('This folder is empty','') : '');
+      const files = d.files.length ? `<div class="section-h">Files <span class="count">${d.files.length}</span></div>${fl.length?block(sorted(fl)):empty('No files of this type','')}` : '';
+      tools = crumbs + (d.files.length ? typeChips(d.files) : '');
+      body = folders + files + (!d.folders.length && !d.files.length ? empty('This folder is empty','') : '');
       break; }
     case 'types': {
       const g = groupBy(S.files, f => f.type);
@@ -542,8 +568,10 @@ function render(){
       body = sections(groups, {dot:true, max:24});
       break; }
   }
-  $('content').innerHTML = `<div class="title"><h1>${esc(title)}</h1></div><p class="sub">${esc(sub)}</p>${body}`;
+  $('phead').innerHTML = `<div class="title"><h1>${esc(title)}</h1></div><p class="sub">${esc(sub)}</p>${tools}`;
+  $('content').innerHTML = body;
   loadThumbs();
+  renderStatus();
 }
 
 // Thumbnails load as they scroll into view.
@@ -558,6 +586,7 @@ function preview(f){
   S.sel = f.path;
   document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel'));
   document.querySelectorAll(`[data-path="${CSS.escape(f.path)}"]`).forEach(e=>e.classList.add('sel'));
+  renderStatus();
   const raw = '/api/raw?path='+encodeURIComponent(f.path);
   let stage;
   if(f.ext==='pdf') stage = `<img src="${pageImg(1, true, f)}" alt="" onerror="this.src='/api/thumb?s=720&path=${encodeURIComponent(f.path)}'">`;
@@ -631,7 +660,7 @@ async function openFolder(path){
   if(S.browse===path) render();
   $('content').scrollTop = 0;
 }
-function closePreview(){ $('prev').classList.remove('open'); S.sel=null; document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel')); }
+function closePreview(){ $('prev').classList.remove('open'); S.sel=null; document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel')); renderStatus(); }
 
 function togglePin(p){
   S.pins.has(p) ? S.pins.delete(p) : S.pins.add(p);
