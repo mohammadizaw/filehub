@@ -1213,6 +1213,21 @@ $('rnInput').addEventListener('keydown', e => {
   else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); closeRename(); }
 });
 
+// ---------- new version from the cloud: refresh the page by itself ----------
+let myVersion = null;
+async function checkVersion(){
+  let v; try{ v = (await api('/api/version')).version; }catch(e){ return; }  // server restarting: try again later
+  if(myVersion === null){ myVersion = v; return; }
+  if(v && v !== myVersion){
+    const busy = $('splitModal').classList.contains('open') || $('rn').classList.contains('on') || $('zoom').classList.contains('on');
+    if(busy) return;  // wait until you've finished
+    toast('FileHub was updated. Refreshing…');
+    setTimeout(() => location.reload(), 1200);
+  }
+}
+checkVersion(); setInterval(checkVersion, 60000);
+addEventListener('focus', checkVersion);
+
 // Keyboard: ⌘C copy · ⌘V paste into the open folder · ⌘D duplicate · ⌥⌘C copy path
 document.addEventListener('keydown', e => {
   if(e.key==='Escape' && $('ctx').classList.contains('on')){ closeMenu(); e.stopPropagation(); return; }
