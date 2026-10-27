@@ -10,12 +10,15 @@ import plistlib
 import mimetypes
 import os
 import re
+import signal
 import subprocess
+import sys
 import tempfile
 import threading
 import time
 import webbrowser
 import zipfile
+import urllib.request
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
@@ -758,6 +761,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if url.path in ("/", "/index.html"):
                 return self.send_file(os.path.join(HERE, "filehub.html"), "text/html; charset=utf-8")
+            if url.path == "/api/version":
+                return self.send(200, {"version": VERSION})
             if url.path == "/api/library":
                 return self.send(200, library(force=qs.get("refresh") == "1"))
             if url.path == "/api/open":
@@ -858,10 +863,112 @@ class Handler(BaseHTTPRequestHandler):
         return self.send(200, {"ok": True})
 
 
+# ---------- Updates from the cloud ----------
+# FileHub fetches new versions itself (git pull), whether it was started from the Dock,
+# the .command file or Terminal. No internet or a failed update = keep the current version.
+UPDATE_EVERY = int(os.environ.get("FILEHUB_UPDATE_EVERY", 30 * 60))  # also check every 30 minutes while it runs
+
+
+def git_version():
+    try:
+        out = subprocess.run(["git", "-C", HERE, "rev-parse", "HEAD"],
+                             capture_output=True, text=True, timeout=10)
+        return out.stdout.strip() or None
+    except Exception:
+        return None
+
+
+VERSION = git_version()
+
+
+def self_update():
+    """Get the latest FileHub from GitHub. True when new code arrived."""
+    if not os.path.isdir(os.path.join(HERE, ".git")):
+        return False
+    # git needs Apple's command line tools; never trigger their install pop-up from here
+    if subprocess.run(["xcode-select", "-p"], capture_output=True).returncode != 0:
+        return False
+    before = git_version()
+    try:
+        subprocess.run(["git", "-C", HERE, "pull", "--ff-only", "--quiet"],
+                       capture_output=True, timeout=30,
+                       env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+    except Exception:
+        return False
+    after = git_version()
+    return bool(after and after != before)
+
+
+def restart():
+    """Start the new version in place of this one (the browser page reloads by itself)."""
+    env = dict(os.environ, FILEHUB_NO_BROWSER="1", FILEHUB_UPDATED="1")
+    os.execve(sys.executable, [sys.executable, os.path.abspath(__file__)], env)
+
+
+def update_loop():
+    while True:
+        time.sleep(UPDATE_EVERY)
+        if self_update():
+            print("A new version of FileHub arrived. Restarting it...")
+            restart()
+
+
+def running_version():
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:%d/api/version" % PORT, timeout=3) as r:
+            return json.loads(r.read()).get("version")
+    except Exception:
+        return None  # older versions don't answer /api/version
+
+
+def stop_old_filehub():
+    """If an older FileHub is still running, stop it so this version can start."""
+    if VERSION and running_version() == VERSION:
+        return False  # the same version is already running: just use it
+    out = subprocess.run(["lsof", "-nP", "-t", "-iTCP:%d" % PORT, "-sTCP:LISTEN"],
+                         capture_output=True, text=True)
+    stopped = False
+    for pid in out.stdout.split():
+        cmd = subprocess.run(["ps", "-p", pid, "-o", "command="], capture_output=True, text=True).stdout
+        if "filehub.py" in cmd and int(pid) != os.getpid():  # only ever FileHub itself
+            os.kill(int(pid), signal.SIGTERM)
+            stopped = True
+    return stopped
+
+
+def start_server():
+    for _ in range(20):
+        try:
+            return ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+        except OSError:
+            time.sleep(0.5)
+    if running_version() == VERSION:
+        raise SystemExit("FileHub is already running.")
+    raise SystemExit("FileHub couldn't start: something else is using port %d." % PORT)
+
+
 def main():
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+    global VERSION
+    if not os.environ.get("FILEHUB_UPDATED"):
+        print("Checking for updates...")
+        if self_update():
+            print("FileHub was updated. Starting the new version...")
+            env = dict(os.environ, FILEHUB_UPDATED="1")
+            os.execve(sys.executable, [sys.executable, os.path.abspath(__file__)], env)
+    VERSION = git_version()
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+    except OSError:  # port busy: an older FileHub, this same version, or our own restart
+        if stop_old_filehub():
+            print("Stopped the older FileHub.")
+        elif not os.environ.get("FILEHUB_UPDATED"):
+            print("FileHub is already running.")
+            webbrowser.open("http://127.0.0.1:%d" % PORT)
+            return
+        server = start_server()
     print("FileHub is running at http://127.0.0.1:%d  (press Ctrl+C to stop)" % PORT)
     threading.Thread(target=library, daemon=True).start()  # warm up
+    threading.Thread(target=update_loop, daemon=True).start()
     if not os.environ.get("FILEHUB_NO_BROWSER"):
         threading.Timer(0.8, lambda: webbrowser.open("http://127.0.0.1:%d" % PORT)).start()
     try:

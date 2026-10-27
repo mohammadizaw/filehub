@@ -10,7 +10,9 @@ Double-click `Open FileHub.command`, or run:
 
     python3 filehub.py
 
-The launcher first runs `git pull` to fetch any changes made in the cloud. If there is
+FileHub updates itself: every time it starts (from the Dock, the launcher or Terminal) and
+every 30 minutes while it runs, it fetches changes made in the cloud with `git pull`, and
+the open page refreshes by itself. The launcher also runs `git pull` first. If there is
 no internet or the update fails, it just starts the version you already have. If an older
 FileHub is still running, it restarts it so the update takes effect.
 
