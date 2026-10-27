@@ -1539,12 +1539,18 @@ document.addEventListener('mouseover', e => {
   if(el.hasAttribute('title')){ const t = el.getAttribute('title'); el.removeAttribute('title'); if(t) el.dataset.tip = t; else delete el.dataset.tip; }
   if(!el.dataset.tip) return;
   hideTip(); tipFor = el;
+  const mx = e.clientX, my = e.clientY;
   tipT = setTimeout(() => {
     if(tipFor !== el || !el.isConnected) return;
     const tip = $('tip'); tip.textContent = el.dataset.tip; tip.classList.add('on');
     const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
-    tip.style.left = Math.max(8, Math.min(r.left + r.width/2 - w/2, innerWidth - w - 8)) + 'px';
-    tip.style.top = (r.bottom + 8 + h > innerHeight - 8 ? r.top - h - 8 : r.bottom + 8) + 'px';
+    // tall things (like the panel's drag edge): put the label next to the mouse instead of under the element
+    const tall = r.height > 80;
+    let left = tall ? mx + 14 : r.left + r.width/2 - w/2;
+    let top = tall ? my + 16 : (r.bottom + 8 + h > innerHeight - 8 ? r.top - h - 8 : r.bottom + 8);
+    if(tall && left + w > innerWidth - 8) left = mx - w - 14;
+    tip.style.left = Math.max(8, Math.min(left, innerWidth - w - 8)) + 'px';
+    tip.style.top = Math.max(8, Math.min(top, innerHeight - h - 8)) + 'px';
   }, 500);
 });
 document.addEventListener('mouseout', e => { if(tipFor && !tipFor.contains(e.relatedTarget)) hideTip(); });
