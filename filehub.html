@@ -88,7 +88,7 @@ button,select,input{font:inherit;color:inherit}
 .section-h .count{color:var(--muted);font-weight:400;font-size:13px}
 .section-h .folder{color:var(--muted);font-weight:400;font-size:12px;margin-left:auto;cursor:pointer}
 .family{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(164px,1fr));gap:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(164px * var(--zoom,1)),1fr));gap:14px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s;position:relative}
 .family .card{background:var(--panel2)}
 .card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
@@ -295,25 +295,25 @@ select.ctl{font-weight:600}
 .card{border:0;border-radius:18px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
 .card.sel{box-shadow:0 0 0 2px var(--accent),var(--shadow-lg)}
-.thumb{margin:8px 8px 0;border:0;border-radius:13px;background:var(--panel2);height:112px}
+.thumb{margin:8px 8px 0;border:0;border-radius:13px;background:var(--panel2);height:calc(112px * var(--zoom,1))}
 .thumb .badge{top:16px;left:16px}
-.pages{top:96px;right:16px;border-radius:8px}
+.pages{top:calc(112px * var(--zoom,1) - 16px);right:16px;border-radius:8px}
 .badge{border-radius:7px;background-image:linear-gradient(135deg,rgba(255,255,255,.28),rgba(255,255,255,0))}
 .name{font-weight:700}
 .pin{border-radius:10px;top:14px;right:14px}
 /* list */
 .list{border:0;border-radius:18px;box-shadow:var(--shadow)}
 .row{border-bottom-color:var(--panel2)}
-.row .ic{width:32px;height:32px;border-radius:10px;background-image:linear-gradient(135deg,rgba(255,255,255,.32),rgba(255,255,255,0));box-shadow:0 4px 10px -5px color-mix(in srgb,var(--tint) 35%,transparent)}
+.row .ic{width:calc(32px * var(--lzoom,1));height:calc(32px * var(--lzoom,1));border-radius:10px;background-image:linear-gradient(135deg,rgba(255,255,255,.32),rgba(255,255,255,0));box-shadow:0 4px 10px -5px color-mix(in srgb,var(--tint) 35%,transparent)}
 .row .nm div{font-weight:600}
 .row.sel{background:var(--accent-soft)}
 .row.hd{background:var(--panel);top:-6px}
 .row.hd:hover{background:var(--panel)}
 /* folders */
-.folders{gap:12px}
+.folders{gap:12px;grid-template-columns:repeat(auto-fill,minmax(calc(190px * var(--zoom,1)),1fr))}
 .ftile{border:0;border-radius:16px;box-shadow:var(--shadow);padding:12px;transition:transform .15s,box-shadow .15s}
 .ftile:hover{background:var(--panel);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
-.ftile svg{width:40px;height:40px;padding:9px;border-radius:12px;background:var(--violet-soft);color:var(--violet);fill:color-mix(in srgb,var(--violet) 22%,transparent)}
+.ftile svg{width:calc(40px * var(--zoom,1));height:calc(40px * var(--zoom,1));padding:calc(9px * var(--zoom,1));border-radius:12px;background:var(--violet-soft);color:var(--violet);fill:color-mix(in srgb,var(--violet) 22%,transparent)}
 .ftile b{font-weight:700}
 .crumbs button{border-radius:9px;font-weight:600}
 /* preview panel */
@@ -392,17 +392,17 @@ select.ctl{font-weight:600}
 :root[data-style="glass"] .row{border-bottom-color:var(--glass-line)}
 
 /* ===== Density: Compact ===== */
-:root[data-density="compact"] .grid{grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:10px}
-:root[data-density="compact"] .thumb{height:84px}
-:root[data-density="compact"] .pages{top:68px}
+:root[data-density="compact"] .grid{grid-template-columns:repeat(auto-fill,minmax(calc(136px * var(--zoom,1)),1fr));gap:10px}
+:root[data-density="compact"] .thumb{height:calc(84px * var(--zoom,1))}
+:root[data-density="compact"] .pages{top:calc(84px * var(--zoom,1) - 16px)}
 :root[data-density="compact"] .meta{padding:7px 9px 9px}
 :root[data-density="compact"] .name{font-size:12.5px}
 :root[data-density="compact"] .row{padding:5px 14px}
-:root[data-density="compact"] .row .ic{width:26px;height:26px;font-size:8.5px}
+:root[data-density="compact"] .row .ic{width:calc(26px * var(--lzoom,1));height:calc(26px * var(--lzoom,1));font-size:8.5px}
 :root[data-density="compact"] .nav button{padding:6px 12px}
 :root[data-density="compact"] .section{margin-bottom:18px}
 :root[data-density="compact"] .ftile{padding:8px 10px}
-:root[data-density="compact"] .ftile svg{width:32px;height:32px;padding:7px}
+:root[data-density="compact"] .ftile svg{width:calc(32px * var(--zoom,1));height:calc(32px * var(--zoom,1));padding:calc(7px * var(--zoom,1))}
 :root[data-density="compact"] .title h1{font-size:22px}
 
 /* ===== Font ===== */
@@ -410,6 +410,20 @@ select.ctl{font-weight:600}
 :root[data-font="serif"] body{font-family:"New York",ui-serif,Georgia,"Times New Roman",serif}
 @media (max-width:900px){ .appear{right:8px;left:8px;width:auto} }
 
+/* ===== Size slider (top bar) ===== */
+.sizer{display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;background:var(--panel);border-radius:12px;box-shadow:var(--shadow);color:var(--muted)}
+.sizer button{border:0;background:none;padding:2px;cursor:pointer;color:inherit;display:grid;place-items:center;border-radius:6px}
+.sizer button:hover{color:var(--accent)}
+.sizer .s svg{width:12px;height:12px}.sizer .b svg{width:17px;height:17px}
+.sizer input{-webkit-appearance:none;appearance:none;width:112px;height:4px;border-radius:4px;margin:0;cursor:pointer;
+  background:linear-gradient(var(--accent),var(--accent)) 0/var(--fill,30%) 100% no-repeat,var(--line)}
+.sizer input::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .1s}
+.sizer input::-webkit-slider-thumb:hover{transform:scale(1.15)}
+.sizer input::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:#fff;border:2px solid var(--accent)}
+:root[data-style="flat"] .sizer{box-shadow:none;border:1px solid var(--line);border-radius:8px}
+:root[data-style="glass"] .sizer{background:var(--glass);border:1px solid var(--glass-line)}
+@media (max-width:1100px){ .sizer input{width:80px} }
+@media (max-width:900px){ .sizer{display:none} }
 /* ===== Rename box ===== */
 .rn{position:fixed;inset:0;z-index:70;background:rgba(10,14,22,.35);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding-top:16vh}
 .rn.on{display:flex}
@@ -465,6 +479,11 @@ select.ctl{font-weight:600}
         <option value="name">Name A–Z</option>
         <option value="size">Biggest</option>
       </select>
+      <div class="sizer" title="File and folder size">
+        <button class="s" id="zoomDown" title="Smaller"></button>
+        <input type="range" id="zoomR" min="0.7" max="1.8" step="0.05" aria-label="File and folder size">
+        <button class="b" id="zoomUp" title="Bigger"></button>
+      </div>
       <div class="seg" id="viewSeg">
         <button data-v="grid" title="Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
         <button data-v="list" title="List"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
@@ -681,7 +700,7 @@ function card(f){
   const info = S.sort==='used' ? `Opened ${f.useCount}× · ${ago(lastTouch(f))}` : `${ago(lastTouch(f))} · ${size(f.size)}`;
   return `<div class="card ${S.sel===f.path?'sel':''}" data-path="${esc(f.path)}" title="${esc(f.folder)}">
     <div class="thumb"><span class="badge" style="background:${color(f.type)}">${esc(f.ext||'file')}</span>
-      <img loading="lazy" data-src="/api/thumb?s=240&path=${encodeURIComponent(f.path)}" alt="">
+      <img loading="lazy" data-src="/api/thumb?s=${thumbSize()}&path=${encodeURIComponent(f.path)}" alt="">
       ${f.pages?`<span class="pages">${pagesText(f)}</span>`:''}</div>
     <button class="pin ${pinned?'on':''}" data-pin="${esc(f.path)}" title="${pinned?'Unpin':'Pin'}">${svg('star', pinned?'currentColor':'none')}</button>
     <div class="meta" title="${esc(f.name)}"><div class="name">${esc(f.name)}</div><div class="info">${esc(info)}</div></div></div>`;
@@ -1015,6 +1034,29 @@ $('appear').addEventListener('click', e => {
 document.addEventListener('click', e => { if(!e.target.closest('#appear,#appearBtn')) $('appear').classList.remove('on'); });
 document.addEventListener('keydown', e => { if(e.key==='Escape' && $('appear').classList.contains('on')){ $('appear').classList.remove('on'); e.stopPropagation(); } }, true);
 applyLook();
+
+// ---------- size slider: makes file cards and folder tiles smaller or bigger ----------
+const thumbSize = () => (S.zoom||1) > 1.25 ? 480 : 240;   // sharper pictures on big cards
+let shownThumb = 240;
+function applyZoom(z, save){
+  z = Math.min(1.8, Math.max(0.7, Math.round(z*20)/20));
+  S.zoom = z;
+  const r = document.documentElement.style;
+  r.setProperty('--zoom', z);
+  r.setProperty('--lzoom', (0.85 + (z-1)*0.45).toFixed(3));   // list rows change more gently
+  const inp = $('zoomR'); inp.value = z;
+  inp.style.setProperty('--fill', ((z-0.7)/(1.8-0.7)*100) + '%');
+  inp.title = `Size: ${Math.round(z*100)}%`;
+  if(save){ store.set('zoom', z); if(thumbSize() !== shownThumb){ shownThumb = thumbSize(); render(); } }
+}
+$('zoomDown').innerHTML = svg('grid'); $('zoomUp').innerHTML = svg('grid');
+$('zoomR').addEventListener('input', e => applyZoom(+e.target.value, false));
+$('zoomR').addEventListener('change', e => applyZoom(+e.target.value, true));
+$('zoomDown').onclick = () => applyZoom((S.zoom||1) - 0.15, true);
+$('zoomUp').onclick = () => applyZoom((S.zoom||1) + 0.15, true);
+$('zoomR').addEventListener('dblclick', () => applyZoom(1, true));  // double-click: back to normal
+applyZoom(store.get('zoom', 1), false);
+shownThumb = thumbSize();
 
 // ---------- right-click menu + copy / paste ----------
 // Copy puts files on the Mac clipboard, so they can be pasted here, in Finder or in Mail.
