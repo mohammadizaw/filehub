@@ -410,6 +410,15 @@ select.ctl{font-weight:600}
 :root[data-font="serif"] body{font-family:"New York",ui-serif,Georgia,"Times New Roman",serif}
 @media (max-width:900px){ .appear{right:8px;left:8px;width:auto} }
 
+/* ===== Rename box ===== */
+.rn{position:fixed;inset:0;z-index:70;background:rgba(10,14,22,.35);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding-top:16vh}
+.rn.on{display:flex}
+.rn .box{width:min(440px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);padding:18px;animation:popin .14s ease-out}
+.rn h3{margin:0 0 4px;font-size:16px;font-weight:800}
+.rn p{margin:0 0 12px;color:var(--muted);font-size:12.5px;word-break:break-word}
+.rn input{width:100%;padding:10px 12px;border:2px solid var(--accent);border-radius:11px;background:var(--panel2);font-size:15px;font-weight:600;outline:none}
+.rn .err{color:#e5484d;font-size:12.5px;min-height:18px;margin:8px 0 0}
+.rn .actions{justify-content:flex-end;margin:10px 0 0}
 /* ===== Right-click menu ===== */
 .ctx{position:fixed;z-index:60;min-width:236px;max-width:300px;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg),0 0 0 .5px rgba(0,0,0,.04);padding:6px;font-size:13px;display:none;user-select:none}
 .ctx.on{display:block;animation:ctxin .1s ease-out}
@@ -473,6 +482,9 @@ select.ctl{font-weight:600}
 </div>
 <div class="appear" id="appear"></div>
 <div class="ctx" id="ctx"></div>
+<div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
+  <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
+  <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
 <div class="toast" id="toast"></div>
 <div class="zoom" id="zoom">
   <div class="zbar">
@@ -548,6 +560,7 @@ const ICONS = {
   grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   sort:'<path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/>',
   newfolder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10.5v5M9.5 13h5"/>',
+  pencil:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
   chev:'<path d="m9 6 6 6-6 6"/>',
   star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
 };
@@ -1072,6 +1085,7 @@ function menuFor(target){
       {icon:'info', label:'Get info', run:()=>preview(f)},
       '-',
       {icon:'copy', label:'Copy', key:K('C'), run:()=>copyFiles([f.path])},
+      {icon:'pencil', label:'Rename…', run:()=>renameItem(f.path, false)},
       {icon:'dup', label:'Duplicate', key:K('D'), run:()=>duplicateFile(f.path)},
       {icon:'link', label:'Copy path', key:K('C',1), run:()=>copyText(f.path,'Path copied')},
       {icon:'text', label:'Copy name', run:()=>copyText(f.name,'Name copied')},
@@ -1088,6 +1102,7 @@ function menuFor(target){
       {icon:'finder', label:'Open in Finder', run:()=>post('/api/launch',{path})},
       '-',
       {icon:'copy', label:'Copy', run:()=>copyFiles([path])},
+      ...(folderEl.matches('.ftile') ? [{icon:'pencil', label:'Rename…', run:()=>renameItem(path, true)}] : []),
       {icon:'paste', label:pasteLabel()+' into it', dis:!clip.files.length, run:()=>pasteInto(path)},
       {icon:'newfolder', label:'New folder inside', run:()=>newFolder(path)},
       {icon:'link', label:'Copy path', run:()=>copyText(path,'Path copied')},
@@ -1158,6 +1173,45 @@ function fitSub(sub){
 document.addEventListener('mousedown', e => { if(!e.target.closest('#ctx')) closeMenu(); }, true);
 addEventListener('blur', closeMenu); addEventListener('resize', closeMenu);
 document.addEventListener('scroll', closeMenu, true);
+
+
+// ---------- rename (same folder only; never replaces another file) ----------
+let RN = null;
+function renameItem(path, isFolder){
+  const name = path.split('/').pop();
+  RN = {path, isFolder};
+  $('rnWhere').textContent = 'In ' + path.slice(0, path.lastIndexOf('/')).replace(/^\/Users\/[^/]+/,'~');
+  $('rnErr').textContent = '';
+  const inp = $('rnInput'); inp.value = name;
+  $('rn').classList.add('on'); inp.focus();
+  const dot = name.lastIndexOf('.');
+  inp.setSelectionRange(0, !isFolder && dot > 0 ? dot : name.length); // select the name, not the .pdf
+}
+const closeRename = () => { $('rn').classList.remove('on'); RN = null; };
+async function saveRename(){
+  if(!RN) return;
+  const {path} = RN, name = $('rnInput').value.trim();
+  if(name === path.split('/').pop()){ closeRename(); return; }
+  const r = await post('/api/rename', {path, name}).catch(()=>null);
+  const d = r ? await r.json() : {error:"Couldn't rename"};
+  if(!r || !r.ok){ $('rnErr').textContent = d.error || "Couldn't rename"; return; }
+  const np = d.path, moved = p => p===path ? np : p.startsWith(path+'/') ? np + p.slice(path.length) : p;
+  S.pins = new Set([...S.pins].map(moved)); store.set('pins', [...S.pins]);
+  const wasSel = S.sel && moved(S.sel)!==S.sel;
+  if(S.browse && moved(S.browse)!==S.browse){ S.browse = moved(S.browse); store.set('browse', S.browse); }
+  closeRename(); toast(`Renamed to “${name}”`);
+  if(S.view==='browse' && S.browse) await openFolder(S.browse);
+  api('/api/library?refresh=1').then(fs => { S.files = fs; if(S.view!=='browse') render(); else renderNav();
+    const f = wasSel && byPath().get(moved(S.sel)); if(f) preview(f); }).catch(()=>{});
+  if(wasSel){ const f = byPath().get(np); if(f) preview(f); else S.sel = np; }
+}
+$('rnSave').onclick = saveRename;
+$('rnCancel').onclick = closeRename;
+$('rn').addEventListener('mousedown', e => { if(e.target.id==='rn') closeRename(); });
+$('rnInput').addEventListener('keydown', e => {
+  if(e.key==='Enter'){ e.preventDefault(); saveRename(); }
+  else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); closeRename(); }
+});
 
 // Keyboard: ⌘C copy · ⌘V paste into the open folder · ⌘D duplicate · ⌥⌘C copy path
 document.addEventListener('keydown', e => {

@@ -690,6 +690,46 @@ def new_folder(dest):
     return out
 
 
+def rename_item(path, new_name):
+    """Rename a file or folder in the same folder. Never replaces another file."""
+    path = os.path.realpath(path)
+    new_name = (new_name or "").strip()
+    if not new_name or new_name in (".", "..") or "/" in new_name or ":" in new_name \
+            or new_name.startswith(".") or len(new_name.encode()) > 255:
+        raise ValueError("Please use a different name (no / or : and not starting with a dot).")
+    folder = os.path.dirname(path)
+    if folder == HOME:
+        raise ValueError("Main folders like Desktop and Documents can't be renamed here.")
+    new = os.path.join(folder, new_name)
+    if new == path:
+        return path
+    if os.path.exists(new) and not os.path.samefile(new, path):  # same file = only the capitals changed
+        raise ValueError("“%s” already exists in this folder." % new_name)
+    os.rename(path, new)
+    # keep the split-PDF links pointing at the new name
+    with _rel_lock:
+        changed = False
+        def moved(p):
+            if p == path:
+                return new
+            if p.startswith(path + "/"):
+                return new + p[len(path):]
+            return p
+        for child in list(_links):
+            v = _links.pop(child)
+            nc, np_ = moved(child), moved(v["parent"])
+            changed |= nc != child or np_ != v["parent"]
+            v["parent"] = np_
+            _links[nc] = v
+        if changed:
+            tmp = RELATIONS_FILE + ".tmp"
+            with open(tmp, "w") as fh:
+                json.dump(_links, fh, indent=1)
+            os.replace(tmp, RELATIONS_FILE)
+    _library["time"] = 0
+    return new
+
+
 # ---------- Web server ----------
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -797,6 +837,11 @@ class Handler(BaseHTTPRequestHandler):
         elif url.path == "/api/quicklook":
             subprocess.Popen(["qlmanage", "-p", p], stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL)
+        elif url.path == "/api/rename":
+            try:
+                return self.send(200, {"path": rename_item(p, data.get("name"))})
+            except (ValueError, OSError) as e:
+                return self.send(400, {"error": str(e)})
         elif url.path == "/api/duplicate":
             try:
                 return self.send(200, {"made": [duplicate(p)]})
