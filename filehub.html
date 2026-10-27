@@ -180,8 +180,8 @@ dd a{color:var(--accent)}
 .loading{display:flex;align-items:center;gap:10px;color:var(--muted);padding:40px 0;justify-content:center}
 .spin{width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s 0.8s linear infinite}
 @keyframes s{to{transform:rotate(360deg)}}
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;font-size:13px}
-.toast.show{opacity:1;transform:translateX(-50%)}
+.toast{position:fixed;top:14px;right:18px;z-index:85;max-width:min(420px,70vw);box-shadow:var(--shadow-lg);transform:translateX(24px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;opacity:0;transition:.2s;pointer-events:none;font-size:13px;word-break:break-word}
+.toast.show{opacity:1;transform:none}
 /* Split window */
 .modal{position:fixed;inset:0;background:rgba(10,14,22,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:20;padding:24px}
 .modal.open{display:flex}
@@ -315,6 +315,7 @@ select.ctl{font-weight:600}
 .statusbar .status .sel-name{max-width:none}
 .sizer.mini{height:26px;padding:4px 6px 0;background:none!important;box-shadow:none!important;border:0!important;gap:6px}
 .sizer.mini input{width:104px;flex:none}
+.sizer.mini .szl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:2px}
 .sizer.mini .s svg{width:11px;height:11px}.sizer.mini .b svg{width:15px;height:15px}
 /* type filters */
 .chip{border:0;background:var(--panel);box-shadow:var(--shadow);font-weight:600;padding:6px 14px}
@@ -546,7 +547,35 @@ select.ctl{font-weight:600}
 :root[data-style="flat"] .sizer{box-shadow:none;border:1px solid var(--line);border-radius:8px}
 :root[data-style="glass"] .sizer{background:var(--glass);border:1px solid var(--glass-line)}
 @media (max-width:1100px){ .sizer input{width:80px} }
-@media (max-width:900px){ .sizer{display:none} }
+@media (max-width:900px){ .sizer:not(.mini){display:none} .toast{right:10px;left:10px;max-width:none} }
+/* ===== In-app folder picker (Move to… / Copy to…) ===== */
+.fp .box{width:min(560px,94vw);max-height:82vh;display:flex;flex-direction:column;padding:16px 18px}
+.fp p{margin:0 0 10px}
+.fpbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.fpbar .btn{padding:6px 11px}
+.fpcrumbs{display:flex;flex-wrap:wrap;gap:3px;align-items:center;font-size:13px;min-width:0}
+.fpcrumbs button{all:unset;cursor:pointer;padding:3px 7px;border-radius:7px;color:var(--muted);font-weight:600}
+.fpcrumbs button:hover{background:var(--hover);color:var(--text)}
+.fpcrumbs button:last-child{color:var(--text)}
+.fpcrumbs i{color:var(--muted);font-style:normal}
+.fplist{flex:1;min-height:200px;overflow-y:auto;background:var(--panel2);border-radius:14px;padding:6px}
+.fplist .fe{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;cursor:pointer;font-weight:600}
+.fplist .fe:hover{background:var(--hover)}
+.fplist .fe.on{background:var(--accent-grad);color:#fff;box-shadow:var(--accent-glow)}
+.fplist .fe.dis{opacity:.4;cursor:default}
+.fplist .fe .fo{--s:28px}
+.fplist .fe.on .fo svg{color:#fff;fill:rgba(255,255,255,.3)}
+.fplist .fe small{margin-left:auto;color:var(--muted);font-weight:500;font-size:12px}
+.fplist .fe.on small{color:rgba(255,255,255,.85)}
+.fplist .fe .go{margin-left:6px;border:0;background:none;color:inherit;opacity:.5;cursor:pointer;border-radius:6px;padding:2px 6px;font-size:15px}
+.fplist .fe:hover .go{opacity:.9}
+.fplist .fe.on .go{color:#fff}
+.fplist .msg{padding:30px;text-align:center;color:var(--muted)}
+.fpfoot{margin-top:10px}
+.fpcur{font-size:12.5px;color:var(--muted);margin-bottom:8px;word-break:break-word}
+.fpcur b{color:var(--text)}
+.fp .actions{justify-content:flex-end;margin:0;gap:8px}
+.fp .actions #fpNew{margin-right:auto}
 /* ===== Rename box ===== */
 .rn{position:fixed;inset:0;z-index:70;background:rgba(10,14,22,.35);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding-top:16vh}
 .rn.on{display:flex}
@@ -743,7 +772,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     <div class="phead" id="phead"></div>
     <div class="content" id="content"></div>
     <div class="statusbar"><div class="status" id="status"></div>
-      <div class="sizer mini" title="File and folder size">
+      <div class="sizer mini" title="File and folder size"><span class="szl">Size</span>
         <button class="s" id="zoomDown" title="Smaller"></button>
         <input type="range" id="zoomR" min="0.7" max="1.8" step="0.05" aria-label="File and folder size">
         <button class="b" id="zoomUp" title="Bigger"></button>
@@ -776,6 +805,13 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 <div class="rn ask" id="ask"><div class="box"><h3 id="askTitle"></h3><p id="askText"></p><input id="askInput" spellcheck="false" autocomplete="off">
   <div class="actions"><button class="btn" id="askNo">Cancel</button><button class="btn primary" id="askYes">OK</button></div></div></div>
 <div class="tip" id="tip"></div>
+<div class="rn fp" id="fp"><div class="box">
+  <h3 id="fpTitle">Choose a folder</h3><p id="fpWhat"></p>
+  <div class="fpbar"><button class="btn" id="fpUp" title="Up one folder">↑</button><div class="fpcrumbs" id="fpCrumbs"></div></div>
+  <div class="fplist" id="fpList"></div>
+  <div class="fpfoot"><div class="fpcur" id="fpCur"></div>
+    <div class="actions"><button class="btn" id="fpNew">New folder</button><button class="btn" id="fpOther">Other…</button><button class="btn" id="fpCancel">Cancel</button><button class="btn primary" id="fpOk">Move here</button></div></div>
+</div></div>
 <div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
   <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
   <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
@@ -1448,7 +1484,7 @@ function openDD(sel){
   closeMenu(); DDsel = sel;
   const dd = $('dd'), btn = sel._cs.btn;
   dd.innerHTML = [...sel.options].map((o,i) => `<div class="ci ${i===sel.selectedIndex?'kb':''}" data-i="${i}"><span class="chk">${i===sel.selectedIndex?'✓':''}</span><span class="lbl">${esc(o.text)}</span></div>`).join('');
-  dd.classList.add('on'); btn.classList.add('open');
+  dd.classList.add('on'); btn.classList.add('open'); dd._openedAt = Date.now();
   const r = btn.getBoundingClientRect();
   dd.style.minWidth = Math.max(180, r.width) + 'px';
   const h = dd.offsetHeight, w = dd.offsetWidth;
@@ -1460,7 +1496,7 @@ function pickDD(i){ const sel = DDsel; if(!sel) return; closeDD(); if(i !== sel.
 $('dd').addEventListener('click', e => { e.stopPropagation(); const c = e.target.closest('.ci'); if(c) pickDD(+c.dataset.i); });
 $('dd').addEventListener('mousemove', e => { const c = e.target.closest('.ci'); if(c){ $('dd').querySelectorAll('.kb').forEach(x=>x.classList.remove('kb')); c.classList.add('kb'); } });
 document.addEventListener('mousedown', e => { if(DDsel && !e.target.closest('#dd,.csel')) closeDD(); }, true);
-document.addEventListener('scroll', e => { if(DDsel && !e.target.closest?.('#dd')) closeDD(); }, true);
+document.addEventListener('scroll', e => { if(DDsel && !e.target.closest?.('#dd') && Date.now() - ($('dd')._openedAt||0) > 600) closeDD(); }, true);
 addEventListener('resize', closeDD); addEventListener('blur', closeDD);
 document.addEventListener('keydown', e => {
   if(!DDsel) return;
@@ -1710,7 +1746,7 @@ function openMenu(m, x, y){
   CTX.items = m.items;
   const h = m.head;
   const head = h && h.multi ? `<div class="ch"><span class="ic multi">${h.count}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : h ? `<div class="ch"><span class="ic${h.folder?' isfo':''}">${h.folder?folderIcon():`<span class="fi" style="--c:${h.color}"><i>${esc(h.ext)}</i></span>`}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : '';
-  const el = $('ctx'); el.innerHTML = head + itemsHTML(m.items); el.classList.add('on');
+  const el = $('ctx'); el.innerHTML = head + itemsHTML(m.items); el.classList.add('on'); CTX.openedAt = Date.now();
   el.style.left = '0px'; el.style.top = '0px';
   const w = el.offsetWidth, ht = el.offsetHeight;
   el.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px';
@@ -1756,7 +1792,8 @@ function fitSub(sub){
 }
 document.addEventListener('mousedown', e => { if(!e.target.closest('#ctx')) closeMenu(); }, true);
 addEventListener('blur', closeMenu); addEventListener('resize', closeMenu);
-document.addEventListener('scroll', closeMenu, true);
+// a layout change (e.g. the preview panel sliding open) also sends a scroll signal: ignore those right after opening
+document.addEventListener('scroll', e => { if(Date.now() - (CTX.openedAt||0) > 600) closeMenu(); }, true);
 
 
 
@@ -1872,6 +1909,8 @@ const keyOf = el => el.dataset.path || el.dataset.browse;
 const isFolderEl = el => el.classList.contains('ftile');
 const elOf = k => itemEls().find(el => keyOf(el) === k);
 const anyOverlay = () => !!document.querySelector('.rn.on,.modal.open,.zoom.on,#appear.on,#ctx.on,#dd.on');
+// the version check waits while a picker is open
+
 function clearSel(){ S.selSet = new Set(); S.anchor = S.focus = null; applySel(); }
 function applySel(){
   itemEls().forEach(el => { const k = keyOf(el); el.classList.toggle('sel', S.selSet.has(k)); el.classList.toggle('kbf', k === S.focus && S.selSet.size > 0); el.classList.toggle('is-cut', S.cut.includes(k)); });
@@ -2073,9 +2112,77 @@ async function copySelTo(keys, dest){
     refreshHere();
   }catch(e){ toast(e.message); }
 }
-async function pickFolderFor(purpose){
+
+// ---------- in-app folder picker: Move to… / Copy to… (no Finder window) ----------
+let FP = null;
+function pickFolderFor(purpose){
+  if(purpose === 'sidebar') return pickFolderNative(purpose);
+  const items = selKeys();
+  return new Promise(res => {
+    const home = (S.places.find(p => p.icon==='home') || {}).path || '/';
+    const start = S.view==='browse' && S.browse ? S.browse : (S.places[0] || {}).path || home;
+    FP = {res, purpose, moving: items, sel: null, path: start, home};
+    $('fpTitle').textContent = purpose==='copy' ? 'Copy to…' : 'Move to…';
+    $('fpWhat').textContent = `${plural(items.length,'item')}: open the folder you want, or click a folder once to pick it.`;
+    $('fpOk').textContent = purpose==='copy' ? 'Copy here' : 'Move here';
+    $('fp').classList.add('on');
+    fpGo(start);
+  });
+}
+async function pickFolderNative(purpose){
   try{ const r = await (await post('/api/choosefolder', {for:purpose})).json(); return r && r.path; }catch(e){ return null; }
 }
+async function fpGo(path){
+  if(!FP) return; FP.path = path; FP.sel = null;
+  $('fpList').innerHTML = '<div class="msg"><div class="spin" style="margin:0 auto 8px"></div>Opening…</div>';
+  let d;
+  try{ d = await api('/api/browse?path='+encodeURIComponent(path)); }
+  catch(e){ $('fpList').innerHTML = '<div class="msg">Can’t open that folder</div>'; return; }
+  if(!FP || FP.path !== path) return;
+  FP.data = d;
+  $('fpCrumbs').innerHTML = (d.crumbs||[]).map((c,i) => `${i?'<i>›</i>':''}<button data-fp="${esc(c.path)}">${esc(c.name)}</button>`).join('');
+  const blocked = p => FP.moving.some(m => p === m || p.startsWith(m + '/'));
+  $('fpList').innerHTML = d.folders.length ? d.folders.map(f => `<div class="fe ${blocked(f.path)?'dis':''}" data-fp="${esc(f.path)}">${folderIcon()}<span>${esc(f.name)}</span><small>${f.count} item${f.count===1?'':'s'}</small><button class="go" data-fpgo="${esc(f.path)}" title="Open">›</button></div>`).join('')
+    : '<div class="msg">No folders inside. You can use "New folder", or pick this folder.</div>';
+  fpShowCur();
+  $('fpUp').disabled = !(d.crumbs && d.crumbs.length > 1);
+}
+function fpTarget(){ return FP && (FP.sel || FP.path); }
+function fpShowCur(){
+  const t = fpTarget(); if(!t) return;
+  const label = t.replace(/^\/Users\/[^/]+/, '~');
+  $('fpCur').innerHTML = `${FP.purpose==='copy'?'Copy':'Move'} into <b>${esc(folderName(t))}</b> <span>(${esc(label)})</span>`;
+  const bad = FP.moving.some(m => t === m || t.startsWith(m + '/'));
+  $('fpOk').disabled = bad;
+}
+function fpClose(v){ if(!FP) return; const r = FP.res; FP = null; $('fp').classList.remove('on'); r(v); }
+$('fpList').addEventListener('click', e => {
+  const go = e.target.closest('[data-fpgo]'); if(go){ fpGo(go.dataset.fpgo); return; }
+  const fe = e.target.closest('.fe[data-fp]'); if(!fe || fe.classList.contains('dis')) return;
+  const p = fe.dataset.fp;
+  $('fpList').querySelectorAll('.fe.on').forEach(x => x.classList.remove('on'));
+  if(FP.sel === p){ FP.sel = null; } else { FP.sel = p; fe.classList.add('on'); }
+  fpShowCur();
+});
+$('fpList').addEventListener('dblclick', e => { const fe = e.target.closest('.fe[data-fp]'); if(fe && !fe.classList.contains('dis')) fpGo(fe.dataset.fp); });
+$('fpCrumbs').addEventListener('click', e => { const b = e.target.closest('[data-fp]'); if(b) fpGo(b.dataset.fp); });
+$('fpUp').onclick = () => { const c = FP && FP.data && FP.data.crumbs; if(c && c.length > 1) fpGo(c[c.length-2].path); };
+$('fpOk').onclick = () => fpClose(fpTarget());
+$('fpCancel').onclick = () => fpClose(null);
+$('fpOther').onclick = async () => { const purpose = FP.purpose; const t = await pickFolderNative(purpose); if(t) fpClose(t); };
+$('fpNew').onclick = async () => {
+  if(!FP) return;
+  try{ const d = await call('/api/newfolder', {path: FP.path}); const made = d.made[0]; await fpGo(FP.path); FP.sel = made; $('fpList').querySelectorAll('.fe').forEach(x => x.classList.toggle('on', x.dataset.fp === made)); fpShowCur(); }
+  catch(e){ toast(e.message); }
+};
+$('fp').addEventListener('mousedown', e => { if(e.target.id==='fp') fpClose(null); });
+document.addEventListener('keydown', e => {
+  if(!FP) return;
+  if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); fpClose(null); }
+  else if(e.key==='Enter'){ e.preventDefault(); e.stopPropagation(); if(!$('fpOk').disabled) fpClose(fpTarget()); }
+  else if(e.key==='Backspace' && !e.target.closest('input')){ e.preventDefault(); e.stopPropagation(); $('fpUp').click(); }
+}, true);
+
 async function undo(){
   const op = UNDO.pop(); if(!op){ toast('Nothing to undo'); return; }
   try{
@@ -2255,7 +2362,7 @@ async function checkVersion(){
   }catch(e){ return; }  // server restarting: try again later
   if(myVersion === null){ myVersion = v; return; }
   if(v && v !== myVersion){
-    const busy = $('splitModal').classList.contains('open') || $('rn').classList.contains('on') || $('sendBox').classList.contains('on') || $('zoom').classList.contains('on');
+    const busy = $('splitModal').classList.contains('open') || $('rn').classList.contains('on') || $('sendBox').classList.contains('on') || $('fp').classList.contains('on') || $('zoom').classList.contains('on');
     if(busy) return;  // wait until you've finished
     toast('FileHub was updated. Refreshing…');
     setTimeout(() => location.reload(), 1200);
