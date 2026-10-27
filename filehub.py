@@ -565,10 +565,14 @@ def browse(path):
             "folders": folders, "files": metadata(files[:600])}
 
 
-def choose_folder():
+PICKER_PROMPTS = {"split": "Save the split PDF in:", "sidebar": "Add this folder to the FileHub sidebar:"}
+
+
+def choose_folder(purpose="split"):
     """Open the Mac's own folder picker and return the chosen folder (or None)."""
+    prompt = PICKER_PROMPTS.get(purpose, PICKER_PROMPTS["split"])
     script = ('tell application "System Events" to activate\n'
-              'POSIX path of (choose folder with prompt "Save the split PDF in:")')
+              'POSIX path of (choose folder with prompt "%s")' % prompt)
     out = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=300)
     p = out.stdout.strip().rstrip("/")
     return p if p and os.path.isdir(p) else None
@@ -831,7 +835,7 @@ class Handler(BaseHTTPRequestHandler):
             except (ValueError, OSError, subprocess.SubprocessError) as e:
                 return self.send(400, {"error": str(e)})
         if url.path == "/api/choosefolder":
-            chosen = choose_folder()
+            chosen = choose_folder(data.get("for") or "split")
             return self.send(200, {"path": chosen, "display": nice_path(chosen) if chosen else None})
         if not allowed(p):
             return self.send(404, {"error": "not found"})
