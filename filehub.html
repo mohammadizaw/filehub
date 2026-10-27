@@ -529,6 +529,8 @@ select.ctl{font-weight:600}
 .banner{position:fixed;bottom:44px;left:50%;padding-right:40px!important;transform:translateX(-50%);z-index:80;max-width:min(620px,92vw);background:#3a2a10;color:#ffe7b3;border:1px solid #8a6420;border-radius:14px;padding:10px 16px;font-size:13px;box-shadow:var(--shadow-lg);display:none}
 .banner.on{display:block}
 .banner b{color:#fff}
+.banner .bact{margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner .bact span{font-size:12px;opacity:.85}
 .banner .bx{position:absolute;top:8px;right:8px;border:0;background:none;color:#ffe7b3;font-size:16px;cursor:pointer;border-radius:6px;width:24px;height:24px}
 .banner .bx:hover{background:rgba(255,255,255,.12)}
 /* ===== Size slider (top bar) ===== */
@@ -769,7 +771,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
   <div class="list2" id="sbList"></div>
   <div class="row2"><label class="chk"><input type="checkbox" class="switch" id="sbCounts"> Show numbers</label>
     <button class="btn" id="sbAdd">+ Add folder…</button><button class="btn" id="sbReset">Reset</button><button class="btn primary" id="sbDone">Done</button></div></div></div>
-<div class="banner" id="oldBanner"><button class="bx" title="Hide" onclick="this.parentNode.classList.remove('on');window.oldBannerHidden=1">✕</button><b>FileHub needs a restart to finish updating.</b> The screen is new but the old FileHub is still running, so some buttons (Copy, Duplicate, Rename…) say "not found". Quit FileHub and open it again, or simply restart your Mac.</div>
+<div class="banner" id="oldBanner"><button class="bx" title="Hide" onclick="this.parentNode.classList.remove('on');window.oldBannerHidden=1">✕</button><b>FileHub needs a restart to finish updating.</b> The screen is new but the old FileHub is still running, so some buttons (Copy, Duplicate, Rename…) say "not found". <div class="bact"><button class="btn primary" id="restartNow">Restart FileHub now</button> <span id="restartMsg">A Terminal window opens for a moment while it restarts.</span></div></div>
 <div class="ctx dd" id="dd"></div>
 <div class="rn ask" id="ask"><div class="box"><h3 id="askTitle"></h3><p id="askText"></p><input id="askInput" spellcheck="false" autocomplete="off">
   <div class="actions"><button class="btn" id="askNo">Cancel</button><button class="btn primary" id="askYes">OK</button></div></div></div>
@@ -2186,6 +2188,23 @@ $('prevGrip').addEventListener('mousedown', e => {
 });
 $('prevGrip').addEventListener('dblclick', () => store.set('prevW', setPrevW(400)));
 addEventListener('resize', () => setPrevW(store.get('prevW', 400)));
+
+
+// One-click restart for an old FileHub that is still running: open the launcher,
+// which gets the latest version, stops the old FileHub and starts the new one.
+$('restartNow').onclick = async () => {
+  const home = (S.places.find(p => p.icon==='home') || {}).path;
+  const msg = $('restartMsg');
+  if(!home){ msg.textContent = 'Please restart your Mac to finish.'; return; }
+  const r = await post('/api/launch', {path: home + '/Documents/File explore/Open FileHub.command'}).catch(() => null);
+  if(!r || !r.ok){ msg.textContent = "Couldn't start it from here. Please restart your Mac to finish."; return; }
+  $('restartNow').disabled = true; msg.textContent = 'Restarting… this page will refresh by itself.';
+  for(let i = 0; i < 60; i++){
+    await new Promise(res => setTimeout(res, 1500));
+    try{ const v = await fetch('/api/version'); if(v.ok){ location.reload(); return; } }catch(e){}
+  }
+  msg.textContent = 'Still the old FileHub. Please restart your Mac.';
+};
 
 // ---------- rename (same folder only; never replaces another file) ----------
 let RN = null;

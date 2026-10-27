@@ -57,7 +57,8 @@ filehub_pids() {
 }
 
 if lsof -nP -iTCP:$PORT -sTCP:LISTEN >/dev/null 2>&1; then
-  RUNNING_VERSION="$(cat "$STAMP" 2>/dev/null)"
+  # Ask the running FileHub which version it is (older ones don't answer).
+  RUNNING_VERSION="$(curl -s -m 3 "http://127.0.0.1:$PORT/api/version" 2>/dev/null | sed -n 's/.*"version": *"\([0-9a-f]*\)".*/\1/p')"
   PIDS="$(filehub_pids)"
   if [ -n "$VERSION" ] && [ "$RUNNING_VERSION" != "$VERSION" ] && [ -n "$PIDS" ]; then
     # It's an older version: stop it so the new one can start.
