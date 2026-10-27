@@ -594,6 +594,102 @@ def split_pdf(path, start, end, dest=None):
             "folder": nice_path(folder), "folderPath": folder}
 
 
+# ---------- Copy / paste (only ever ADDS files: never moves, renames or deletes) ----------
+CLIP_WRITE = """ObjC.import('AppKit');
+function run(argv) {
+  const pb = $.NSPasteboard.generalPasteboard;
+  pb.clearContents;
+  const urls = $.NSMutableArray.array;
+  argv.forEach(p => urls.addObject($.NSURL.fileURLWithPath(p)));
+  return pb.writeObjects(urls) ? 'ok' : 'fail';
+}"""
+CLIP_READ = """ObjC.import('AppKit');
+function run() {
+  const items = $.NSPasteboard.generalPasteboard.pasteboardItems;
+  const out = [];
+  if (items) for (let i = 0; i < items.count; i++) {
+    const u = items.objectAtIndex(i).stringForType('public.file-url');
+    if (u && !u.isNil()) { const url = $.NSURL.URLWithString(u); if (url && url.isFileURL) out.push(url.path.js); }
+  }
+  return JSON.stringify(out);
+}"""
+
+
+def clipboard_set(paths):
+    """Put files on the Mac clipboard, so they can be pasted here, in Finder, Mail..."""
+    out = subprocess.run(["osascript", "-l", "JavaScript", "-e", CLIP_WRITE] + paths,
+                         capture_output=True, text=True, timeout=15)
+    return out.stdout.strip() == "ok"
+
+
+def clipboard_files():
+    """Files currently on the Mac clipboard (copied here or in Finder)."""
+    try:
+        out = subprocess.run(["osascript", "-l", "JavaScript", "-e", CLIP_READ],
+                             capture_output=True, text=True, timeout=15)
+        paths = json.loads(out.stdout.strip() or "[]")
+    except Exception:
+        return []
+    return [p for p in paths if os.path.exists(p)]
+
+
+def free_name(folder, name, copy_word=False):
+    """A name that is not taken yet in folder, like Finder: 'Report copy.pdf', 'Report copy 2.pdf'."""
+    if os.path.isdir(os.path.join(folder, name)) or "." not in name.strip("."):
+        stem, ext = name, ""
+    else:
+        stem, ext = os.path.splitext(name)
+    if not copy_word and not os.path.exists(os.path.join(folder, name)):
+        return os.path.join(folder, name)
+    cand = os.path.join(folder, "%s copy%s" % (stem, ext))
+    i = 2
+    while os.path.exists(cand):
+        cand = os.path.join(folder, "%s copy %d%s" % (stem, i, ext))
+        i += 1
+    return cand
+
+
+def copy_into(sources, dest):
+    """Copy files/folders into dest. Existing files are never replaced."""
+    dest = os.path.realpath(dest)
+    if not (dest == HOME or dest.startswith(HOME + "/")) or not os.path.isdir(dest):
+        raise ValueError("can't paste into that folder")
+    made = []
+    for src in sources:
+        src = os.path.realpath(src)
+        if not os.path.exists(src):
+            continue
+        if os.path.isdir(src) and (dest == src or dest.startswith(src + "/")):
+            raise ValueError("can't paste a folder inside itself")
+        out = free_name(dest, os.path.basename(src))
+        # ditto keeps the Mac details too (where it was downloaded from, tags...)
+        subprocess.run(["ditto", src, out], check=True, capture_output=True, timeout=3600)
+        made.append(out)
+    _library["time"] = 0  # show the new files on next refresh
+    return made
+
+
+def duplicate(path):
+    path = os.path.realpath(path)
+    out = free_name(os.path.dirname(path), os.path.basename(path), copy_word=True)
+    subprocess.run(["ditto", path, out], check=True, capture_output=True, timeout=3600)
+    _library["time"] = 0
+    return out
+
+
+def new_folder(dest):
+    dest = os.path.realpath(dest)
+    if not (dest == HOME or dest.startswith(HOME + "/")) or not os.path.isdir(dest):
+        raise ValueError("can't make a folder there")
+    out = os.path.join(dest, "untitled folder")
+    i = 2
+    while os.path.exists(out):
+        out = os.path.join(dest, "untitled folder %d" % i)
+        i += 1
+    os.mkdir(out)
+    return out
+
+
 # ---------- Web server ----------
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -669,6 +765,26 @@ class Handler(BaseHTTPRequestHandler):
         if self.headers.get("Origin") not in (None, "http://127.0.0.1:%d" % PORT,
                                               "http://localhost:%d" % PORT):
             return self.send(403, {"error": "forbidden"})
+        if url.path == "/api/clipboard":
+            files = clipboard_files()
+            return self.send(200, {"files": files, "names": [os.path.basename(f) for f in files]})
+        if url.path == "/api/copy":
+            paths = [x for x in data.get("paths", []) if allowed(x)]
+            if not paths:
+                return self.send(404, {"error": "not found"})
+            return self.send(200, {"ok": clipboard_set([os.path.realpath(x) for x in paths])})
+        if url.path in ("/api/paste", "/api/newfolder"):
+            if not (os.path.realpath(p) == HOME or allowed(p)):
+                return self.send(404, {"error": "not found"})
+            try:
+                if url.path == "/api/newfolder":
+                    return self.send(200, {"made": [new_folder(p)]})
+                files = clipboard_files()
+                if not files:
+                    return self.send(400, {"error": "Nothing to paste. Copy a file first."})
+                return self.send(200, {"made": copy_into(files, p)})
+            except (ValueError, OSError, subprocess.SubprocessError) as e:
+                return self.send(400, {"error": str(e)})
         if url.path == "/api/choosefolder":
             chosen = choose_folder()
             return self.send(200, {"path": chosen, "display": nice_path(chosen) if chosen else None})
@@ -681,6 +797,11 @@ class Handler(BaseHTTPRequestHandler):
         elif url.path == "/api/quicklook":
             subprocess.Popen(["qlmanage", "-p", p], stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL)
+        elif url.path == "/api/duplicate":
+            try:
+                return self.send(200, {"made": [duplicate(p)]})
+            except (OSError, subprocess.SubprocessError) as e:
+                return self.send(400, {"error": str(e)})
         elif url.path == "/api/split":
             try:
                 return self.send(200, split_pdf(p, int(data.get("from")), int(data.get("to")),

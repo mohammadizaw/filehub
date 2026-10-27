@@ -15,7 +15,11 @@ no internet or the update fails, it just starts the version you already have. If
 FileHub is still running, it restarts it so the update takes effect.
 
 It opens http://127.0.0.1:8765 (only this computer can reach it). It never moves,
-renames or deletes your files; splitting a PDF always saves a new file.
+renames or deletes your files; splitting a PDF, pasting and duplicating always
+make new files, and a paste never replaces a file that is already there.
+
+Right-click a file, folder or empty space for a menu. Copy (⌘C) puts files on the Mac
+clipboard, so you can paste them in a FileHub folder (⌘V) or in Finder; ⌘D duplicates.
 
 ## Files
 - `filehub.py` – the small local server (Python 3.9+, standard library only).
