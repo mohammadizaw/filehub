@@ -19,6 +19,7 @@
   --accent-grad:linear-gradient(135deg,var(--accent1),var(--accent2));
   --accent-glow:0 6px 16px -6px color-mix(in srgb,var(--accent2) 60%,transparent);
   --violet:#8b7cf6; --violet-soft:#eeebff;
+  --folder:var(--accent); --folder-soft:color-mix(in srgb,var(--accent) 14%,var(--panel));
   --shadow:0 1px 2px color-mix(in srgb,var(--tint) 6%,transparent),0 8px 24px -8px color-mix(in srgb,var(--tint) 16%,transparent);
   --shadow-lg:0 2px 4px color-mix(in srgb,var(--tint) 6%,transparent),0 16px 40px -12px color-mix(in srgb,var(--tint) 26%,transparent);
   --pdf:#ff6b6b; --word:#6c8cff; --slides:#ffa046; --sheets:#34c38f; --img:#a77bf3;
@@ -31,6 +32,7 @@
   --hover:hsl(var(--h) calc(25% * var(--sat)) 23%);
   --accent-soft:color-mix(in srgb,var(--accent) 20%,var(--panel));
   --violet:#a497ff; --violet-soft:#2f2b55;
+  --folder-soft:color-mix(in srgb,var(--accent) 22%,var(--panel));
   --shadow:0 1px 2px rgba(0,0,0,.25),0 8px 24px -8px rgba(0,0,0,.45);
   --shadow-lg:0 2px 4px rgba(0,0,0,.25),0 16px 40px -12px rgba(0,0,0,.6);
 }}
@@ -41,6 +43,7 @@
   --hover:hsl(var(--h) calc(25% * var(--sat)) 23%);
   --accent-soft:color-mix(in srgb,var(--accent) 20%,var(--panel));
   --violet:#a497ff; --violet-soft:#2f2b55;
+  --folder-soft:color-mix(in srgb,var(--accent) 22%,var(--panel));
   --shadow:0 1px 2px rgba(0,0,0,.25),0 8px 24px -8px rgba(0,0,0,.45);
   --shadow-lg:0 2px 4px rgba(0,0,0,.25),0 16px 40px -12px rgba(0,0,0,.6);
 }
@@ -264,7 +267,7 @@ dd a{color:var(--accent)}
 .app{padding:14px}
 .side{border:0;border-radius:22px;box-shadow:var(--shadow);margin-right:14px;padding:20px 14px}
 .brand{font-weight:800;font-size:17px;letter-spacing:-.01em}
-.brand .logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#a594ff,#7b68ee);box-shadow:0 6px 14px -6px rgba(123,104,238,.7)}
+.brand .logo{width:32px;height:32px;border-radius:10px;background:var(--accent-grad);box-shadow:var(--accent-glow)}
 .nav-h{font-weight:700;letter-spacing:.08em}
 .nav button{padding:8px 12px;border-radius:12px;font-weight:600;margin:1px 0;transition:background .15s,color .15s}
 .nav button svg{color:var(--muted)}
@@ -313,7 +316,7 @@ select.ctl{font-weight:600}
 .folders{gap:12px;grid-template-columns:repeat(auto-fill,minmax(calc(190px * var(--zoom,1)),1fr))}
 .ftile{border:0;border-radius:16px;box-shadow:var(--shadow);padding:12px;transition:transform .15s,box-shadow .15s}
 .ftile:hover{background:var(--panel);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
-.ftile svg{width:calc(40px * var(--zoom,1));height:calc(40px * var(--zoom,1));padding:calc(9px * var(--zoom,1));border-radius:12px;background:var(--violet-soft);color:var(--violet);fill:color-mix(in srgb,var(--violet) 22%,transparent)}
+.ftile svg{width:calc(40px * var(--zoom,1));height:calc(40px * var(--zoom,1));padding:calc(9px * var(--zoom,1));border-radius:12px;background:var(--folder-soft);color:var(--folder);fill:color-mix(in srgb,var(--folder) 22%,transparent)}
 .ftile b{font-weight:700}
 .crumbs button{border-radius:9px;font-weight:600}
 /* preview panel */
@@ -345,7 +348,7 @@ select.ctl{font-weight:600}
 @media (max-width:900px){ .app{padding:0} .prev.open{margin:0;border-radius:0} }
 
 /* ===== Appearance panel ===== */
-.appear{position:fixed;top:66px;right:22px;z-index:30;width:330px;max-height:calc(100vh - 90px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-lg);padding:16px 18px 18px;display:none}
+.appear{position:fixed;top:66px;right:22px;z-index:30;width:356px;max-height:calc(100vh - 90px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-lg);padding:16px 18px 18px;display:none}
 .appear.on{display:block;animation:popin .14s ease-out}
 @keyframes popin{from{opacity:0;transform:translateY(-6px)}}
 .appear h3{margin:0 0 2px;font-size:16px;font-weight:800}
@@ -353,13 +356,13 @@ select.ctl{font-weight:600}
 .appear .opts{display:flex;gap:6px;background:var(--panel2);border-radius:12px;padding:4px}
 .appear .opts button{flex:1;border:0;background:none;border-radius:9px;padding:7px 6px;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--muted)}
 .appear .opts button.on{background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
-.swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .sw{border:2px solid transparent;border-radius:13px;padding:6px;cursor:pointer;background:var(--panel2);text-align:center;font-size:12px;font-weight:600;color:var(--muted)}
 .sw.on{border-color:var(--accent);color:var(--text)}
-.sw i{display:block;height:34px;border-radius:9px;margin-bottom:5px;position:relative;overflow:hidden}
+.sw i{display:block;height:30px;border-radius:9px;margin-bottom:5px;position:relative;overflow:hidden}
 .sw i::after{content:"";position:absolute;left:8px;right:24px;top:9px;bottom:9px;border-radius:5px;background:#fff;opacity:.9}
-.dots{display:flex;flex-wrap:wrap;gap:10px}
-.dot{width:30px;height:30px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;color:#fff;box-shadow:0 3px 8px -3px rgba(0,0,0,.35)}
+.dots{display:grid;grid-template-columns:repeat(8,1fr);gap:9px;justify-items:center}
+.dot{width:28px;height:28px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;color:#fff;box-shadow:0 3px 8px -3px rgba(0,0,0,.35)}
 .dot.on{outline:2px solid var(--accent);outline-offset:3px}
 .dot svg{width:15px;height:15px;opacity:0}
 .dot.on svg{opacity:1}
@@ -390,6 +393,46 @@ select.ctl{font-weight:600}
 :root[data-style="glass"] :is(.thumb,.stage,.family .card){background:color-mix(in srgb,var(--panel2) 55%,transparent)}
 :root[data-style="glass"] .row.hd{background:color-mix(in srgb,var(--panel) 92%,transparent)}
 :root[data-style="glass"] .row{border-bottom-color:var(--glass-line)}
+
+/* ===== Style: Clay (soft raised shapes, like the picture you shared) ===== */
+:root[data-style="clay"]{--clay-d:color-mix(in srgb,var(--tint) 20%,transparent);--clay-l:rgba(255,255,255,.9)}
+:root[data-theme="dark"][data-style="clay"]{--clay-d:rgba(0,0,0,.5);--clay-l:rgba(255,255,255,.045)}
+@media (prefers-color-scheme:dark){:root[data-style="clay"]:not([data-theme="light"]){--clay-d:rgba(0,0,0,.5);--clay-l:rgba(255,255,255,.045)}}
+:root[data-style="clay"] :is(.side,.prev,.card,.list,.ftile,.family,.search,.ctl,.seg,.chip:not(.on),.sizer){background:var(--bg);border:0;box-shadow:6px 6px 14px var(--clay-d),-6px -6px 14px var(--clay-l)}
+:root[data-style="clay"] :is(.seg button:not(.on),.row.hd,.row.hd:hover){background:var(--bg)}
+:root[data-style="clay"] :is(.thumb,.stage){background:var(--bg);box-shadow:inset 3px 3px 7px var(--clay-d),inset -3px -3px 7px var(--clay-l)}
+:root[data-style="clay"] .family .card{background:var(--bg);box-shadow:4px 4px 10px var(--clay-d),-4px -4px 10px var(--clay-l)}
+:root[data-style="clay"] :is(.card,.ftile):hover{box-shadow:9px 9px 20px var(--clay-d),-7px -7px 18px var(--clay-l)}
+:root[data-style="clay"] .card.sel{box-shadow:0 0 0 2px var(--accent),6px 6px 14px var(--clay-d),-6px -6px 14px var(--clay-l)}
+:root[data-style="clay"] .ftile svg{box-shadow:inset 2px 2px 5px var(--clay-d),inset -2px -2px 5px var(--clay-l)}
+:root[data-style="clay"] .row{border-bottom-color:color-mix(in srgb,var(--tint) 8%,transparent)}
+
+/* ===== Style: Outline (crisp lines, high contrast) ===== */
+:root[data-style="outline"]{--ol:color-mix(in srgb,var(--text) 24%,transparent)}
+:root[data-style="outline"] :is(.side,.prev,.card,.list,.ftile,.family,.search,.ctl,.seg,.chip,.sizer){box-shadow:none;border:1.5px solid var(--ol)}
+:root[data-style="outline"] .thumb{border:1px solid var(--line)}
+:root[data-style="outline"] :is(.card,.ftile):hover{transform:none;box-shadow:none;border-color:var(--accent)}
+:root[data-style="outline"] .card.sel{box-shadow:0 0 0 1.5px var(--accent);border-color:var(--accent)}
+:root[data-style="outline"] .nav button.on{background:none;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+:root[data-style="outline"] .nav button.on svg,:root[data-style="outline"] .nav button.on .n{color:var(--accent)}
+:root[data-style="outline"] :is(.chip.on,.btn.primary){background:var(--accent);box-shadow:none}
+:root[data-style="outline"] :is(.row .ic,.badge){background-image:none;box-shadow:none}
+:root[data-style="outline"] .ftile svg{background:none;box-shadow:inset 0 0 0 1.5px var(--folder)}
+
+/* ===== Send with SmartDrop ===== */
+.send .box{width:min(480px,94vw)}
+.send .file{display:flex;align-items:center;gap:12px;background:var(--panel2);border-radius:14px;padding:10px 12px;margin:10px 0 14px}
+.send .file .ic{width:40px;height:40px;border-radius:11px;flex:none;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:800;text-transform:uppercase;background-image:linear-gradient(135deg,rgba(255,255,255,.3),rgba(255,255,255,0))}
+.send .file b{display:block;font-weight:700;word-break:break-word}
+.send .file small{color:var(--muted)}
+.send ol{margin:0;padding:0;list-style:none;counter-reset:st;display:grid;gap:10px}
+.send li{counter-increment:st;display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;font-size:13.5px}
+.send li::before{content:counter(st);width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:800;display:grid;place-items:center;font-size:13px}
+.send li .btn{margin-top:7px}
+.send .ok{color:#22a86d;font-weight:700}
+.send .addr{margin-top:14px;font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.send .addr a{color:var(--accent);word-break:break-all}
+.send .addr button{border:0;background:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px;padding:0}
 
 /* ===== Density: Compact ===== */
 :root[data-density="compact"] .grid{grid-template-columns:repeat(auto-fill,minmax(calc(136px * var(--zoom,1)),1fr));gap:10px}
@@ -501,6 +544,17 @@ select.ctl{font-weight:600}
 </div>
 <div class="appear" id="appear"></div>
 <div class="ctx" id="ctx"></div>
+<div class="rn send" id="sendBox"><div class="box"><h3>Send with SmartDrop</h3>
+  <div class="file" id="sendFile"></div>
+  <ol>
+    <li><div><b>Open SmartDrop and choose who receives it.</b><br><button class="btn primary" id="sendOpen">Open SmartDrop ↗</button></div></li>
+    <li><div><b>Add the file.</b> <span class="ok" id="sendCopied">It's already copied</span>, so click SmartDrop's file area and press ⌘V.
+      Or drag it in from Finder, or pick it with SmartDrop's "choose file" button.<br>
+      <button class="btn" id="sendFinder">Show in Finder</button> <button class="btn" id="sendCopy">Copy again</button></div></li>
+    <li><div><b>Press Send in SmartDrop.</b></div></li>
+  </ol>
+  <div class="addr">SmartDrop address: <a id="sendUrl" target="smartdrop" rel="noopener"></a><button id="sendChange">change</button></div>
+  <div class="actions"><button class="btn" id="sendDone">Done</button></div></div></div>
 <div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
   <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
   <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
@@ -580,6 +634,7 @@ const ICONS = {
   sort:'<path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/>',
   newfolder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10.5v5M9.5 13h5"/>',
   pencil:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+  send:'<path d="M21 3 10 14"/><path d="m21 3-7 18-4-7-7-4z"/>',
   chev:'<path d="m9 6 6 6-6 6"/>',
   star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
 };
@@ -855,6 +910,7 @@ function preview(f){
         <button class="btn" data-act="quicklook" title="Space">Quick Look</button>
         ${f.ext==='pdf'?`<button class="btn" data-act="read">Read here</button><button class="btn" data-act="split">✂︎ Split pages</button>`:''}
         <button class="btn" data-act="pin">${pinned?'★ Pinned':'☆ Pin'}</button>
+        <button class="btn" data-act="send">➤ Send</button>
         <button class="btn" data-act="copy">Copy path</button>
       </div>
       <dl>
@@ -937,6 +993,7 @@ document.addEventListener('click', async e => {
     if(a==='pin'){ togglePin(S.sel); preview(byPath().get(S.sel)); renderNav(); }
     else if(a==='split'){ openSplit(byPath().get(S.sel)); }
     else if(a==='read'){ document.querySelector('.stage').innerHTML = `<iframe src="/api/raw?path=${encodeURIComponent(S.sel)}#view=FitH"></iframe>`; }
+    else if(a==='send'){ sendFile(byPath().get(S.sel)); }
     else if(a==='copy'){ navigator.clipboard.writeText(S.sel).then(()=>toast('Path copied')); }
     else { post('/api/'+a, {path:S.sel}); toast(a==='launch'?'Opening…':a==='reveal'?'Showing in Finder':'Quick Look'); }
     return;
@@ -984,19 +1041,34 @@ applyTheme();
 const THEMES = [
   {id:'lavender', name:'Lavender', h:250, sat:1},
   {id:'ocean',    name:'Ocean',    h:212, sat:1},
+  {id:'sky',      name:'Sky',      h:195, sat:.9},
   {id:'mint',     name:'Mint',     h:162, sat:.75},
+  {id:'forest',   name:'Forest',   h:135, sat:.45},
   {id:'sand',     name:'Sand',     h:34,  sat:.8},
+  {id:'peach',    name:'Peach',    h:18,  sat:.85},
   {id:'rose',     name:'Rose',     h:340, sat:.75},
+  {id:'berry',    name:'Berry',    h:300, sat:.55},
+  {id:'nord',     name:'Nord',     h:215, sat:.35},
+  {id:'paper',    name:'Paper',    h:45,  sat:.22},
   {id:'graphite', name:'Graphite', h:220, sat:.12},
 ];
 const ACCENTS = [
-  {id:'orange', name:'Orange', c:'#ff7a4d', a:'#ff9466', b:'#ff6a3d'},
-  {id:'violet', name:'Violet', c:'#8b7cf6', a:'#a594ff', b:'#7360ea'},
-  {id:'blue',   name:'Blue',   c:'#3f7cf6', a:'#5d9bff', b:'#3466ec'},
-  {id:'pink',   name:'Pink',   c:'#f25c9b', a:'#ff7fb4', b:'#e6488a'},
-  {id:'green',  name:'Green',  c:'#22a86d', a:'#3fc888', b:'#1c9a62'},
-  {id:'teal',   name:'Teal',   c:'#159fae', a:'#2fc1cc', b:'#128f9e'},
-  {id:'red',    name:'Red',    c:'#e5484d', a:'#ff6b6b', b:'#d93b40'},
+  {id:'orange',   name:'Orange',   c:'#ff7a4d', a:'#ff9466', b:'#ff6a3d'},
+  {id:'coral',    name:'Coral',    c:'#f2645a', a:'#ff8a7a', b:'#ea4f45'},
+  {id:'red',      name:'Red',      c:'#e5484d', a:'#ff6b6b', b:'#d93b40'},
+  {id:'pink',     name:'Pink',     c:'#f25c9b', a:'#ff7fb4', b:'#e6488a'},
+  {id:'magenta',  name:'Magenta',  c:'#d340e6', a:'#e879f9', b:'#c026d3'},
+  {id:'purple',   name:'Purple',   c:'#a14ff5', a:'#c084fc', b:'#9333ea'},
+  {id:'violet',   name:'Violet',   c:'#8b7cf6', a:'#a594ff', b:'#7360ea'},
+  {id:'indigo',   name:'Indigo',   c:'#5b5ff0', a:'#818cf8', b:'#4f46e5'},
+  {id:'blue',     name:'Blue',     c:'#3f7cf6', a:'#5d9bff', b:'#3466ec'},
+  {id:'sky',      name:'Sky',      c:'#0c9ad6', a:'#38bdf8', b:'#0284c7'},
+  {id:'teal',     name:'Teal',     c:'#159fae', a:'#2fc1cc', b:'#128f9e'},
+  {id:'green',    name:'Green',    c:'#22a86d', a:'#3fc888', b:'#1c9a62'},
+  {id:'lime',     name:'Lime',     c:'#5c9a0f', a:'#84cc16', b:'#4d7c0f'},
+  {id:'amber',    name:'Amber',    c:'#e08b00', a:'#fbbf24', b:'#d97706'},
+  {id:'mocha',    name:'Mocha',    c:'#9a6b4f', a:'#b5876a', b:'#835a41'},
+  {id:'graphite', name:'Graphite', c:'#4b5568', a:'#64748b', b:'#334155'},
 ];
 const LOOK_DEFAULT = {theme:'lavender', accent:'orange', style:'soft', density:'comfortable', font:'rounded'};
 const look = () => Object.assign({}, LOOK_DEFAULT, store.get('look', {}));
@@ -1016,7 +1088,7 @@ function renderAppear(){
     <div class="ah">Mode</div>${opts('mode', [['auto','Auto'],['light','Light'],['dark','Dark']], mode)}
     <div class="ah">Theme</div><div class="swatches">${THEMES.map(t=>`<button class="sw ${L.theme===t.id?'on':''}" data-look="theme" data-v="${t.id}"><i style="background:hsl(${t.h} ${38*t.sat}% 90%)"></i>${t.name}</button>`).join('')}</div>
     <div class="ah">Accent colour</div><div class="dots">${ACCENTS.map(a=>`<button class="dot ${L.accent===a.id?'on':''}" title="${a.name}" data-look="accent" data-v="${a.id}" style="background:linear-gradient(135deg,${a.a},${a.b})">${svg('check')}</button>`).join('')}</div>
-    <div class="ah">Style</div>${opts('style', [['soft','Soft'],['flat','Flat'],['glass','Glass']], L.style)}
+    <div class="ah">Style</div>${opts('style', [['soft','Soft'],['flat','Flat'],['glass','Glass'],['clay','Clay'],['outline','Outline']], L.style)}
     <div class="ah">Size</div>${opts('density', [['comfortable','Comfortable'],['compact','Compact']], L.density)}
     <div class="ah">Font</div>${opts('font', [['rounded','Rounded'],['system','Mac'],['serif','Classic']], L.font)}
     <button class="btn reset" data-look="reset">Back to the original look</button>`;
@@ -1125,6 +1197,7 @@ function menuFor(target){
       {icon:'open', label:'Quick Look', key:'Space', run:()=>post('/api/quicklook',{path:f.path})},
       {icon:'finder', label:'Show in Finder', run:()=>{ post('/api/reveal',{path:f.path}); toast('Showing in Finder'); }},
       {icon:'info', label:'Get info', run:()=>preview(f)},
+      {icon:'send', label:'Send with SmartDrop…', run:()=>sendFile(f)},
       '-',
       {icon:'copy', label:'Copy', key:K('C'), run:()=>copyFiles([f.path])},
       {icon:'pencil', label:'Rename…', run:()=>renameItem(f.path, false)},
@@ -1168,7 +1241,7 @@ function itemsHTML(items){
 function openMenu(m, x, y){
   CTX.items = m.items;
   const h = m.head;
-  const head = h ? `<div class="ch"><span class="ic" style="background-color:${h.folder?'var(--violet)':h.color}">${h.folder?svg('folder'):esc(h.ext)}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : '';
+  const head = h ? `<div class="ch"><span class="ic" style="background-color:${h.folder?'var(--folder)':h.color}">${h.folder?svg('folder'):esc(h.ext)}</span><div style="min-width:0"><b>${esc(h.name)}</b><small>${esc(h.info||'')}</small></div></div>` : '';
   const el = $('ctx'); el.innerHTML = head + itemsHTML(m.items); el.classList.add('on');
   el.style.left = '0px'; el.style.top = '0px';
   const w = el.offsetWidth, ht = el.offsetHeight;
@@ -1217,6 +1290,39 @@ addEventListener('blur', closeMenu); addEventListener('resize', closeMenu);
 document.addEventListener('scroll', closeMenu, true);
 
 
+
+// ---------- send with SmartDrop ----------
+// FileHub copies the file, opens SmartDrop (you choose the receiver there), and helps you add the file.
+const SEND_DEFAULT = 'https://smartdrop.fast-peony-9305.chatgpt.site/';
+const sendUrl = () => store.get('sendUrl', SEND_DEFAULT) || SEND_DEFAULT;
+let SENDING = null;
+async function sendFile(f){
+  if(!f) return;
+  SENDING = f;
+  $('sendFile').innerHTML = `<span class="ic" style="background-color:${color(f.type)}">${esc((f.ext||'?').slice(0,4))}</span><div style="min-width:0"><b>${esc(f.name)}</b><small>${esc([f.pages?pagesText(f):'', f.size?size(f.size):''].filter(Boolean).join(' · '))}</small></div>`;
+  $('sendUrl').textContent = sendUrl().replace(/^https?:\/\//,'').replace(/\/$/,''); $('sendUrl').href = sendUrl();
+  $('sendCopied').textContent = 'Copying…';
+  $('sendBox').classList.add('on');
+  const r = await post('/api/copy', {paths:[f.path]}).catch(()=>null);
+  const ok = r && r.ok && (await r.json()).ok;
+  $('sendCopied').textContent = ok ? "It's already copied" : "Use Copy again";
+}
+const closeSend = () => { $('sendBox').classList.remove('on'); SENDING = null; };
+$('sendOpen').onclick = () => { window.open(sendUrl(), 'smartdrop'); };
+$('sendFinder').onclick = () => { if(SENDING){ post('/api/reveal', {path:SENDING.path}); toast('Showing in Finder: drag it into SmartDrop'); } };
+$('sendCopy').onclick = () => SENDING && copyFiles([SENDING.path]);
+$('sendDone').onclick = closeSend;
+$('sendBox').addEventListener('mousedown', e => { if(e.target.id==='sendBox') closeSend(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape' && $('sendBox').classList.contains('on')){ closeSend(); e.stopPropagation(); } }, true);
+$('sendChange').onclick = () => {
+  const v = prompt('SmartDrop web address:', sendUrl());
+  if(v===null) return;
+  const u = v.trim();
+  if(u && !/^https?:\/\//i.test(u)){ toast('Please use an address that starts with https://'); return; }
+  store.set('sendUrl', u || null);
+  $('sendUrl').textContent = sendUrl().replace(/^https?:\/\//,'').replace(/\/$/,''); $('sendUrl').href = sendUrl();
+};
+
 // ---------- rename (same folder only; never replaces another file) ----------
 let RN = null;
 function renameItem(path, isFolder){
@@ -1261,7 +1367,7 @@ async function checkVersion(){
   let v; try{ v = (await api('/api/version')).version; }catch(e){ return; }  // server restarting: try again later
   if(myVersion === null){ myVersion = v; return; }
   if(v && v !== myVersion){
-    const busy = $('splitModal').classList.contains('open') || $('rn').classList.contains('on') || $('zoom').classList.contains('on');
+    const busy = $('splitModal').classList.contains('open') || $('rn').classList.contains('on') || $('sendBox').classList.contains('on') || $('zoom').classList.contains('on');
     if(busy) return;  // wait until you've finished
     toast('FileHub was updated. Refreshing…');
     setTimeout(() => location.reload(), 1200);
