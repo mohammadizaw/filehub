@@ -4,31 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FileHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap">
 <style>
 :root{
-  --bg:#f6f7f9; --panel:#ffffff; --panel2:#f1f3f6; --line:#e3e6eb; --text:#1c2230;
-  --muted:#6b7385; --accent:#3b6cf6; --accent-soft:#e8eefe; --hover:#eef1f6;
-  --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.05);
-  --pdf:#e5484d; --word:#3b6cf6; --slides:#f08c2b; --sheets:#2f9e5b; --img:#a35bd6;
-  --video:#d6458f; --audio:#0f9fb3; --other:#7b8394;
+  --bg:#eceaf6; --panel:#ffffff; --panel2:#f6f5fb; --line:#e7e4f2; --text:#3a3758;
+  --muted:#8b87a6; --accent:#ff7a4d; --accent-soft:#fff0ea; --hover:#f3f1fa;
+  --accent-grad:linear-gradient(135deg,#ff9466,#ff6a3d);
+  --accent-glow:0 6px 16px -6px rgba(255,106,61,.55);
+  --violet:#8b7cf6; --violet-soft:#eeebff;
+  --shadow:0 1px 2px rgba(60,50,120,.05),0 8px 24px -8px rgba(60,50,120,.14);
+  --shadow-lg:0 2px 4px rgba(60,50,120,.05),0 16px 40px -12px rgba(60,50,120,.22);
+  --pdf:#ff6b6b; --word:#6c8cff; --slides:#ffa046; --sheets:#34c38f; --img:#a77bf3;
+  --video:#f06595; --audio:#3cc4d9; --other:#9a98b5;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#121418; --panel:#1a1d23; --panel2:#21252c; --line:#2c313a; --text:#e7e9ee;
-  --muted:#9097a6; --accent:#6d93ff; --accent-soft:#232c44; --hover:#252a33;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+  --bg:#16152a; --panel:#211f38; --panel2:#2a2844; --line:#35335a; --text:#ecebf6;
+  --muted:#a09dbf; --accent:#ff8659; --accent-soft:#3a2a35; --hover:#2d2b48;
+  --violet:#a497ff; --violet-soft:#2f2b55;
+  --shadow:0 1px 2px rgba(0,0,0,.25),0 8px 24px -8px rgba(0,0,0,.45);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.25),0 16px 40px -12px rgba(0,0,0,.6);
 }}
 :root[data-theme="dark"]{
-  --bg:#121418; --panel:#1a1d23; --panel2:#21252c; --line:#2c313a; --text:#e7e9ee;
-  --muted:#9097a6; --accent:#6d93ff; --accent-soft:#232c44; --hover:#252a33;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);
+  --bg:#16152a; --panel:#211f38; --panel2:#2a2844; --line:#35335a; --text:#ecebf6;
+  --muted:#a09dbf; --accent:#ff8659; --accent-soft:#3a2a35; --hover:#2d2b48;
+  --violet:#a497ff; --violet-soft:#2f2b55;
+  --shadow:0 1px 2px rgba(0,0,0,.25),0 8px 24px -8px rgba(0,0,0,.45);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.25),0 16px 40px -12px rgba(0,0,0,.6);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font:14px/1.45 "Nunito",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
 button,select,input{font:inherit;color:inherit}
-.app{display:grid;grid-template-columns:230px 1fr auto;height:100vh}
+.app{display:grid;grid-template-columns:230px minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr);height:100vh;height:100dvh;overflow:hidden}
 /* Sidebar */
-.side{background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow:auto}
+.side{background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;overflow-y:auto;overscroll-behavior:contain;min-height:0}
 .brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:16px;padding:0 8px 16px}
 .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#8f6bff);display:grid;place-items:center;color:#fff}
 .nav-h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:14px 10px 6px}
@@ -38,8 +48,16 @@ button,select,input{font:inherit;color:inherit}
 .nav button .n{margin-left:auto;font-size:12px;color:var(--muted);font-weight:400}
 .nav svg{width:17px;height:17px;flex:none}
 /* Main */
-.main{display:flex;flex-direction:column;min-width:0}
-.top{display:flex;gap:10px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.top{flex:none;display:flex;gap:10px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel)}
+/* page heading: stays put while the files scroll */
+.phead{flex:none;padding:18px 22px 0;border-bottom:1px solid var(--line);background:var(--bg)}
+.phead .chips{margin:0 0 14px}
+.phead .crumbs{margin:0 0 12px}
+.phead:empty{display:none}
+/* status bar at the bottom, like Finder */
+.status{flex:none;display:flex;gap:14px;align-items:center;padding:6px 22px;border-top:1px solid var(--line);background:var(--panel);font-size:12px;color:var(--muted);min-height:30px}
+.status .sel-name{margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%;color:var(--text)}
 .search{flex:1;display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:0 12px;max-width:560px}
 .search input{flex:1;border:0;background:none;outline:none;padding:9px 0}
 .search kbd{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
@@ -49,10 +67,10 @@ button,select,input{font:inherit;color:inherit}
 .seg button{border:0;background:var(--panel2);padding:7px 10px;cursor:pointer;display:grid;place-items:center}
 .seg button.on{background:var(--accent-soft);color:var(--accent)}
 .seg svg,.ctl svg{width:16px;height:16px;display:block}
-.content{flex:1;overflow:auto;padding:20px 22px 40px}
+.content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 22px 30px}
 .title{display:flex;align-items:baseline;gap:12px;margin:0 0 4px}
 .title h1{font-size:22px;margin:0;font-weight:650}
-.sub{color:var(--muted);margin:0 0 18px}
+.sub{color:var(--muted);margin:0 0 14px}
 .section{margin-bottom:26px}
 .section-h{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-weight:600}
 .section-h .count{color:var(--muted);font-weight:400;font-size:13px}
@@ -77,10 +95,12 @@ button,select,input{font:inherit;color:inherit}
 .pin.on{color:#f0a500}
 .pin svg{width:15px;height:15px}
 /* list view */
-.list{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.list{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:clip}
 .family .list{border:0;background:none}
 .row{display:grid;grid-template-columns:34px 1fr 200px 110px 70px;gap:12px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);cursor:pointer}
 .row:last-child{border-bottom:0}
+.row.hd{position:sticky;top:-18px;z-index:2;background:var(--panel2);cursor:default;padding-top:7px;padding-bottom:7px;font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.row.hd:hover{background:var(--panel2)}
 .row:hover{background:var(--hover)}
 .row.sel{background:var(--accent-soft)}
 .row .ic{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:9.5px;font-weight:700;text-transform:uppercase}
@@ -89,17 +109,17 @@ button,select,input{font:inherit;color:inherit}
 .row .nm small{color:var(--muted);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .c{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Preview panel */
-.prev{width:0;overflow:hidden;background:var(--panel);border-left:1px solid var(--line);transition:width .2s}
+.prev{width:0;overflow:hidden;min-height:0;background:var(--panel);border-left:1px solid var(--line);transition:width .2s}
 .prev.open{width:400px}
 .prev-in{width:400px;height:100%;display:flex;flex-direction:column}
-.prev-top{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:8px}
+.prev-top{flex:none;display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:8px}
 .prev-top b{flex:1;font-size:13px;color:var(--muted);font-weight:500}
 .x{border:0;background:none;cursor:pointer;padding:4px;border-radius:6px;color:var(--muted)}
 .x:hover{background:var(--hover)}
 .stage{height:330px;flex:none;background:var(--panel2);display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--line);overflow:hidden}
 .stage iframe,.stage video{width:100%;height:100%;border:0;background:#fff}
 .stage img{max-width:100%;max-height:330px;object-fit:contain}
-.pbody{padding:16px;overflow:auto;flex:1}
+.pbody{padding:16px;overflow-y:auto;overscroll-behavior:contain;flex:1;min-height:0}
 .pbody h2{font-size:16px;margin:0 0 4px;word-break:break-word}
 .actions{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
 .btn{border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:7px 12px;cursor:pointer;font-weight:550;font-size:13px}
@@ -227,6 +247,90 @@ dd a{color:var(--accent)}
   .row{grid-template-columns:34px 1fr 90px}
   .row .c.hide-s{display:none}
 }
+
+/* ===== Soft theme: floating white panels on a lavender background ===== */
+.app{padding:14px}
+.side{border:0;border-radius:22px;box-shadow:var(--shadow);margin-right:14px;padding:20px 14px}
+.brand{font-weight:800;font-size:17px;letter-spacing:-.01em}
+.brand .logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#a594ff,#7b68ee);box-shadow:0 6px 14px -6px rgba(123,104,238,.7)}
+.nav-h{font-weight:700;letter-spacing:.08em}
+.nav button{padding:8px 12px;border-radius:12px;font-weight:600;margin:1px 0;transition:background .15s,color .15s}
+.nav button svg{color:var(--muted)}
+.nav button.on{background:var(--accent-grad);color:#fff;box-shadow:var(--accent-glow)}
+.nav button.on svg,.nav button.on .n{color:#fff}
+.main{background:none}
+.top{background:none;border:0;padding:4px 10px 12px}
+.search{background:var(--panel);border:0;border-radius:14px;box-shadow:var(--shadow);max-width:600px}
+.search input{padding:11px 0}
+.search:focus-within{box-shadow:var(--shadow),0 0 0 2px var(--accent)}
+.ctl,.seg{border:0;border-radius:12px;box-shadow:var(--shadow)}
+.ctl{background:var(--panel);padding:9px 11px}
+.seg button{background:var(--panel);padding:9px 11px}
+.seg button.on{background:var(--accent-soft);color:var(--accent)}
+select.ctl{font-weight:600}
+.phead{background:none;border:0;padding:6px 10px 0}
+.title h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.content{padding:6px 10px 24px}
+.status{background:none;border:0;padding:6px 12px 0;min-height:24px}
+/* type filters */
+.chip{border:0;background:var(--panel);box-shadow:var(--shadow);font-weight:600;padding:6px 14px}
+.chip:hover{color:var(--accent)}
+.chip.on{background:var(--accent-grad);color:#fff;box-shadow:var(--accent-glow)}
+/* cards */
+.section-h{font-weight:700;font-size:15px}
+.family{border:0;border-radius:22px;box-shadow:var(--shadow)}
+.family .card{background:var(--panel2);box-shadow:none}
+.card{border:0;border-radius:18px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.card.sel{box-shadow:0 0 0 2px var(--accent),var(--shadow-lg)}
+.thumb{margin:8px 8px 0;border:0;border-radius:13px;background:var(--panel2);height:112px}
+.thumb .badge{top:16px;left:16px}
+.pages{top:96px;right:16px;border-radius:8px}
+.badge{border-radius:7px;background-image:linear-gradient(135deg,rgba(255,255,255,.28),rgba(255,255,255,0))}
+.name{font-weight:700}
+.pin{border-radius:10px;top:14px;right:14px}
+/* list */
+.list{border:0;border-radius:18px;box-shadow:var(--shadow)}
+.row{border-bottom-color:var(--panel2)}
+.row .ic{width:32px;height:32px;border-radius:10px;background-image:linear-gradient(135deg,rgba(255,255,255,.32),rgba(255,255,255,0));box-shadow:0 4px 10px -5px rgba(60,50,120,.35)}
+.row .nm div{font-weight:600}
+.row.sel{background:var(--accent-soft)}
+.row.hd{background:var(--panel);top:-6px}
+.row.hd:hover{background:var(--panel)}
+/* folders */
+.folders{gap:12px}
+.ftile{border:0;border-radius:16px;box-shadow:var(--shadow);padding:12px;transition:transform .15s,box-shadow .15s}
+.ftile:hover{background:var(--panel);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.ftile svg{width:40px;height:40px;padding:9px;border-radius:12px;background:var(--violet-soft);color:var(--violet);fill:color-mix(in srgb,var(--violet) 22%,transparent)}
+.ftile b{font-weight:700}
+.crumbs button{border-radius:9px;font-weight:600}
+/* preview panel */
+.prev{border:0;border-radius:22px;box-shadow:var(--shadow);transition:width .2s,margin .2s}
+.prev.open{margin-left:14px}
+.prev-top{border-bottom-color:var(--panel2)}
+.stage{background:var(--panel2);border:0;margin:0 12px;border-radius:16px}
+.pager{border:0}
+.pager button{border:0;border-radius:9px;background:var(--panel2)}
+.pbody h2{font-weight:800}
+.btn{border:0;border-radius:12px;background:var(--panel2);font-weight:700;padding:8px 14px}
+.btn.primary{background:var(--accent-grad);box-shadow:var(--accent-glow)}
+.rel button,.linkbox{border-radius:12px}
+.rel .ic{border-radius:7px}
+/* windows */
+.mbox{border:0;border-radius:24px}
+.pages-grid{background:var(--bg)}
+.pg .im{border-radius:8px}
+.pg.in{background:var(--accent-soft)}
+.range input,.dest select{border:0;border-radius:12px;background:var(--panel2)}
+.rcard{border:0;border-radius:24px}
+.toast{border-radius:14px;font-weight:600}
+.empty b{font-weight:800}
+/* slim scrollbars */
+*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--muted) 40%,transparent);border-radius:10px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+@media (max-width:900px){ .app{padding:0} .prev.open{margin:0;border-radius:0} }
 </style>
 </head>
 <body>
@@ -258,7 +362,9 @@ dd a{color:var(--accent)}
       <button class="ctl" id="refresh" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
       <button class="ctl" id="theme" title="Light / dark"></button>
     </div>
+    <div class="phead" id="phead"></div>
     <div class="content" id="content"></div>
+    <div class="status" id="status"></div>
   </main>
 
   <aside class="prev" id="prev"><div class="prev-in" id="prevIn"></div></aside>
@@ -455,7 +561,20 @@ function row(f){
     <div class="c">${ago(lastTouch(f))}</div>
     <div class="c hide-s">${f.useCount?f.useCount+'×':''}</div></div>`;
 }
-const block = list => S.layout==='grid' ? `<div class="grid">${list.map(card).join('')}</div>` : `<div class="list">${list.map(row).join('')}</div>`;
+const LIST_HEAD = `<div class="row hd"><div></div><div>Name</div><div class="c hide-s">Came from</div><div class="c">Last used</div><div class="c hide-s">Opened</div></div>`;
+const block = list => S.layout==='grid' ? `<div class="grid">${list.map(card).join('')}</div>` : `<div class="list">${LIST_HEAD}${list.map(row).join('')}</div>`;
+
+// Status bar: how many items are shown, and which file is selected.
+function renderStatus(){
+  const c = $('content');
+  const files = new Set([...c.querySelectorAll('.card[data-path],.row[data-path]')].map(e => e.dataset.path)).size;
+  const folders = c.querySelectorAll('.ftile').length;
+  const parts = [];
+  if(folders) parts.push(`${folders} folder${folders===1?'':'s'}`);
+  parts.push(`${files} file${files===1?'':'s'}`);
+  const f = S.sel && byPath().get(S.sel);
+  $('status').innerHTML = `<span>${parts.join(' · ')}</span>${f?`<span class="sel-name" title="${esc(f.path)}">${esc(f.name)}${f.size?' · '+size(f.size):''}</span>`:''}`;
+}
 
 function sections(groups, opts={}){
   if(!groups.length) return empty('Nothing here yet', opts.emptyMsg||'');
@@ -477,11 +596,11 @@ const filt = list => S.typeFilter==='All' ? list : list.filter(f => f.type===S.t
 
 function render(){
   renderNav();
-  let title, sub, body;
+  let title, sub, body, tools = '';
   if(S.q){
     title = `Results for “${S.q}”`;
     if(!S.results){ body = '<div class="loading"><div class="spin"></div>Searching…</div>'; sub=''; }
-    else { const r = filt(S.results); sub = `${r.length} files found across your Mac`; body = typeChips(S.results) + (r.length?block(sorted(r)):empty('No files found','Try a shorter word, or part of the name.')); }
+    else { const r = filt(S.results); sub = `${r.length} files found across your Mac`; tools = typeChips(S.results); body = (r.length?block(sorted(r)):empty('No files found','Try a shorter word, or part of the name.')); }
   } else switch(S.view){
     case 'open': {
       const l = openNow();
@@ -495,12 +614,12 @@ function render(){
       const buckets = [['Today',day],['This week',7*day],['This month',31*day],['Earlier',1e12]];
       const groups = []; let prev = 0;
       for(const [k, lim] of buckets){ const fs = l.filter(f => { const a = now-lastTouch(f); return a>=prev && a<lim; }); if(fs.length) groups.push({key:k, files:fs}); prev = lim; }
-      body = typeChips(S.files) + (S.sort==='recent' ? sections(groups, {max:120}) : block(sorted(l).slice(0,400)));
+      tools = typeChips(S.files); body = (S.sort==='recent' ? sections(groups, {max:120}) : block(sorted(l).slice(0,400)));
       break; }
     case 'used': {
       title='Most used'; sub='The files you come back to the most.';
       const l = filt(S.files).filter(f => f.useCount > 1).sort((a,b)=>(b.useCount-a.useCount)||(lastTouch(b)-lastTouch(a))).slice(0,120);
-      body = typeChips(S.files) + (l.length?block(l):empty('Nothing yet','Open some files a few times and they will appear here.'));
+      tools = typeChips(S.files); body = (l.length?block(l):empty('Nothing yet','Open some files a few times and they will appear here.'));
       break; }
     case 'pinned': {
       const m = byPath(); const l = [...S.pins].map(p => m.get(p)).filter(Boolean);
@@ -510,19 +629,19 @@ function render(){
     case 'families': {
       const fams = families().filter(g => S.typeFilter==='All' || g.files.some(f=>f.type===S.typeFilter));
       title='Related files'; sub='Files that belong together: the original lesson, its split parts, copies, marked and answer versions.';
-      body = typeChips(S.files) + sections(fams.slice(0,80), {boxed:true, noSort:true, folderLink:true, label:g=>titleCase(g.key)});
+      tools = typeChips(S.files); body = sections(fams.slice(0,80), {boxed:true, noSort:true, folderLink:true, label:g=>titleCase(g.key)});
       break; }
     case 'sources': {
       const g = groupBy(filt(S.files), f => f.source);
       const groups = [...g.entries()].map(([key,files])=>({key,files})).sort((a,b)=>b.files.length-a.files.length);
       title='Where it came from'; sub='Grouped by the website you downloaded it from, or the folder it lives in.';
-      body = typeChips(S.files) + sections(groups, {max:24});
+      tools = typeChips(S.files); body = sections(groups, {max:24});
       break; }
     case 'folders': {
       const g = groupBy(filt(S.files), f => f.folder);
       const groups = [...g.entries()].map(([key,files])=>({key,files})).sort((a,b)=>Math.max(...b.files.map(lastTouch))-Math.max(...a.files.map(lastTouch)));
       title='Folders'; sub='Your busiest folders, most recently used first.';
-      body = typeChips(S.files) + sections(groups.slice(0,40), {max:24, folderLink:true});
+      tools = typeChips(S.files); body = sections(groups.slice(0,40), {max:24, folderLink:true});
       break; }
     case 'browse': {
       const d = S.browseData;
@@ -532,8 +651,9 @@ function render(){
         <button data-reveal-folder="${esc(d.path)}" style="margin-left:auto;color:var(--accent)">Open in Finder ↗</button></div>`;
       const folders = d.folders.length ? `<div class="section-h">Folders <span class="count">${d.folders.length}</span></div><div class="folders">${d.folders.map(f=>`<div class="ftile" data-browse="${esc(f.path)}">${svg('folder')}<div><b>${esc(f.name)}</b><small>${f.count} item${f.count===1?'':'s'}</small></div></div>`).join('')}</div>` : '';
       const fl = filt(d.files);
-      const files = d.files.length ? `<div class="section-h">Files <span class="count">${d.files.length}</span></div>${typeChips(d.files)}${fl.length?block(sorted(fl)):''}` : '';
-      body = crumbs + folders + files + (!d.folders.length && !d.files.length ? empty('This folder is empty','') : '');
+      const files = d.files.length ? `<div class="section-h">Files <span class="count">${d.files.length}</span></div>${fl.length?block(sorted(fl)):empty('No files of this type','')}` : '';
+      tools = crumbs + (d.files.length ? typeChips(d.files) : '');
+      body = folders + files + (!d.folders.length && !d.files.length ? empty('This folder is empty','') : '');
       break; }
     case 'types': {
       const g = groupBy(S.files, f => f.type);
@@ -542,8 +662,10 @@ function render(){
       body = sections(groups, {dot:true, max:24});
       break; }
   }
-  $('content').innerHTML = `<div class="title"><h1>${esc(title)}</h1></div><p class="sub">${esc(sub)}</p>${body}`;
+  $('phead').innerHTML = `<div class="title"><h1>${esc(title)}</h1></div><p class="sub">${esc(sub)}</p>${tools}`;
+  $('content').innerHTML = body;
   loadThumbs();
+  renderStatus();
 }
 
 // Thumbnails load as they scroll into view.
@@ -558,6 +680,7 @@ function preview(f){
   S.sel = f.path;
   document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel'));
   document.querySelectorAll(`[data-path="${CSS.escape(f.path)}"]`).forEach(e=>e.classList.add('sel'));
+  renderStatus();
   const raw = '/api/raw?path='+encodeURIComponent(f.path);
   let stage;
   if(f.ext==='pdf') stage = `<img src="${pageImg(1, true, f)}" alt="" onerror="this.src='/api/thumb?s=720&path=${encodeURIComponent(f.path)}'">`;
@@ -631,7 +754,7 @@ async function openFolder(path){
   if(S.browse===path) render();
   $('content').scrollTop = 0;
 }
-function closePreview(){ $('prev').classList.remove('open'); S.sel=null; document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel')); }
+function closePreview(){ $('prev').classList.remove('open'); S.sel=null; document.querySelectorAll('.sel').forEach(e=>e.classList.remove('sel')); renderStatus(); }
 
 function togglePin(p){
   S.pins.has(p) ? S.pins.delete(p) : S.pins.add(p);
