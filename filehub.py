@@ -653,6 +653,14 @@ function run(argv) {
     }
     return doc.writeToFile(argv[3]) ? String(count) : "ERR cannot save";
   }
+  if (argv[0] === "shrink") {
+    // Keep text and drawings as they are; only the pictures inside are re-saved smaller (macOS 13 or newer).
+    const opts = $.NSMutableDictionary.alloc.init;
+    const key = (name) => { try { const v = $[name]; if (v && !v.isNil()) return v; } catch (e) {} return $(name); };
+    opts.setObjectForKey($(true), key("PDFDocumentOptimizeImagesForScreenOption"));
+    opts.setObjectForKey($(true), key("PDFDocumentSaveImagesAsJPEGOption"));
+    return doc.writeToFileWithOptions(argv[2], opts) ? String(n) : "ERR cannot save";
+  }
   if (argv[0] === "compress") {
     // Make the file smaller: each page is redrawn as a JPEG picture at the chosen sharpness (dpi) and quality.
     const dpi = parseFloat(argv[3]) || 110, q = parseFloat(argv[4]) || 0.65, grey = argv[5] === "grey";
@@ -671,9 +679,17 @@ function run(argv) {
       const props = $.NSMutableDictionary.alloc.init; props.setObjectForKey($(q), $.NSImageCompressionFactor);
       const jpg = rep.representationUsingTypeProperties($.NSBitmapImageFileTypeJPEG, props);
       const pic = $.NSImage.alloc.initWithData(jpg);
-      pic.size = $.NSMakeSize(pw, ph);  // keep the real page size on paper
+      const jrep = $.NSBitmapImageRep.imageRepWithData(jpg); jrep.size = $.NSMakeSize(pw, ph);  // the bitmap says "I am pw x ph points" (A4 stays A4)
+      pic.removeRepresentation(pic.representations.objectAtIndex(0)); pic.addRepresentation(jrep);
+      pic.size = $.NSMakeSize(pw, ph);
       const np = $.PDFPage.alloc.initWithImage(pic);
       if (!np || np.isNil()) return "ERR cannot draw page " + (i + 1);
+      const mb = np.boundsForBox($.kPDFDisplayBoxMediaBox);
+      if (Math.abs(mb.size.width - pw) > 1 || Math.abs(mb.size.height - ph) > 1) {
+        // the page came out in pixels: scale it back to the paper size by giving it the right boxes
+        np.setBoundsForBox($.NSMakeRect(0, 0, pw, ph), $.kPDFDisplayBoxMediaBox);
+        np.setBoundsForBox($.NSMakeRect(0, 0, pw, ph), $.kPDFDisplayBoxCropBox);
+      }
       nd.insertPageAtIndex(np, i);
     }
     return nd.writeToFile(argv[2]) ? String(n) : "ERR cannot save";
@@ -879,9 +895,9 @@ def rotate_pdf(path, rotations, mode="copy"):
 
 
 COMPRESS_LEVELS = {  # name: (dots per inch, JPEG quality)
-    "small": (72, 0.5),
-    "balanced": (110, 0.65),
-    "good": (150, 0.8),
+    "small": (100, 0.5),
+    "balanced": (150, 0.7),
+    "good": (200, 0.85),
 }
 
 
@@ -890,16 +906,24 @@ def compress_pdf(path, level="balanced", grey=False):
     path = os.path.realpath(path)
     if not allowed(path) or not path.lower().endswith(".pdf"):
         raise ValueError("That PDF isn't there any more.")
-    dpi, q = COMPRESS_LEVELS.get(level, COMPRESS_LEVELS["balanced"])
     folder, name = os.path.split(path)
     stem = os.path.splitext(name)[0]
     out = free_name(folder, "%s - small.pdf" % stem)
     before = os.path.getsize(path)
-    pages = pdftool("compress", path, out, dpi, q, "grey" if grey else "colour")
+    if level == "text":
+        try:
+            pages = pdftool("shrink", path, out)
+        except ValueError as e:
+            raise ValueError("Couldn't shrink the pictures inside (%s). This needs macOS 13 or newer; "
+                             "the picture options below work on every Mac." % e)
+    else:
+        dpi, q = COMPRESS_LEVELS.get(level, COMPRESS_LEVELS["balanced"])
+        pages = pdftool("compress", path, out, dpi, q, "grey" if grey else "colour")
     after = os.path.getsize(out)
-    if after >= before:
+    if after >= before * 0.98:
         os.unlink(out)  # our own just-made file, not the user's: it didn't help, so don't leave it behind
-        raise ValueError("It didn't get smaller: this PDF is already compact at that quality. Try “Smallest”.")
+        raise ValueError("It didn't get smaller: this PDF is already compact at that quality. Try “Smallest”."
+                         if level != "text" else "The pictures inside are already small. Try one of the picture options below.")
     CREATED.add(out)
     _library["time"] = 0
     return {"path": out, "name": os.path.basename(out), "pages": pages, "before": before, "after": after}
