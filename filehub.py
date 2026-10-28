@@ -642,6 +642,17 @@ function run(argv) {
     }
     return doc.writeToFile(argv[3]) ? String(count) : "ERR cannot save";
   }
+  if (argv[0] === "rotate") {
+    // argv[2] = JSON file with {rotations: {"3": 90, "5": 270}} (page number -> extra turn clockwise), argv[3] = output
+    const spec = JSON.parse($.NSString.stringWithContentsOfFileEncodingError(argv[2], 4, null).js);
+    let count = 0;
+    for (const k of Object.keys(spec.rotations || {})) {
+      const i = parseInt(k) - 1, d = ((parseInt(spec.rotations[k]) % 360) + 360) % 360;
+      if (!(i >= 0 && i < n) || !d) continue;
+      const page = doc.pageAtIndex(i); page.rotation = (page.rotation + d) % 360; count++;
+    }
+    return doc.writeToFile(argv[3]) ? String(count) : "ERR cannot save";
+  }
   if (argv[0] === "compress") {
     // Make the file smaller: each page is redrawn as a JPEG picture at the chosen sharpness (dpi) and quality.
     const dpi = parseFloat(argv[3]) || 110, q = parseFloat(argv[4]) || 0.65, grey = argv[5] === "grey";
@@ -831,6 +842,35 @@ def annotate_pdf(path, annotations, mode="copy"):
             return {"path": path, "name": name, "count": count, "backup": backup, "mode": "replace"}
         out = free_name(folder, "%s - annotated.pdf" % stem)
         count = pdftool("annotate", path, spec, out)
+        CREATED.add(out)
+        _library["time"] = 0
+        return {"path": out, "name": os.path.basename(out), "count": count, "mode": "copy"}
+    finally:
+        os.unlink(spec)
+
+
+def rotate_pdf(path, rotations, mode="copy"):
+    """Turn pages (90/180/270 clockwise) into a copy, or into the file itself with a backup."""
+    path = os.path.realpath(path)
+    if not allowed(path) or not path.lower().endswith(".pdf"):
+        raise ValueError("That PDF isn't there any more.")
+    rotations = {str(int(k)): int(v) % 360 for k, v in (rotations or {}).items() if int(v) % 360}
+    if not rotations:
+        raise ValueError("No pages were turned.")
+    folder, name = os.path.split(path)
+    stem = os.path.splitext(name)[0]
+    spec = _spec_file({"rotations": rotations})
+    try:
+        if mode == "replace":
+            tmp = os.path.join(folder, ".%s.filehub-tmp.pdf" % stem)
+            count = pdftool("rotate", path, spec, tmp)
+            backup = os.path.join(BACKUPS, "%d-%s" % (int(time.time()), name))
+            shutil.copy2(path, backup)
+            os.replace(tmp, path)
+            _library["time"] = 0
+            return {"path": path, "name": name, "count": count, "backup": backup, "mode": "replace"}
+        out = free_name(folder, "%s - rotated.pdf" % stem)
+        count = pdftool("rotate", path, spec, out)
         CREATED.add(out)
         _library["time"] = 0
         return {"path": out, "name": os.path.basename(out), "count": count, "mode": "copy"}
@@ -1598,6 +1638,11 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 return self.send(200, annotate_pdf(p, data.get("annotations", []), data.get("mode", "copy")))
             except (ValueError, OSError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/rotate":
+            try:
+                return self.send(200, rotate_pdf(p, data.get("rotations", {}), data.get("mode", "copy")))
+            except (ValueError, TypeError, OSError) as e:
                 return self.send(400, {"error": str(e)})
         if url.path == "/api/compress":
             try:
