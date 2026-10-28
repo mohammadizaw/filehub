@@ -665,9 +665,65 @@ def nice_path(p):
     return p.replace(ICLOUD, "iCloud Drive", 1).replace(HOME, "~", 1)
 
 
+# macOS lets a Terminal-started program look inside ~/.Trash only with "Full Disk Access".
+# Without it we ask Finder for the list instead (Finder may ask you once to allow this).
+BIN_LIST = """tell application "Finder"
+  set out to ""
+  repeat with it in (items of trash)
+    try
+      set out to out & (POSIX path of (it as alias)) & tab & (name of it) & tab & (physical size of it) & tab & (class of it as string) & tab & ((modification date of it) as «class isot» as string) & linefeed
+    end try
+  end repeat
+  return out
+end tell"""
+
+
+class NoAccess(Exception):
+    pass
+
+
+def browse_bin_via_finder():
+    out = subprocess.run(["osascript", "-e", BIN_LIST], capture_output=True, text=True, timeout=120)
+    if out.returncode != 0:
+        raise NoAccess(out.stderr.strip())
+    folders, files = [], []
+    for line in out.stdout.split("\n"):
+        parts = line.split("\t")
+        if len(parts) < 5:
+            continue
+        path, name, size_s, kind, mod = parts[:5]
+        path = path.rstrip("/")
+        try:
+            size = int(float(size_s))
+        except ValueError:
+            size = 0
+        try:
+            modified = datetime.fromisoformat(mod[:19]).timestamp()
+        except ValueError:
+            modified = 0
+        if kind == "folder":
+            folders.append({"name": name, "path": path, "count": 0})
+        else:
+            ext = os.path.splitext(name)[1].lower()
+            files.append({"splitFrom": None, "splitInto": [], "path": path, "name": name, "folder": "Bin",
+                          "ext": ext.lstrip("."), "type": file_type(ext), "kind": "", "size": size,
+                          "modified": modified, "created": modified, "lastUsed": None, "useCount": 0,
+                          "source": "Bin", "url": None, "family": "file:" + path, "pages": None,
+                          "pageWord": PAGE_WORD.get(ext, "pages")})
+    folders.sort(key=lambda f: f["name"].lower())
+    files.sort(key=lambda f: f["name"].lower())
+    return {"path": TRASH, "display": "Bin", "crumbs": [{"name": "Bin", "path": TRASH}],
+            "folders": folders, "files": files, "viaFinder": True}
+
+
 def browse(path):
-    names = sorted((n for n in os.listdir(path) if not n.startswith(".")),
-                   key=lambda n: n.lower())
+    try:
+        names = sorted((n for n in os.listdir(path) if not n.startswith(".")),
+                       key=lambda n: n.lower())
+    except PermissionError:
+        if path == TRASH:
+            return browse_bin_via_finder()
+        raise NoAccess(path)
     folders, files = [], []
     for n in names:
         full = os.path.join(path, n)
@@ -1084,7 +1140,10 @@ class Handler(BaseHTTPRequestHandler):
                 p = os.path.realpath(qs.get("path", HOME) or HOME)
                 if not inside(p, True) or not os.path.isdir(p):
                     return self.send(404, {"error": "not found"})
-                return self.send(200, browse(p))
+                try:
+                    return self.send(200, browse(p))
+                except NoAccess as e:
+                    return self.send(403, {"error": "no-access", "detail": str(e)})
             if url.path in ("/api/thumb", "/api/raw"):
                 p = qs.get("path", "")
                 if not allowed(p):
@@ -1176,6 +1235,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, {"made": copy_into(files, p), "sources": files})
             except (ValueError, OSError, subprocess.SubprocessError) as e:
                 return self.send(400, {"error": str(e)})
+        if url.path == "/api/privacy":  # opens System Settings at Full Disk Access
+            subprocess.Popen(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"])
+            return self.send(200, {"ok": True})
         if url.path == "/api/emptybin":
             try:
                 empty_bin()
