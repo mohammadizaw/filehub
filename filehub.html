@@ -675,6 +675,12 @@ select.ctl{font-weight:600}
 .edprev i{display:block;border-radius:50%;background:var(--accent)}
 .zoom.fs.editing #edCancel,.zoom.fs.editing #edSaveInto,.zoom.fs.editing #edSaveCopy{display:none}
 .zoom.fs.editing .edright .edsep{display:none}
+/* in full screen while editing, the page arrows and Exit join the tool bar (one line) */
+.fsbar.inline{position:static;transform:none;display:flex;box-shadow:none;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:0 0 0 8px;margin-left:2px;border-left:1px solid var(--line);border-radius:0;gap:2px}
+.fsbar.inline .fssep{display:none}
+.fsbar.inline .fsl{padding:0 4px;font-size:12.5px}
+.fsbar.inline button{height:34px;min-width:34px;padding:0 8px}
+.fsbar.inline .fsx span{display:none}
 /* ===== Full screen reading: page fills the screen, floating toolbar that hides itself ===== */
 .zoom.fs{background:var(--bg)}
 .zoom.fs .zbar,.zoom.fs .znav{display:none!important}
@@ -683,7 +689,8 @@ select.ctl{font-weight:600}
 .zoom.fs.editing .edbar .edright{margin-left:0}
 .zoom.fs.editing .edcount{display:none}
 .zoom.fs.idle .edbar{opacity:0;transform:translateY(12px);pointer-events:none}
-.zoom.fs.editing .zstage{padding-bottom:170px}
+.zoom.fs.editing .zstage{padding-bottom:110px}
+.zoom.fs.editing .edbar{bottom:22px}
 .zoom.fs:not(.editing) .zstage{padding-bottom:80px}
 .zoom.fs.editing #fsEdit{display:none}
 .zoom.fs .zselui{z-index:46}
@@ -1022,7 +1029,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     <button class="edpop" id="edSizeBtn" title="Thickness / text size"><span class="lbl" id="edSizeLbl">Size</span><b id="edSizeVal">3</b></button>
     <div class="edpanel" id="edColorPanel"><div class="edcolors" id="edColors"></div></div>
     <div class="edpanel" id="edSizePanel"><input type="range" id="edSize" min="1" max="8" step="1" value="3"><span class="edprev"><i id="edSizePrev"></i></span></div>
-    <div class="edright">
+    <div class="edright" id="edRight">
       <button class="btn" id="edUndo" title="Undo mark (⌘Z)">↶</button><button class="btn" id="edRedo" title="Redo mark (⇧⌘Z)">↷</button>
       <span class="edcount" id="edCount"></span>
       <span class="edsep"></span>
@@ -2778,11 +2785,11 @@ async function openAnnotate(f){
 async function startEdit(){
   if(ED.on && ED.file === Z.file) return;
   Object.assign(ED, {on:true, file:Z.file, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null});
-  $('zoom').classList.add('editing'); setTool(ED.tool);
+  $('zoom').classList.add('editing'); setTool(ED.tool); if(typeof placeFsBar==='function') placeFsBar();
   try{ ED.info = await api('/api/pdfinfo?path='+encodeURIComponent(Z.file.path)); }catch(e){ ED.info = null; }
   renderMarks(); edStatus();
 }
-function stopEdit(){ ED.on = false; edPanel('edColorPanel', false); $('zoom').classList.remove('editing'); $('zOv').innerHTML = ''; $('zTextIn').classList.remove('on'); edStatus(); }
+function stopEdit(){ ED.on = false; edPanel('edColorPanel', false); if(typeof placeFsBar==='function') setTimeout(placeFsBar, 0); $('zoom').classList.remove('editing'); $('zOv').innerHTML = ''; $('zTextIn').classList.remove('on'); edStatus(); }
 function setTool(t){
   ED.tool = t; $('zoom').dataset.tool = t;
   document.querySelectorAll('#edTools button').forEach(b => b.classList.toggle('on', b.dataset.tool===t));
@@ -2972,14 +2979,21 @@ $('zImg').addEventListener('load', () => { if(ED.on) renderMarks(); });
 // ---------- full screen reading ----------
 let fsIdleT = null, fsEnteredAt = 0;
 function enterFs(){
-  $('zoom').classList.add('fs'); fsWake(); fsEnteredAt = Date.now();
+  $('zoom').classList.add('fs'); fsWake(); fsEnteredAt = Date.now(); placeFsBar();
   const el = document.documentElement;
   if(!document.fullscreenElement && el.requestFullscreen){ el.requestFullscreen().catch(() => {}); }
   zoomLabel();
 }
 function exitFs(){
-  $('zoom').classList.remove('fs', 'idle'); clearTimeout(fsIdleT);
+  $('zoom').classList.remove('fs', 'idle'); clearTimeout(fsIdleT); placeFsBar();
   if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+}
+// the page arrows + Exit live in their own bar when reading, and inside the tool bar when editing in full screen
+function placeFsBar(){
+  const bar = $('fsBar'), inline = $('zoom').classList.contains('fs') && ED.on;
+  const target = inline ? $('edRight') : $('zoom');
+  if(bar.parentNode !== target) target.appendChild(bar);
+  bar.classList.toggle('inline', inline);
 }
 function fsWake(){ const z = $('zoom'); if(!z.classList.contains('fs')) return; z.classList.remove('idle'); clearTimeout(fsIdleT); fsIdleT = setTimeout(() => { if(ED.drawing || $('zTextIn').classList.contains('on') || document.querySelector('.edpanel.on')) return fsWake(); z.classList.add('idle'); }, 2500); }
 document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement && $('zoom').classList.contains('fs') && Date.now() - fsEnteredAt > 600) exitFs(); });
