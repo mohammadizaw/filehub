@@ -361,7 +361,9 @@ def library(days=60, force=False):
         for th in threads:
             th.join()
         paths = list(dict.fromkeys(p for r in results for p in (r or [])))
-        paths = [p for p in paths if os.path.splitext(p)[1].lower() in DOC_EXT]
+        # Spotlight can lag a few seconds: skip what's gone, add what FileHub itself just made or moved
+        paths += [p for p in list(CREATED) + list(JUST_MOVED) if os.path.isfile(p)]
+        paths = list(dict.fromkeys(p for p in paths if os.path.splitext(p)[1].lower() in DOC_EXT and os.path.exists(p)))
         paths.sort(key=lambda p: -os.path.getmtime(p) if os.path.exists(p) else 0)
         files = metadata(paths[:3000])
         _library.update(time=time.time(), files=files)
@@ -767,6 +769,7 @@ def new_folder(dest):
 
 
 CREATED = set()  # items FileHub made while running (copies, duplicates, new folders)
+JUST_MOVED = set()  # where FileHub moved or renamed things to (so they show before Spotlight notices)
 
 
 def relink(old, new):
@@ -816,6 +819,8 @@ def move_one(src, dst):
         subprocess.run(["ditto", src, dst], check=True, capture_output=True, timeout=3600)
         trash([src], force=True)  # other disk: the original goes to the Bin, never deleted
     relink(src, dst)
+    JUST_MOVED.discard(src)
+    JUST_MOVED.add(dst)
     if src in CREATED:
         CREATED.discard(src)
         CREATED.add(dst)
@@ -918,6 +923,8 @@ def rename_item(path, new_name):
         raise ValueError("“%s” already exists in this folder." % new_name)
     os.rename(path, new)
     relink(path, new)
+    JUST_MOVED.discard(path)
+    JUST_MOVED.add(new)
     _library["time"] = 0
     return new
 
@@ -962,6 +969,16 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, places())
             if url.path == "/api/drives":
                 return self.send(200, drives())
+            if url.path == "/api/stamp":  # cheap: has this folder changed? (files added, removed, renamed)
+                p = os.path.realpath(qs.get("path", "") or HOME)
+                if not inside(p, True) or not os.path.isdir(p):
+                    return self.send(404, {"error": "not found"})
+                try:
+                    names = [n for n in os.listdir(p) if not n.startswith(".")]
+                    st = os.stat(p)
+                    return self.send(200, {"stamp": "%d-%d-%d" % (int(st.st_mtime), int(st.st_ctime), len(names))})
+                except OSError as e:
+                    return self.send(500, {"error": str(e)})
             if url.path == "/api/browse":
                 p = os.path.realpath(qs.get("path", HOME) or HOME)
                 if not inside(p, True) or not os.path.isdir(p):

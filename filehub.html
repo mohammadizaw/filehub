@@ -1292,7 +1292,7 @@ async function openFolder(path, fromHistory){
   if(S.browse===path) render();
   $('content').scrollTop = 0;
   if(!fromHistory) pushLoc();
-  updNavBtns();
+  updNavBtns(); folderStamp = null;
 }
 function closePreview(){ $('prev').classList.remove('open'); S.sel=null; S.selSet.clear(); applySel(); }
 
@@ -2020,14 +2020,41 @@ async function call(url, body){
   if(!r || !r.ok) throw new Error(d.error === 'not found' ? 'FileHub needs a restart to do this (see the note at the bottom)' : (d.error || "Couldn't do that"));
   return d;
 }
+// Take items off the screen right away (the real rescan follows in the background).
+function removeLocal(paths){
+  const gone = p => paths.some(q => p===q || p.startsWith(q+'/'));
+  const d = S.browseData;
+  if(d){ d.files = d.files.filter(f => !gone(f.path)); d.folders = d.folders.filter(f => !gone(f.path)); }
+  S.files = S.files.filter(f => !gone(f.path)); S.open = S.open.filter(f => !gone(f.path));
+  if(S.results) S.results = S.results.filter(f => !gone(f.path));
+  paths.forEach(p => S.selSet.delete(p));
+  if(S.sel && gone(S.sel)) closePreview();
+  const top = $('content').scrollTop; render(); $('content').scrollTop = top;
+}
+let folderStamp = null;
 async function refreshHere(select){
+  const top = $('content').scrollTop;
   if(S.view==='browse' && S.browse){
     try{ S.browseData = await api('/api/browse?path='+encodeURIComponent(S.browse)); }catch(e){}
+    if(select && select.length){ S.selSet = new Set(select); S.focus = select[select.length-1]; S.anchor = select[0]; }
+    render(); $('content').scrollTop = top; folderStamp = null;
   }
-  try{ S.files = await api('/api/library?refresh=1'); }catch(e){}
-  if(select && select.length){ S.selSet = new Set(select); S.focus = select[select.length-1]; S.anchor = select[0]; }
-  render();
+  // the full rescan (Spotlight) can take a few seconds on a real Mac: do it in the background
+  try{ S.files = await api('/api/library?refresh=1'); }catch(e){ return; }
+  if(S.view!=='browse' && select && select.length){ S.selSet = new Set(select); S.focus = select[select.length-1]; S.anchor = select[0]; }
+  const t2 = $('content').scrollTop; render(); $('content').scrollTop = t2;
 }
+// Notice changes made outside FileHub (a file saved into this folder by another app, Finder, a download…).
+async function watchFolder(){
+  if(S.view!=='browse' || !S.browse || MQ || DRAG || anyOverlay() || document.hidden) return;
+  let r; try{ r = await api('/api/stamp?path='+encodeURIComponent(S.browse)); }catch(e){ return; }
+  if(folderStamp === null){ folderStamp = r.stamp; return; }
+  if(r.stamp === folderStamp) return;
+  folderStamp = r.stamp;
+  const path = S.browse, top = $('content').scrollTop;
+  try{ const d = await api('/api/browse?path='+encodeURIComponent(path)); if(S.browse===path){ S.browseData = d; render(); $('content').scrollTop = top; } }catch(e){}
+}
+setInterval(watchFolder, 2500);
 function followPins(pairs){
   S.pins = new Set([...S.pins].map(p => movedPath(pairs, p))); store.set('pins', [...S.pins]);
   if(S.sel) S.sel = movedPath(pairs, S.sel);
@@ -2046,7 +2073,7 @@ async function pasteHere(folder){
   try{
     if(same){
       const d = await call('/api/move', {paths:S.cut, dest:folder});
-      S.cut = []; followPins(d.pairs);
+      S.cut = []; followPins(d.pairs); removeLocal(d.pairs.map(x=>x[0]));
       did({type:'move', pairs:d.pairs, msg:`Moved ${plural(d.pairs.length,'item')}`});
       return refreshHere(d.pairs.map(x=>x[1]));
     }
@@ -2072,7 +2099,7 @@ async function moveSel(keys, dest){
   try{
     const d = await call('/api/move', {paths:keys, dest});
     if(!d.pairs.length){ toast('Already in that folder'); return; }
-    followPins(d.pairs);
+    followPins(d.pairs); removeLocal(d.pairs.map(x=>x[0]));
     did({type:'move', pairs:d.pairs, msg:`Moved ${plural(d.pairs.length,'item')} to “${folderName(dest)}”`});
     refreshHere();
   }catch(e){ toast(e.message); }
@@ -2161,7 +2188,8 @@ async function deleteSel(keys = selKeys()){
   try{
     const d = await call('/api/delete', {paths:keys});
     if(!d.pairs.length) return toast("Couldn't move that to the Bin");
-    followPins(d.pairs);
+    if(S.sel && d.pairs.some(x => x[0]===S.sel)) closePreview();  // don't keep showing a file that's now in the Bin
+    followPins(d.pairs); removeLocal(d.pairs.map(x=>x[0]));
     did({type:'trash', pairs:d.pairs, msg:`Moved ${plural(d.pairs.length,'item')} to the Bin`});
     clearSel(); refreshHere();
   }catch(e){ toast(e.message); }
@@ -2177,6 +2205,8 @@ async function undo(){
       const d = await call('/api/trash', {paths:op.made});
       if(d.trashed.length < op.made.length) throw new Error("Some copies were changed or FileHub restarted, so they were left alone");
     }
+    if(op.type==='move' || op.type==='rename' || op.type==='trash') removeLocal(op.pairs.map(x=>x[1]).filter(Boolean));
+    else removeLocal(op.made || []);
     REDO.push(op); toast('Undone: ' + op.msg.toLowerCase());
     refreshHere(['move','rename','trash'].includes(op.type) ? op.pairs.map(x=>x[0]) : op.sources);
   }catch(e){ toast(e.message); }
@@ -2189,6 +2219,7 @@ async function redo(){
     else if(op.type==='dup'){ op.made = (await call('/api/duplicate', {paths:op.sources})).made; }
     else if(op.type==='newfolder'){ op.made = (await call('/api/newfolder', {path:op.dest})).made; }
     else { op.made = (await call('/api/copyto', {paths:op.sources, dest:op.dest})).made; }
+    if(op.type==='move' || op.type==='rename' || op.type==='trash') removeLocal(op.pairs.map(x=>x[0]));
     UNDO.push(op); toast('Redone: ' + op.msg.toLowerCase());
     refreshHere(op.made || op.pairs.map(x=>x[1]));
   }catch(e){ toast(e.message); }
