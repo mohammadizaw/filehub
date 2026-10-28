@@ -659,6 +659,22 @@ select.ctl{font-weight:600}
 .zoom.editing #zEdit,.zoom.editing #zClose{display:none}
 .edbar #edSaveInto{background:var(--accent-soft);color:var(--accent)}
 .zoom.editing .zstage{padding-top:6px}
+/* colour and size live behind one button each */
+.edbar{position:relative}
+.edpop{display:flex;align-items:center;gap:8px;border:0;background:var(--panel2);color:var(--text);border-radius:11px;padding:0 12px;height:36px;cursor:pointer;font-weight:600;font-size:12.5px}
+.edpop:hover{background:var(--hover)}
+.edpop.on{background:var(--accent-soft);color:var(--accent)}
+.edpop .cdot{width:18px;height:18px;border-radius:50%;box-shadow:0 0 0 1px var(--line),inset 0 0 0 2px var(--panel)}
+.edpop b{font-size:13px;min-width:14px;text-align:center}
+.edpanel{position:absolute;top:calc(100% + 8px);left:var(--px,0);display:none;align-items:center;gap:12px;background:var(--panel);border-radius:14px;box-shadow:var(--shadow-lg);padding:12px 14px;z-index:50;animation:popin .14s ease-out}
+.edpanel.on{display:flex}
+.zoom.fs .edpanel{top:auto;bottom:calc(100% + 8px)}
+.edpanel .edcolors{padding:0}
+.edpanel input[type=range]{width:160px;accent-color:var(--accent)}
+.edprev{width:34px;height:34px;border-radius:50%;background:var(--panel2);display:grid;place-items:center}
+.edprev i{display:block;border-radius:50%;background:var(--accent)}
+.zoom.fs.editing #edCancel,.zoom.fs.editing #edSaveInto,.zoom.fs.editing #edSaveCopy{display:none}
+.zoom.fs.editing .edright .edsep{display:none}
 /* ===== Full screen reading: page fills the screen, floating toolbar that hides itself ===== */
 .zoom.fs{background:var(--bg)}
 .zoom.fs .zbar,.zoom.fs .znav{display:none!important}
@@ -1002,8 +1018,10 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
       <button data-tool="arrow" title="Arrow (A)"></button>
       <button data-tool="line" title="Line (L)"></button>
     </div>
-    <div class="edcolors" id="edColors"></div>
-    <label class="edsize" title="Thickness / text size"><span id="edSizeLbl">Size</span><input type="range" id="edSize" min="1" max="8" step="1" value="3"></label>
+    <button class="edpop" id="edColorBtn" title="Colour"><span class="cdot" id="edColorDot"></span><span class="lbl">Colour</span></button>
+    <button class="edpop" id="edSizeBtn" title="Thickness / text size"><span class="lbl" id="edSizeLbl">Size</span><b id="edSizeVal">3</b></button>
+    <div class="edpanel" id="edColorPanel"><div class="edcolors" id="edColors"></div></div>
+    <div class="edpanel" id="edSizePanel"><input type="range" id="edSize" min="1" max="8" step="1" value="3"><span class="edprev"><i id="edSizePrev"></i></span></div>
     <div class="edright">
       <button class="btn" id="edUndo" title="Undo mark (⌘Z)">↶</button><button class="btn" id="edRedo" title="Redo mark (⇧⌘Z)">↷</button>
       <span class="edcount" id="edCount"></span>
@@ -2764,19 +2782,30 @@ async function startEdit(){
   try{ ED.info = await api('/api/pdfinfo?path='+encodeURIComponent(Z.file.path)); }catch(e){ ED.info = null; }
   renderMarks(); edStatus();
 }
-function stopEdit(){ ED.on = false; $('zoom').classList.remove('editing'); $('zOv').innerHTML = ''; $('zTextIn').classList.remove('on'); edStatus(); }
+function stopEdit(){ ED.on = false; edPanel('edColorPanel', false); $('zoom').classList.remove('editing'); $('zOv').innerHTML = ''; $('zTextIn').classList.remove('on'); edStatus(); }
 function setTool(t){
   ED.tool = t; $('zoom').dataset.tool = t;
   document.querySelectorAll('#edTools button').forEach(b => b.classList.toggle('on', b.dataset.tool===t));
   if(t !== 'select' && TOOL_DEFAULT_COLOR[t] && !ED.colorPicked) ED.color = TOOL_DEFAULT_COLOR[t];
   $('edSizeLbl').textContent = ED_LBL[t] || 'Thickness';
-  renderColors(); ED.sel = null; renderMarks();
+  renderColors(); sizeShow(); edPanel('edColorPanel', false); ED.sel = null; renderMarks();
 }
-function renderColors(){ $('edColors').innerHTML = ED_COLORS.map(c => `<button data-c="${c}" class="${ED.color===c?'on':''}" style="background:${c}" title="${c}"></button>`).join(''); }
-$('edColors').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if(!b) return; ED.color = b.dataset.c; ED.colorPicked = true; renderColors(); if(ED.sel){ ED.sel.color = ED.color; renderMarks(); } });
+function renderColors(){ $('edColors').innerHTML = ED_COLORS.map(c => `<button data-c="${c}" class="${ED.color===c?'on':''}" style="background:${c}" title="${c}"></button>`).join(''); $('edColorDot').style.background = ED.color; }
+function sizeShow(){ $('edSizeVal').textContent = ED.size; const d = 6 + ED.size*3; Object.assign($('edSizePrev').style, {width:d+'px', height:d+'px', background: ED.color}); }
+function edPanel(id, open){
+  const pnl = $(id), btn = id==='edColorPanel' ? $('edColorBtn') : $('edSizeBtn');
+  ['edColorPanel','edSizePanel'].forEach(x => { if(x!==id){ $(x).classList.remove('on'); } }); $('edColorBtn').classList.remove('on'); $('edSizeBtn').classList.remove('on');
+  const on = open==null ? !pnl.classList.contains('on') : open;
+  pnl.classList.toggle('on', on); btn.classList.toggle('on', on);
+  if(on){ const bar = $('edBar').getBoundingClientRect(), b = btn.getBoundingClientRect(); pnl.style.setProperty('--px', Math.max(6, Math.min(b.left - bar.left, bar.width - pnl.offsetWidth - 6)) + 'px'); }
+}
+$('edColorBtn').onclick = e => { e.stopPropagation(); edPanel('edColorPanel'); };
+$('edSizeBtn').onclick = e => { e.stopPropagation(); edPanel('edSizePanel'); };
+document.addEventListener('mousedown', e => { if(!e.target.closest('.edpanel,.edpop')){ edPanel('edColorPanel', false); } }, true);
+$('edColors').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if(!b) return; ED.color = b.dataset.c; ED.colorPicked = true; renderColors(); sizeShow(); if(ED.sel){ ED.sel.color = ED.color; renderMarks(); } edPanel('edColorPanel', false); });
 $('edTools').addEventListener('click', e => { const b = e.target.closest('[data-tool]'); if(b) setTool(b.dataset.tool); });
 $('zSelUi').addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); if(e.target.closest('[data-selop="del"]') && ED.sel) removeMark(ED.sel); });
-$('edSize').addEventListener('input', e => { ED.size = +e.target.value; if(ED.sel && (ED.sel.width || ED.sel.size)){ if(ED.sel.type==='text') ED.sel.size = 8 + ED.size*3; else ED.sel.width = ED.size; renderMarks(); } });
+$('edSize').addEventListener('input', e => { ED.size = +e.target.value; sizeShow(); if(ED.sel && (ED.sel.width || ED.sel.size)){ if(ED.sel.type==='text') ED.sel.size = 8 + ED.size*3; else ED.sel.width = ED.size; renderMarks(); } });
 function edStatus(){ const n = edCount(); $('edCount').textContent = ED.on ? (n ? `${plural(n,'mark')} on ${plural(Object.keys(ED.marks).filter(p => ED.marks[p].length).length,'page')}` : 'No marks yet') : ''; $('edUndo').disabled = !ED.undo.length; $('edRedo').disabled = !ED.redo.length; }
 function pushUndo(action){ ED.undo.push(action); ED.redo.length = 0; edStatus(); }
 function edUndo(){ const a = ED.undo.pop(); if(!a) return; a.undo(); ED.redo.push(a); renderMarks(); edStatus(); }
@@ -2952,7 +2981,7 @@ function exitFs(){
   $('zoom').classList.remove('fs', 'idle'); clearTimeout(fsIdleT);
   if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
 }
-function fsWake(){ const z = $('zoom'); if(!z.classList.contains('fs')) return; z.classList.remove('idle'); clearTimeout(fsIdleT); fsIdleT = setTimeout(() => { if(ED.drawing || $('zTextIn').classList.contains('on')) return fsWake(); z.classList.add('idle'); }, 2500); }
+function fsWake(){ const z = $('zoom'); if(!z.classList.contains('fs')) return; z.classList.remove('idle'); clearTimeout(fsIdleT); fsIdleT = setTimeout(() => { if(ED.drawing || $('zTextIn').classList.contains('on') || document.querySelector('.edpanel.on')) return fsWake(); z.classList.add('idle'); }, 2500); }
 document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement && $('zoom').classList.contains('fs') && Date.now() - fsEnteredAt > 600) exitFs(); });
 document.addEventListener('mousemove', e => { if($('zoom').classList.contains('fs')) fsWake(); });
 $('zFull').onclick = enterFs; $('fsExit').onclick = exitFs; $('fsEdit').onclick = () => { startEdit(); fsWake(); };
