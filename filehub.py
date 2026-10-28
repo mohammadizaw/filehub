@@ -596,8 +596,10 @@ function run(argv) {
         ann.color = $.NSColor.clearColor; ann.alignment = 0; border(ann, 0);
         page.addAnnotation(ann); count++;
       } else if (t === "note") {
-        const p = pt(a.rect.x, a.rect.y); const ann = make($.NSMakeRect(p.x, p.y - 20, 20, 20), $.PDFAnnotationSubtypeText);
-        ann.contents = a.text || ""; ann.color = col(a.color || "#ffd60a"); ann.iconType = 2;
+        // a sticky note: a yellow box with the text showing on the page (readable in Preview, Acrobat, iPad...)
+        const r = rectOf(a.rect); const ann = make(r, $.PDFAnnotationSubtypeFreeText);
+        ann.contents = a.text || ""; ann.font = $.NSFont.systemFontOfSize(a.size || 12); ann.fontColor = col("#1a1a1a");
+        ann.color = col(a.color || "#ffeb3b"); ann.alignment = 0; border(ann, 0);
         page.addAnnotation(ann); count++;
       } else if (t === "pen") {
         if (!a.points || a.points.length < 2) continue;
