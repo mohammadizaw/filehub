@@ -610,6 +610,23 @@ function run(argv) {
         const path = $.NSBezierPath.bezierPath; path.moveToPoint($.NSMakePoint(pts[0].x, pts[0].y));
         for (let i = 1; i < pts.length; i++) path.lineToPoint($.NSMakePoint(pts[i].x, pts[i].y));
         ann.addBezierPath(path); page.addAnnotation(ann); count++;
+      } else if (t === "sig") {
+        // a signature: pen strokes drawn into the box a.rect (strokes are 0..1 inside that box)
+        if (!a.strokes || !a.strokes.length || !a.rect) continue;
+        const r = rectOf(a.rect); const lw = Math.max(0.4, (a.width || 0.01) * a.rect.w * dw);
+        const pad = lw + 2;
+        const bounds = $.NSMakeRect(r.origin.x - pad, r.origin.y - pad, r.size.width + 2 * pad, r.size.height + 2 * pad);
+        const ann = make(bounds, $.PDFAnnotationSubtypeInk); ann.color = col(a.color || "#111111", 1); border(ann, lw);
+        for (const st of a.strokes) {
+          if (!st.length) continue;
+          const path = $.NSBezierPath.bezierPath;
+          const q0 = pt(a.rect.x + st[0][0] * a.rect.w, a.rect.y + st[0][1] * a.rect.h);
+          path.moveToPoint($.NSMakePoint(q0.x, q0.y));
+          if (st.length === 1) path.lineToPoint($.NSMakePoint(q0.x + 0.01, q0.y));
+          for (let i = 1; i < st.length; i++) { const q = pt(a.rect.x + st[i][0] * a.rect.w, a.rect.y + st[i][1] * a.rect.h); path.lineToPoint($.NSMakePoint(q.x, q.y)); }
+          ann.addBezierPath(path);
+        }
+        page.addAnnotation(ann); count++;
       } else if (t === "rect" || t === "ellipse") {
         const r = rectOf(a.rect); const ann = make(r, t === "rect" ? $.PDFAnnotationSubtypeSquare : $.PDFAnnotationSubtypeCircle);
         ann.color = col(a.color); if (a.fill) ann.interiorColor = col(a.color, 0.25); border(ann, a.width || 2);
@@ -692,6 +709,79 @@ def merge_pdfs(items, name=None, dest=None):
 
 
 BACKUPS = os.path.join(THUMBS, "backups")
+
+# ---------- Saved signatures ----------
+# Each signature is a small JSON file: the pen strokes (0..1 inside its own box), its shape and a name.
+SIG_DIR = os.path.join(HOME, "Library", "Application Support", "FileHub", "signatures")
+_sig_lock = threading.Lock()
+
+
+def _sig_path(sid):
+    if not re.fullmatch(r"[0-9a-f]{8,32}", sid or ""):
+        raise ValueError("Unknown signature.")
+    return os.path.join(SIG_DIR, sid + ".json")
+
+
+def signatures():
+    out = []
+    try:
+        names = sorted(os.listdir(SIG_DIR))
+    except OSError:
+        return out
+    for n in names:
+        if not n.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(SIG_DIR, n)) as fh:
+                d = json.load(fh)
+            d["id"] = n[:-5]
+            out.append(d)
+        except (OSError, ValueError):
+            continue
+    out.sort(key=lambda d: d.get("created", 0))
+    return out
+
+
+def add_signature(name, strokes, aspect, width):
+    name = (name or "").strip()[:60] or "Signature"
+    if not strokes or not isinstance(strokes, list):
+        raise ValueError("Nothing was drawn.")
+    strokes = [[[round(float(x), 4), round(float(y), 4)] for x, y in st] for st in strokes if len(st) >= 1]
+    if len(json.dumps(strokes)) > 1_500_000:
+        raise ValueError("That image is too detailed for a signature. Try a smaller or simpler picture.")
+    sid = "%x%x" % (int(time.time() * 1000), os.getpid() % 4096)
+    d = {"name": name, "strokes": strokes, "aspect": max(0.1, min(20.0, float(aspect or 3))),
+         "width": max(0.001, min(0.2, float(width or 0.01))), "created": time.time()}
+    with _sig_lock:
+        os.makedirs(SIG_DIR, exist_ok=True)
+        tmp = _sig_path(sid) + ".tmp"
+        with open(tmp, "w") as fh:
+            json.dump(d, fh)
+        os.replace(tmp, _sig_path(sid))
+    d["id"] = sid
+    return d
+
+
+def delete_signature(sid):
+    with _sig_lock:
+        try:
+            os.unlink(_sig_path(sid))
+        except FileNotFoundError:
+            pass
+
+
+def rename_signature(sid, name):
+    name = (name or "").strip()[:60]
+    if not name:
+        raise ValueError("Give the signature a name.")
+    with _sig_lock:
+        with open(_sig_path(sid)) as fh:
+            d = json.load(fh)
+        d["name"] = name
+        with open(_sig_path(sid), "w") as fh:
+            json.dump(d, fh)
+    d["id"] = sid
+    return d
 os.makedirs(BACKUPS, exist_ok=True)
 
 
@@ -1338,6 +1428,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_file(p)
                 t = thumbnail(p, int(qs.get("s", 480)))
                 return self.send_file(t, "image/png") if t else self.send(404, {"error": "no preview"})
+            if url.path == "/api/signatures":
+                return self.send(200, {"items": signatures()})
             if url.path == "/api/pdfinfo":
                 p = qs.get("path", "")
                 if not allowed(p) or not p.lower().endswith(".pdf"):
@@ -1432,6 +1524,22 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/merge":
             try:
                 return self.send(200, merge_pdfs(data.get("items", []), data.get("name"), data.get("dest") or None))
+            except (ValueError, OSError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/signatures/add":
+            try:
+                return self.send(200, add_signature(data.get("name"), data.get("strokes"), data.get("aspect"), data.get("width")))
+            except (ValueError, TypeError, OSError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/signatures/delete":
+            try:
+                delete_signature(data.get("id", ""))
+                return self.send(200, {"ok": True})
+            except (ValueError, OSError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/signatures/rename":
+            try:
+                return self.send(200, rename_signature(data.get("id", ""), data.get("name")))
             except (ValueError, OSError) as e:
                 return self.send(400, {"error": str(e)})
         if url.path == "/api/annotate":
