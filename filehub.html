@@ -690,6 +690,20 @@ body:has(#zoom.on.editing:not(.fs)) .toast{top:124px}
 .sigacts .btn{flex:1}
 .sighint{font-size:11.5px;color:var(--muted)}
 .sigpad .box{width:min(680px,94vw)}
+.cmp .box{width:min(520px,94vw)}
+.cmp .muted{color:var(--muted);font-size:13px;margin:4px 0 12px}
+.cmp .muted.small{font-size:12px;margin:12px 0 0}
+.cmplevels{display:grid;gap:8px}
+.cmplevels button{display:grid;gap:2px;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);cursor:pointer;font:inherit}
+.cmplevels button span{font-size:12px;color:var(--muted)}
+.cmplevels button:hover{border-color:var(--accent)}
+.cmplevels button.on{border-color:var(--accent);box-shadow:var(--accent-glow);background:var(--accent-soft)}
+.cmpopt{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:12px;cursor:pointer}
+.cmpopt input{accent-color:var(--accent)}
+.cmpbusy{display:none;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-right:auto}
+.cmp.busy .cmpbusy{display:flex}
+.cmp.busy #cmpGo,.cmp.busy #cmpCancel{display:none}
+.cmpbusy .spin{width:14px;height:14px}
 .sigcanvaswrap{position:relative;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;margin:10px 0}
 .sigcanvaswrap canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
 .sigline{position:absolute;left:8%;right:8%;bottom:22%;border-bottom:1px dashed #bbb;pointer-events:none}
@@ -1033,6 +1047,19 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 <div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
   <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
   <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
+<div class="rn cmp" id="cmp"><div class="box">
+  <h3>Make this PDF smaller</h3>
+  <p class="muted" id="cmpWhat"></p>
+  <div class="cmplevels" id="cmpLevels">
+    <button data-level="small"><b>Smallest</b><span>For email and WhatsApp. Text stays readable on screen.</span></button>
+    <button data-level="balanced" class="on"><b>Balanced</b><span>Much smaller, still clear when printed.</span></button>
+    <button data-level="good"><b>Best quality</b><span>Smaller, sharp enough for small print.</span></button>
+  </div>
+  <label class="cmpopt"><input type="checkbox" id="cmpGrey"><span>Black &amp; white (greyscale) — smaller again, good for scanned papers</span></label>
+  <p class="muted small">A new file “<span id="cmpName"></span>” is made next to the original. The original is not changed. Pages become pictures, so text can't be selected in the small copy.</p>
+  <div class="err" id="cmpErr"></div>
+  <div class="actions"><span class="cmpbusy" id="cmpBusy"><span class="spin"></span>Compressing… this can take a minute for big files</span><button class="btn" id="cmpCancel">Cancel</button><button class="btn primary" id="cmpGo">Make smaller</button></div>
+</div></div>
 <div class="rn sigpad" id="sigPad"><div class="box">
   <h3 id="sigPadTitle">New signature</h3>
   <p class="muted" id="sigPadHint">Sign in the box below with the mouse or trackpad.</p>
@@ -1188,6 +1215,7 @@ const ICONS = {
   strike:'<path d="M5 12h14M8 7c0-2 2-3 4-3s4 1 4 3M8 17c0 2 2 3 4 3s4-1 4-3"/>',
   note:'<path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9l-5 5H6a2 2 0 0 1-2-2z"/><path d="M15 19v-5h5"/>',
   pen:'<path d="M12 19l7-7a2.1 2.1 0 0 0-3-3l-7 7-1 4z"/><path d="m14 10 3 3"/>',
+  shrink:'<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/>',
   signature:'<path d="M3 17c2.5-6 5-9 6.5-9s.5 7 2 7 2.5-4 3.5-4 .5 4 2 4 2-3 4-3"/><path d="M3 21h18"/>',
   rect:'<rect x="4" y="5" width="16" height="14" rx="2"/>',
   circle:'<circle cx="12" cy="12" r="8"/>',
@@ -1580,7 +1608,7 @@ function preview(f){
         <button class="btn primary" data-act="launch">${svg('launch')}<span>Open</span></button>
         <button class="btn" data-act="quicklook" title="Space">${svg('open')}<span>Quick Look</span></button>
         <button class="btn" data-act="reveal">${svg('finder')}<span>In Finder</span></button>
-        ${f.ext==='pdf'?`<button class="btn" data-act="read">${svg('types')}<span>Read here</span></button><button class="btn" data-act="split">${svg('scissors')}<span>Split pages</span></button><button class="btn" data-act="annotate">${svg('pen')}<span>Annotate</span></button>`:''}
+        ${f.ext==='pdf'?`<button class="btn" data-act="read">${svg('types')}<span>Read here</span></button><button class="btn" data-act="split">${svg('scissors')}<span>Split pages</span></button><button class="btn" data-act="compress">${svg('shrink')}<span>Make smaller</span></button><button class="btn" data-act="annotate">${svg('pen')}<span>Annotate</span></button>`:''}
         <button class="btn ${pinned?'on':''}" data-act="pin">${svg('star', pinned?'currentColor':'none')}<span>${pinned?'Pinned':'Pin'}</span></button>
         <button class="btn" data-act="share">${svg('share')}<span>Share</span></button>
         <button class="btn" data-act="copy">${svg('link')}<span>Copy path</span></button>
@@ -1676,6 +1704,7 @@ document.addEventListener('click', async e => {
     if(a==='pin'){ togglePin(S.sel); preview(byPath().get(S.sel)); renderNav(); }
     else if(a==='split'){ openSplit(byPath().get(S.sel)); }
     else if(a==='annotate'){ openAnnotate(byPath().get(S.sel)); }
+    else if(a==='compress'){ openCompress(byPath().get(S.sel)); }
     else if(a==='read'){ document.querySelector('.stage').innerHTML = `<iframe src="/api/raw?path=${encodeURIComponent(S.sel)}#view=FitH"></iframe>`; }
     else if(a==='share'){ const r = act.getBoundingClientRect(); openMenu({items: shareItems([S.sel])}, r.left, r.bottom + 6); }
     else if(a==='copy'){ navigator.clipboard.writeText(S.sel).then(()=>toast('Path copied')); }
@@ -2075,7 +2104,7 @@ function menuFor(target){
       {icon:'text', label:'Copy name', run:()=>copyText(f.name,'Name copied')},
       '-',
       {icon:'star', label:pinned?'Unpin':'Pin', run:()=>{ togglePin(f.path); render(); if(S.sel===f.path) preview(f); }},
-      ...(f.ext==='pdf' ? [{icon:'scissors', label:'Split pages…', run:()=>openSplit(f)}, {icon:'pen', label:'Annotate…', run:()=>openAnnotate(f)}] : []),
+      ...(f.ext==='pdf' ? [{icon:'scissors', label:'Split pages…', run:()=>openSplit(f)}, {icon:'pen', label:'Annotate…', run:()=>openAnnotate(f)}, {icon:'shrink', label:'Make smaller…', run:()=>openCompress(f)}] : []),
       ...(['png','jpg','jpeg','webp','gif'].includes(f.ext) ? [{icon:'signature', label:'Save as signature…', run:()=>sigFromFile(f)}] : []),
       {icon:'folder', label:'Open its folder', run:()=>openFolder(f.path.slice(0, f.path.lastIndexOf('/')))},
       ...(inBin(f.path) ? [] : ['-', {icon:'trash', label:'Move to Bin', key:K('⌫'), run:()=>deleteSel([f.path])}]),
@@ -2991,6 +3020,28 @@ document.addEventListener('mouseup', e => {
   if(r.w < 0.005 || r.h < 0.004){ renderMarks(); return; }
   addMark(Object.assign({type:ED.tool, rect:r, color:ED.color}, ED.tool==='rect' || ED.tool==='ellipse' ? {width:ED.size, fill:false} : {}), d.page);
 });
+// ---------- make a PDF smaller ----------
+let CMP = null;
+function openCompress(f){
+  if(!f || f.ext !== 'pdf') return;
+  CMP = f; $('cmpWhat').textContent = `${f.name} — ${size(f.size)} now`; $('cmpName').textContent = f.name.replace(/\.pdf$/i, '') + ' - small.pdf';
+  $('cmpErr').textContent = ''; $('cmp').classList.remove('busy'); $('cmp').classList.add('on');
+  const lv = store.get('cmpLevel', 'balanced'); document.querySelectorAll('#cmpLevels button').forEach(b => b.classList.toggle('on', b.dataset.level === lv)); $('cmpGrey').checked = !!store.get('cmpGrey', false);
+}
+$('cmpLevels').addEventListener('click', e => { const b = e.target.closest('[data-level]'); if(!b) return; document.querySelectorAll('#cmpLevels button').forEach(x => x.classList.toggle('on', x === b)); store.set('cmpLevel', b.dataset.level); });
+$('cmpCancel').onclick = () => $('cmp').classList.remove('on');
+$('cmp').addEventListener('mousedown', e => { if(e.target === $('cmp') && !$('cmp').classList.contains('busy')) $('cmp').classList.remove('on'); });
+$('cmpGo').onclick = async () => {
+  const level = (document.querySelector('#cmpLevels button.on') || {}).dataset?.level || 'balanced', grey = $('cmpGrey').checked; store.set('cmpGrey', grey);
+  $('cmp').classList.add('busy'); $('cmpErr').textContent = '';
+  try{
+    const d = await call('/api/compress', {path: CMP.path, level, grey});
+    $('cmp').classList.remove('on');
+    const pct = Math.round(100 - d.after * 100 / d.before);
+    did({type:'copy', sources:[CMP.path], dest:CMP.path.slice(0, CMP.path.lastIndexOf('/')), made:[d.path], msg:`Made “${d.name}”: ${size(d.before)} → ${size(d.after)} (${pct}% smaller)`});
+    await refreshHere([d.path]); const nf = byPath().get(d.path); if(nf) preview(nf);
+  }catch(err){ $('cmp').classList.remove('busy'); $('cmpErr').textContent = err.message; }
+};
 // ---------- signatures: draw once, place on any page ----------
 const SIG = {items:[], chosen:null, loaded:false, color:'#111111', pen:3, strokes:[], cur:null};
 const sigPath = (strokes, x, y, w, h) => strokes.map(st => st.map((q, k) => (k ? 'L' : 'M') + (x + q[0]*w).toFixed(1) + ' ' + (y + q[1]*h).toFixed(1)).join(' ') + (st.length === 1 ? ' l0.1 0' : '')).join(' ');
