@@ -642,6 +642,31 @@ function run(argv) {
     }
     return doc.writeToFile(argv[3]) ? String(count) : "ERR cannot save";
   }
+  if (argv[0] === "compress") {
+    // Make the file smaller: each page is redrawn as a JPEG picture at the chosen sharpness (dpi) and quality.
+    const dpi = parseFloat(argv[3]) || 110, q = parseFloat(argv[4]) || 0.65, grey = argv[5] === "grey";
+    const nd = $.PDFDocument.alloc.init;
+    for (let i = 0; i < n; i++) {
+      const page = doc.pageAtIndex(i), box = page.boundsForBox($.kPDFDisplayBoxCropBox), rot = page.rotation;
+      const turned = (rot === 90 || rot === 270);
+      const pw = turned ? box.size.height : box.size.width, ph = turned ? box.size.width : box.size.height;  // as displayed, in points
+      const w = Math.max(8, Math.round(pw * dpi / 72)), h = Math.max(8, Math.round(ph * dpi / 72));
+      const img = page.thumbnailOfSizeForBox($.NSMakeSize(w, h), $.kPDFDisplayBoxCropBox);
+      let rep = $.NSBitmapImageRep.imageRepWithData(img.TIFFRepresentation);
+      if (grey) {
+        const g = rep.bitmapImageRepByConvertingToColorSpaceRenderingIntent($.NSColorSpace.genericGrayColorSpace, 0);
+        if (g && !g.isNil()) rep = g;
+      }
+      const props = $.NSMutableDictionary.alloc.init; props.setObjectForKey($(q), $.NSImageCompressionFactor);
+      const jpg = rep.representationUsingTypeProperties($.NSBitmapImageFileTypeJPEG, props);
+      const pic = $.NSImage.alloc.initWithData(jpg);
+      pic.size = $.NSMakeSize(pw, ph);  // keep the real page size on paper
+      const np = $.PDFPage.alloc.initWithImage(pic);
+      if (!np || np.isNil()) return "ERR cannot draw page " + (i + 1);
+      nd.insertPageAtIndex(np, i);
+    }
+    return nd.writeToFile(argv[2]) ? String(n) : "ERR cannot save";
+  }
   if (argv[0] === "split") {
     const a = parseInt(argv[2]), b = parseInt(argv[3]);
     if (!(a >= 1 && b >= a && b <= n)) return "ERR bad range";
@@ -811,6 +836,33 @@ def annotate_pdf(path, annotations, mode="copy"):
         return {"path": out, "name": os.path.basename(out), "count": count, "mode": "copy"}
     finally:
         os.unlink(spec)
+
+
+COMPRESS_LEVELS = {  # name: (dots per inch, JPEG quality)
+    "small": (72, 0.5),
+    "balanced": (110, 0.65),
+    "good": (150, 0.8),
+}
+
+
+def compress_pdf(path, level="balanced", grey=False):
+    """Make a smaller copy next to the PDF: "Name - small.pdf". The original is never touched."""
+    path = os.path.realpath(path)
+    if not allowed(path) or not path.lower().endswith(".pdf"):
+        raise ValueError("That PDF isn't there any more.")
+    dpi, q = COMPRESS_LEVELS.get(level, COMPRESS_LEVELS["balanced"])
+    folder, name = os.path.split(path)
+    stem = os.path.splitext(name)[0]
+    out = free_name(folder, "%s - small.pdf" % stem)
+    before = os.path.getsize(path)
+    pages = pdftool("compress", path, out, dpi, q, "grey" if grey else "colour")
+    after = os.path.getsize(out)
+    if after >= before:
+        os.unlink(out)  # our own just-made file, not the user's: it didn't help, so don't leave it behind
+        raise ValueError("It didn't get smaller: this PDF is already compact at that quality. Try “Smallest”.")
+    CREATED.add(out)
+    _library["time"] = 0
+    return {"path": out, "name": os.path.basename(out), "pages": pages, "before": before, "after": after}
 
 
 def restore_backup(path, backup):
@@ -1545,6 +1597,11 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/annotate":
             try:
                 return self.send(200, annotate_pdf(p, data.get("annotations", []), data.get("mode", "copy")))
+            except (ValueError, OSError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/compress":
+            try:
+                return self.send(200, compress_pdf(p, data.get("level", "balanced"), bool(data.get("grey"))))
             except (ValueError, OSError) as e:
                 return self.send(400, {"error": str(e)})
         if url.path == "/api/restore":
