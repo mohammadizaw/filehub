@@ -661,7 +661,16 @@ select.ctl{font-weight:600}
 .zoom.editing .zstage{padding-top:6px}
 /* ===== Full screen reading: page fills the screen, floating toolbar that hides itself ===== */
 .zoom.fs{background:var(--bg)}
-.zoom.fs .zbar,.zoom.fs .edbar,.zoom.fs .znav,.zoom.fs .zselui{display:none!important}
+.zoom.fs .zbar,.zoom.fs .znav{display:none!important}
+/* while annotating in full screen, the whole tool bar floats above the page arrows */
+.zoom.fs.editing .edbar{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);z-index:45;margin:0;max-width:calc(100vw - 32px);justify-content:center;transition:opacity .25s,transform .25s;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.zoom.fs.editing .edbar .edright{margin-left:0}
+.zoom.fs.editing .edcount{display:none}
+.zoom.fs.idle .edbar{opacity:0;transform:translateX(-50%) translateY(12px);pointer-events:none}
+.zoom.fs.editing .zstage{padding-bottom:170px}
+.zoom.fs:not(.editing) .zstage{padding-bottom:80px}
+.zoom.fs.editing #fsEdit{display:none}
+.zoom.fs .zselui{z-index:46}
 .zoom.fs .zstage{padding:0;align-items:flex-start}
 .zoom.fs .zstage .zpage{width:min(100%,calc(100vh * var(--pa,0.773)));transition:none}
 .zoom.fs .zstage img{border-radius:0;box-shadow:none}
@@ -1011,6 +1020,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     <span class="fsl" id="fsLabel"></span>
     <button id="fsNext" title="Next page (→)">›</button>
     <span class="fssep"></span>
+    <button class="fsx" id="fsEdit" title="Annotate: highlight, write, draw"></button>
     <button class="fsx" id="fsExit" title="Exit full screen (Esc)"></button>
   </div>
 </div>
@@ -1710,6 +1720,7 @@ document.querySelectorAll('#edTools button').forEach(b => b.innerHTML = svg({sel
 $('zEdit').innerHTML = svg('pen') + ' Annotate';
 $('zFull').innerHTML = svg('fullscreen');
 $('fsExit').innerHTML = svg('exitfs') + '<span>Exit full screen</span>';
+$('fsEdit').innerHTML = svg('pen') + '<span>Annotate</span>';
 $('zSelUi').querySelector('[data-selop="del"]').innerHTML = svg('trash');
 $('appearBtn').onclick = e => { e.stopPropagation(); renderAppear(); $('appear').classList.toggle('on'); loadSystemLook().then(renderAppear); };
 $('appear').addEventListener('click', e => {
@@ -2941,10 +2952,10 @@ function exitFs(){
   $('zoom').classList.remove('fs', 'idle'); clearTimeout(fsIdleT);
   if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
 }
-function fsWake(){ const z = $('zoom'); if(!z.classList.contains('fs')) return; z.classList.remove('idle'); clearTimeout(fsIdleT); fsIdleT = setTimeout(() => z.classList.add('idle'), 2500); }
+function fsWake(){ const z = $('zoom'); if(!z.classList.contains('fs')) return; z.classList.remove('idle'); clearTimeout(fsIdleT); fsIdleT = setTimeout(() => { if(ED.drawing || $('zTextIn').classList.contains('on')) return fsWake(); z.classList.add('idle'); }, 2500); }
 document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement && $('zoom').classList.contains('fs') && Date.now() - fsEnteredAt > 600) exitFs(); });
 document.addEventListener('mousemove', e => { if($('zoom').classList.contains('fs')) fsWake(); });
-$('zFull').onclick = enterFs; $('fsExit').onclick = exitFs;
+$('zFull').onclick = enterFs; $('fsExit').onclick = exitFs; $('fsEdit').onclick = () => { startEdit(); fsWake(); };
 $('fsPrev').onclick = () => zoomTo(Z.p-1); $('fsNext').onclick = () => zoomTo(Z.p+1);
 $('zImg').addEventListener('load', () => { const i = $('zImg'); if(i.naturalWidth && i.naturalHeight) document.documentElement.style.setProperty('--pa', (i.naturalWidth / i.naturalHeight).toFixed(4)); });
 function zoomLabel(){ $('fsLabel').textContent = `Page ${Z.p} of ${Z.n}`; $('fsPrev').disabled = Z.p<=1; $('fsNext').disabled = Z.p>=Z.n; }
@@ -3015,7 +3026,7 @@ document.addEventListener('keydown', e => {
   if(e.key==='/' && !typing){ e.preventDefault(); $('q').focus(); }
   else if($('zoom').classList.contains('on')){
     if(e.key==='Escape'){ if($('zoom').classList.contains('fs')) exitFs(); else closeZoom(); }
-    else if((e.key==='f' || e.key==='F') && !typing && !ED.on){ e.preventDefault(); $('zoom').classList.contains('fs') ? exitFs() : enterFs(); }
+    else if((e.key==='f' || e.key==='F') && !typing && !(ED.on && e.target.closest && e.target.closest('[contenteditable]'))){ e.preventDefault(); $('zoom').classList.contains('fs') ? exitFs() : enterFs(); }
     else if(e.key===' ' && !typing){ e.preventDefault(); zoomTo(Z.p + (e.shiftKey ? -1 : 1)); }
     else if(e.key==='ArrowRight' || e.key==='PageDown') { e.preventDefault(); zoomTo(Z.p+1); }
     else if(e.key==='ArrowLeft' || e.key==='PageUp') { e.preventDefault(); zoomTo(Z.p-1); }
