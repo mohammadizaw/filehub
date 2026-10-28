@@ -1230,7 +1230,11 @@ function render(){
       const fl = filt(d.files);
       const files = d.files.length ? `<div class="section-h">Files <span class="count">${d.files.length}</span></div>${fl.length?block(sorted(fl)):empty('No files of this type','')}` : '';
       tools = crumbs + (d.files.length ? typeChips(d.files) : '');
-      body = folders + files + (!d.folders.length && !d.files.length ? empty('This folder is empty','') : '');
+      const noAccessMsg = d.noAccess ? `<div class="empty"><b>macOS isn't letting FileHub look in here</b>
+        ${isBin(d.path) ? 'The file is in the Bin, but newer Macs only let programs see inside the Bin with “Full Disk Access”.' : 'This folder is protected by macOS privacy settings.'}<br><br>
+        <strong>To fix it once:</strong> System Settings → Privacy &amp; Security → <strong>Full Disk Access</strong> → turn on <strong>Terminal</strong> (and <strong>python3</strong> if it's listed), then restart FileHub.
+        <div class="actions" style="justify-content:center"><button class="btn primary" data-privacy="1">Open that setting</button> <button class="btn" data-reveal-folder="${esc(d.path)}">Open in Finder</button></div></div>` : '';
+      body = noAccessMsg + folders + files + (!d.noAccess && !d.folders.length && !d.files.length ? empty('This folder is empty','') : '');
       break; }
     case 'types': {
       const g = groupBy(S.files, f => f.type);
@@ -1327,7 +1331,12 @@ async function openFolder(path, fromHistory){
   clearSel(); S.view='browse'; S.browse=path; S.q=''; $('q').value=''; S.typeFilter='All'; S.browseData=null; store.set('view','browse'); store.set('browse',path);
   render();
   try{ S.browseData = await api('/api/browse?path='+encodeURIComponent(path)); }
-  catch(e){ S.browseData = {path, display:path, crumbs:[], folders:[], files:[]}; toast("Can't open that folder"); }
+  catch(e){
+    const noAccess = /no-access/.test(e.message);
+    const bin = isBin(path);
+    S.browseData = {path, display: bin ? 'Bin' : path.replace(/^\/Users\/[^/]+/,'~'), crumbs: bin ? [{name:'Bin', path}] : [], folders:[], files:[], noAccess};
+    if(!noAccess) toast("Can't open that folder");
+  }
   if(S.browse===path) render();
   $('content').scrollTop = 0;
   if(!fromHistory) pushLoc();
@@ -1351,6 +1360,7 @@ document.addEventListener('click', async e => {
   if(nav){ showView(nav.dataset.view); return; }
   const pl = e.target.closest('[data-place],[data-browse]');
   if(pl && !e.target.closest('.modal')){ openFolder(pl.dataset.place || pl.dataset.browse); return; }
+  if(e.target.closest('[data-privacy]')){ post('/api/privacy', {}); toast('Opening System Settings…'); return; }
   const rf = e.target.closest('[data-reveal-folder]');
   if(rf){ post('/api/launch',{path:rf.dataset.revealFolder}); return; }
   const gt = e.target.closest('[data-goto]');
