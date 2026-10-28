@@ -625,7 +625,10 @@ select.ctl{font-weight:600}
 .edcolors button:hover{transform:scale(1.12)}
 .edcolors button.on{outline:2px solid var(--accent);outline-offset:2px;transform:scale(1.12)}
 .edsize{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:600}
-.edsize input{width:90px;accent-color:var(--accent)}
+.edsize input{width:70px;accent-color:var(--accent)}
+.edright{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+@media (max-width:1500px){ .edcount{display:none} }
+@media (max-width:1180px){ .edright{margin-left:0;width:100%;justify-content:flex-end} }
 .edcount{font-size:12.5px;color:var(--muted);font-weight:600}
 .zpage{position:relative;display:block;line-height:0}
 .zpage img{display:block}
@@ -974,12 +977,14 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     </div>
     <div class="edcolors" id="edColors"></div>
     <label class="edsize" title="Thickness / text size"><span id="edSizeLbl">Size</span><input type="range" id="edSize" min="1" max="8" step="1" value="3"></label>
-    <span class="sp"></span>
-    <button class="btn" id="edUndo" title="Undo mark (⌘Z)">↶</button><button class="btn" id="edRedo" title="Redo mark (⇧⌘Z)">↷</button>
-    <span class="edcount" id="edCount"></span>
-    <button class="btn" id="edCancel" title="Leave editing and throw the marks away">Discard</button>
-    <button class="btn primary" id="edSaveCopy" title="Keeps the original unchanged: makes “Name - annotated.pdf” next to it">Save as copy</button>
-    <button class="btn" id="edSaveInto" title="Writes the marks into this PDF itself (you can undo with ⌘Z afterwards)">Save into PDF</button>
+    <div class="edright">
+      <button class="btn" id="edUndo" title="Undo mark (⌘Z)">↶</button><button class="btn" id="edRedo" title="Redo mark (⇧⌘Z)">↷</button>
+      <span class="edcount" id="edCount"></span>
+      <span class="edsep"></span>
+      <button class="btn" id="edCancel" title="Leave editing and throw the marks away">Discard</button>
+      <button class="btn" id="edSaveInto" title="Writes the marks into this PDF itself (you can undo with ⌘Z afterwards)">Save into PDF</button>
+      <button class="btn primary" id="edSaveCopy" title="Keeps the original unchanged: makes “Name - annotated.pdf” next to it">Save as copy</button>
+    </div>
   </div>
   <div class="zstage" id="zStage"><div class="zpage" id="zPage"><img id="zImg" alt=""><svg id="zOv" xmlns="http://www.w3.org/2000/svg"></svg><div id="zTextIn" class="ztextin" contenteditable="true" spellcheck="false"></div><div class="zselui" id="zSelUi"><button data-selop="del" title="Delete this mark (⌫)"></button></div></div></div>
   <button class="znav r" id="zNext" title="Next page (→)">›</button>
