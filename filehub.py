@@ -10,6 +10,7 @@ import plistlib
 import mimetypes
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -523,6 +524,105 @@ function run(argv) {
        .writeToFileAtomically(argv[4], true);
     return String(n);
   }
+  if (argv[0] === "info") {
+    // Page sizes (in PDF points) and rotation, so marks drawn on screen land in the right place.
+    const out = [];
+    for (let i = 0; i < n; i++) { const b = doc.pageAtIndex(i).boundsForBox(1); out.push({w: b.size.width, h: b.size.height, x: b.origin.x, y: b.origin.y, rot: doc.pageAtIndex(i).rotation}); }
+    return "JSON" + JSON.stringify({pages: n, sizes: out});
+  }
+  if (argv[0] === "merge") {
+    // argv[2] = JSON file with items [{path, from, to}], argv[3] = output
+    const spec = JSON.parse($.NSString.stringWithContentsOfFileEncodingError(argv[2], 4, null).js);
+    const nd = $.PDFDocument.alloc.init;
+    let k = 0;
+    for (const it of spec.items) {
+      const d = $.PDFDocument.alloc.initWithURL($.NSURL.fileURLWithPath(it.path));
+      if (!d || d.isNil()) return "ERR cannot open " + it.path;
+      if (d.isLocked) return "ERR locked " + it.path;
+      const a = Math.max(1, it.from || 1), b = Math.min(d.pageCount, it.to || d.pageCount);
+      for (let i = a; i <= b; i++) nd.insertPageAtIndex(d.pageAtIndex(i - 1).copy, k++);
+    }
+    if (!k) return "ERR no pages";
+    return nd.writeToFile(argv[3]) ? String(k) : "ERR cannot save";
+  }
+  if (argv[0] === "annotate") {
+    // argv[2] = JSON file with {annotations:[...]} (positions as fractions of the page as shown), argv[3] = output
+    const spec = JSON.parse($.NSString.stringWithContentsOfFileEncodingError(argv[2], 4, null).js);
+    const col = (hex, alpha) => { const v = parseInt((hex || "#ffeb3b").slice(1), 16);
+      return $.NSColor.colorWithRedGreenBlueAlpha(((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255, alpha == null ? 1 : alpha); };
+    let count = 0;
+    for (const a of spec.annotations) {
+      const page = doc.pageAtIndex(a.page - 1); if (!page || page.isNil()) continue;
+      const box = page.boundsForBox(1), rot = ((page.rotation % 360) + 360) % 360;
+      const W = box.size.width, H = box.size.height;
+      const dw = (rot === 90 || rot === 270) ? H : W, dh = (rot === 90 || rot === 270) ? W : H;
+      // fraction of the page as shown (origin top-left) -> PDF point (origin bottom-left, allowing for rotation)
+      const pt = (fx, fy) => { const xd = fx * dw, yd = (1 - fy) * dh; let u, v;
+        if (rot === 90) { u = W - yd; v = xd; } else if (rot === 180) { u = W - xd; v = H - yd; }
+        else if (rot === 270) { u = yd; v = H - xd; } else { u = xd; v = yd; }
+        return {x: box.origin.x + u, y: box.origin.y + v}; };
+      const rectOf = r => { const p1 = pt(r.x, r.y), p2 = pt(r.x + r.w, r.y + r.h);
+        const x = Math.min(p1.x, p2.x), y = Math.min(p1.y, p2.y);
+        return $.NSMakeRect(x, y, Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y)); };
+      const make = (bounds, type) => $.PDFAnnotation.alloc.initWithBoundsForTypeWithProperties(bounds, type, $());
+      const border = (ann, w) => { const b = $.PDFBorder.alloc.init; b.lineWidth = w; ann.border = b; };
+      const t = a.type;
+      if (t === "highlight" || t === "underline" || t === "strike") {
+        const r = rectOf(a.rect), sub = t === "highlight" ? $.PDFAnnotationSubtypeHighlight : t === "underline" ? $.PDFAnnotationSubtypeUnderline : $.PDFAnnotationSubtypeStrikeOut;
+        const sel = page.selectionForRect(r);
+        let lines = null;
+        if (sel && !sel.isNil() && sel.string && sel.string.js.trim().length) lines = sel.selectionsByLine;
+        if (lines && lines.count) {
+          for (let i = 0; i < lines.count; i++) {
+            const lb = lines.objectAtIndex(i).boundsForPage(page);
+            if (lb.size.width < 1 || lb.size.height < 1) continue;
+            const ann = make(lb, sub); ann.color = col(a.color);
+            const w = lb.size.width, h = lb.size.height;
+            ann.quadrilateralPoints = $([$.NSValue.valueWithPoint($.NSMakePoint(0, h)), $.NSValue.valueWithPoint($.NSMakePoint(w, h)),
+                                         $.NSValue.valueWithPoint($.NSMakePoint(0, 0)), $.NSValue.valueWithPoint($.NSMakePoint(w, 0))]);
+            page.addAnnotation(ann); count++;
+          }
+        } else if (t === "highlight") {  // no text there (a picture, a drawing): colour the area instead
+          const ann = make(r, $.PDFAnnotationSubtypeSquare); ann.color = col(a.color, 0); ann.interiorColor = col(a.color, 0.35); border(ann, 0);
+          page.addAnnotation(ann); count++;
+        } else {
+          const ann = make(r, $.PDFAnnotationSubtypeLine); const y = t === "underline" ? r.origin.y : r.origin.y + r.size.height / 2;
+          ann.startPoint = $.NSMakePoint(r.origin.x, y); ann.endPoint = $.NSMakePoint(r.origin.x + r.size.width, y); ann.color = col(a.color); border(ann, 1.5);
+          page.addAnnotation(ann); count++;
+        }
+      } else if (t === "text") {
+        const r = rectOf(a.rect); const ann = make(r, $.PDFAnnotationSubtypeFreeText);
+        ann.contents = a.text || ""; ann.font = $.NSFont.systemFontOfSize(a.size || 14); ann.fontColor = col(a.color || "#111111");
+        ann.color = $.NSColor.clearColor; ann.alignment = 0; border(ann, 0);
+        page.addAnnotation(ann); count++;
+      } else if (t === "note") {
+        const p = pt(a.rect.x, a.rect.y); const ann = make($.NSMakeRect(p.x, p.y - 20, 20, 20), $.PDFAnnotationSubtypeText);
+        ann.contents = a.text || ""; ann.color = col(a.color || "#ffd60a"); ann.iconType = 2;
+        page.addAnnotation(ann); count++;
+      } else if (t === "pen") {
+        if (!a.points || a.points.length < 2) continue;
+        const pts = a.points.map(q => pt(q[0], q[1]));
+        const xs = pts.map(q => q.x), ys = pts.map(q => q.y), pad = (a.width || 2) + 2;
+        const bounds = $.NSMakeRect(Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad);
+        const ann = make(bounds, $.PDFAnnotationSubtypeInk); ann.color = col(a.color, a.opacity == null ? 1 : a.opacity); border(ann, a.width || 2);
+        const path = $.NSBezierPath.bezierPath; path.moveToPoint($.NSMakePoint(pts[0].x, pts[0].y));
+        for (let i = 1; i < pts.length; i++) path.lineToPoint($.NSMakePoint(pts[i].x, pts[i].y));
+        ann.addBezierPath(path); page.addAnnotation(ann); count++;
+      } else if (t === "rect" || t === "ellipse") {
+        const r = rectOf(a.rect); const ann = make(r, t === "rect" ? $.PDFAnnotationSubtypeSquare : $.PDFAnnotationSubtypeCircle);
+        ann.color = col(a.color); if (a.fill) ann.interiorColor = col(a.color, 0.25); border(ann, a.width || 2);
+        page.addAnnotation(ann); count++;
+      } else if (t === "line" || t === "arrow") {
+        if (!a.points || a.points.length < 2) continue;
+        const p1 = pt(a.points[0][0], a.points[0][1]), p2 = pt(a.points[1][0], a.points[1][1]), pad = 12;
+        const bounds = $.NSMakeRect(Math.min(p1.x, p2.x) - pad, Math.min(p1.y, p2.y) - pad, Math.abs(p2.x - p1.x) + 2 * pad, Math.abs(p2.y - p1.y) + 2 * pad);
+        const ann = make(bounds, $.PDFAnnotationSubtypeLine); ann.startPoint = p1; ann.endPoint = p2; ann.color = col(a.color); border(ann, a.width || 2);
+        if (t === "arrow") ann.endLineStyle = 5;  // closed arrow head
+        page.addAnnotation(ann); count++;
+      }
+    }
+    return doc.writeToFile(argv[3]) ? String(count) : "ERR cannot save";
+  }
   if (argv[0] === "split") {
     const a = parseInt(argv[2]), b = parseInt(argv[3]);
     if (!(a >= 1 && b >= a && b <= n)) return "ERR bad range";
@@ -540,11 +640,95 @@ with open(PDF_JS_FILE, "w") as fh:
 
 def pdftool(*args):
     out = subprocess.run(["osascript", "-l", "JavaScript", PDF_JS_FILE] + [str(a) for a in args],
-                         capture_output=True, text=True, timeout=120)
+                         capture_output=True, text=True, timeout=600)
     res = (out.stdout or out.stderr).strip()
+    if res.startswith("JSON"):
+        return json.loads(res[4:])
     if res.startswith("ERR") or not res.isdigit():
         raise ValueError(res.replace("ERR ", "") or "PDF tool failed")
     return int(res)
+
+
+def pdf_info(path):
+    return pdftool("info", path)
+
+
+def _spec_file(data):
+    fd, tmp = tempfile.mkstemp(prefix="filehub-", suffix=".json", dir=THUMBS)
+    with os.fdopen(fd, "w") as fh:
+        json.dump(data, fh)
+    return tmp
+
+
+def merge_pdfs(items, name=None, dest=None):
+    """Join several PDFs (or parts of them) into one NEW file."""
+    items = [it for it in items if allowed(it.get("path", "")) and it["path"].lower().endswith(".pdf")]
+    if len(items) < 1:
+        raise ValueError("Choose at least one PDF.")
+    folder = dest or os.path.dirname(items[0]["path"])
+    folder = os.path.realpath(folder)
+    if not inside(folder, True) or not os.path.isdir(folder):
+        raise ValueError("Can't save in that folder.")
+    name = (name or "").strip()
+    if not name:
+        stem = os.path.splitext(os.path.basename(items[0]["path"]))[0]
+        name = "%s + %d more.pdf" % (stem, len(items) - 1) if len(items) > 1 else stem + " (merged).pdf"
+    if "/" in name or ":" in name or name.startswith("."):
+        raise ValueError("Please use a different name (no / or :).")
+    if not name.lower().endswith(".pdf"):
+        name += ".pdf"
+    out = free_name(folder, name)
+    spec = _spec_file({"items": items})
+    try:
+        count = pdftool("merge", spec, out)
+    finally:
+        os.unlink(spec)
+    CREATED.add(out)
+    _library["time"] = 0
+    return {"path": out, "name": os.path.basename(out), "pages": count,
+            "folder": nice_path(folder), "folderPath": folder}
+
+
+BACKUPS = os.path.join(THUMBS, "backups")
+os.makedirs(BACKUPS, exist_ok=True)
+
+
+def annotate_pdf(path, annotations, mode="copy"):
+    """Write marks (highlights, notes, drawings...) into a copy, or into the file itself with a backup."""
+    path = os.path.realpath(path)
+    if not allowed(path) or not path.lower().endswith(".pdf"):
+        raise ValueError("That PDF isn't there any more.")
+    if not annotations:
+        raise ValueError("Nothing to save yet.")
+    folder, name = os.path.split(path)
+    stem = os.path.splitext(name)[0]
+    spec = _spec_file({"annotations": annotations})
+    try:
+        if mode == "replace":
+            tmp = os.path.join(folder, ".%s.filehub-tmp.pdf" % stem)
+            count = pdftool("annotate", path, spec, tmp)
+            backup = os.path.join(BACKUPS, "%d-%s" % (int(time.time()), name))
+            shutil.copy2(path, backup)
+            os.replace(tmp, path)
+            _library["time"] = 0
+            return {"path": path, "name": name, "count": count, "backup": backup, "mode": "replace"}
+        out = free_name(folder, "%s - annotated.pdf" % stem)
+        count = pdftool("annotate", path, spec, out)
+        CREATED.add(out)
+        _library["time"] = 0
+        return {"path": out, "name": os.path.basename(out), "count": count, "mode": "copy"}
+    finally:
+        os.unlink(spec)
+
+
+def restore_backup(path, backup):
+    """Undo 'save into this file': put the saved backup back."""
+    path = os.path.realpath(path)
+    if not allowed(path) or not backup.startswith(BACKUPS + "/") or not os.path.isfile(backup):
+        raise ValueError("The earlier version isn't available any more.")
+    shutil.copy2(backup, path)
+    _library["time"] = 0
+    return True
 
 
 def pdf_pages_dir(path):
@@ -1152,6 +1336,14 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_file(p)
                 t = thumbnail(p, int(qs.get("s", 480)))
                 return self.send_file(t, "image/png") if t else self.send(404, {"error": "no preview"})
+            if url.path == "/api/pdfinfo":
+                p = qs.get("path", "")
+                if not allowed(p) or not p.lower().endswith(".pdf"):
+                    return self.send(404, {"error": "not found"})
+                try:
+                    return self.send(200, pdf_info(p))
+                except ValueError as e:
+                    return self.send(400, {"error": str(e)})
             if url.path in ("/api/pdfpages", "/api/pdfpage"):
                 p = qs.get("path", "")
                 if not allowed(p) or not p.lower().endswith(".pdf"):
@@ -1234,6 +1426,22 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send(400, {"error": "Nothing to paste. Copy a file first."})
                 return self.send(200, {"made": copy_into(files, p), "sources": files})
             except (ValueError, OSError, subprocess.SubprocessError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/merge":
+            try:
+                return self.send(200, merge_pdfs(data.get("items", []), data.get("name"), data.get("dest") or None))
+            except (ValueError, OSError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/annotate":
+            try:
+                return self.send(200, annotate_pdf(p, data.get("annotations", []), data.get("mode", "copy")))
+            except (ValueError, OSError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/restore":
+            try:
+                restore_backup(p, data.get("backup", ""))
+                return self.send(200, {"ok": True})
+            except (ValueError, OSError) as e:
                 return self.send(400, {"error": str(e)})
         if url.path == "/api/privacy":  # opens System Settings at Full Disk Access
             subprocess.Popen(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"])

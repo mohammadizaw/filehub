@@ -25,6 +25,10 @@ USB sticks and external disks show up under "Drives" in the sidebar by themselve
 eject button; copy, move and paste work on them like any folder. "Move to Bin" (⌘⌫) only
 ever puts things in the Bin, and can be undone.
 
+Select two or more PDFs and press Merge to join them (drag into order, pick page ranges).
+Open a PDF full-screen and press Edit to annotate it: highlight, underline, strike through,
+text, sticky notes, pen, shapes and arrows; save as a new copy or into the PDF (undoable).
+
 Right-click a file, folder or empty space for a menu. Copy (⌘C) puts files on the Mac
 clipboard, so you can paste them in a FileHub folder (⌘V) or in Finder; ⌘D duplicates.
 
