@@ -568,6 +568,15 @@ select.ctl{font-weight:600}
 .fpcur b{color:var(--text)}
 .fp .actions{justify-content:flex-end;margin:0;gap:8px}
 .fp .actions #fpNew{margin-right:auto}
+/* ===== Preview panel: a tidy grid of equal action buttons ===== */
+.pbody .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.pbody .actions .btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px 8px;font-size:12px;font-weight:600;line-height:1.1;min-height:58px;white-space:nowrap}
+.pbody .actions .btn svg{width:18px;height:18px;margin:0;vertical-align:0;color:var(--muted)}
+.pbody .actions .btn:hover svg{color:var(--accent)}
+.pbody .actions .btn.primary svg{color:#fff}
+.pbody .actions .btn.on{background:var(--accent-soft);color:var(--accent)}
+.pbody .actions .btn.on svg{color:#f0a500}
+:root[data-style="sketch"] .pbody .actions .btn{font-weight:400}
 /* ===== Floating bar for a multi-selection ===== */
 .selbar{position:fixed;left:50%;bottom:48px;transform:translateX(-50%) translateY(16px);z-index:30;display:flex;align-items:center;gap:6px;padding:7px 8px 7px 14px;background:color-mix(in srgb,var(--text) 94%,transparent);color:var(--bg);border-radius:16px;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.18s;font-size:13px;font-weight:600;white-space:nowrap}
 .selbar.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
@@ -625,8 +634,14 @@ select.ctl{font-weight:600}
 .zoom.editing[data-tool="select"] #zOv{cursor:default}
 .zoom.editing:not([data-tool="select"]) #zOv{cursor:crosshair}
 .zoom.editing[data-tool="pen"] #zOv{cursor:crosshair}
+.zoom.editing[data-tool="eraser"] #zOv{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24' fill='white' stroke='black' stroke-width='1.6' stroke-linejoin='round'><path d='m8.5 20 10.3-10.3a2 2 0 0 0 0-2.8l-3.7-3.7a2 2 0 0 0-2.8 0L3 12.5a2 2 0 0 0 0 2.8L7.7 20z'/><path d='M4.5 14 12 21.5'/></svg>") 6 20, auto}
+#zOv .selbox{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 4;pointer-events:none;vector-effect:non-scaling-stroke}
+.zselui{position:absolute;display:none;gap:4px;z-index:4;background:var(--panel);border-radius:10px;box-shadow:var(--shadow-lg);padding:3px}
+.zselui.on{display:flex}
+.zselui button{border:0;background:none;width:30px;height:28px;border-radius:8px;cursor:pointer;color:#e5484d;display:grid;place-items:center}
+.zselui button:hover{background:color-mix(in srgb,#e5484d 14%,transparent)}
+.zselui button svg{width:16px;height:16px}
 #zOv .mark{pointer-events:auto}
-#zOv .mark.sel{outline:2px dashed var(--accent)}
 #zOv .hl{mix-blend-mode:multiply}
 .ztextin{display:none;position:absolute;min-width:60px;max-width:70%;padding:2px 4px;background:rgba(255,255,255,.9);outline:2px solid var(--accent);border-radius:3px;color:#111;line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;white-space:pre-wrap;word-break:break-word}
 .ztextin.on{display:block}
@@ -638,6 +653,8 @@ select.ctl{font-weight:600}
 #zOv g.note .snote{position:relative}
 .zoom.editing .znav{top:auto;bottom:26px;height:48px;width:40px;transform:none}
 .zoom.editing .zbar{padding-bottom:8px}
+.zoom.editing #zEdit,.zoom.editing #zClose{display:none}
+.edbar #edSaveInto{background:var(--accent-soft);color:var(--accent)}
 .zoom.editing .zstage{padding-top:6px}
 /* ===== Rename box ===== */
 .rn{position:fixed;inset:0;z-index:70;background:rgba(10,14,22,.35);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding-top:16vh}
@@ -933,13 +950,14 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     <b id="zLabel"></b><span class="sp"></span>
     <span id="zRangeBtns"><button class="btn" id="zFrom">Start split here</button> <button class="btn" id="zTo">End split here</button></span>
     <button class="btn" id="zOut" title="Zoom out (−)">−</button><button class="btn" id="zIn" title="Zoom in (+)">+</button>
-    <button class="btn" id="zEdit" title="Annotate: highlight, write, draw"> Edit</button>
+    <button class="btn" id="zEdit" title="Annotate: highlight, write, draw">Annotate</button>
     <button class="btn primary" id="zClose">Close</button>
   </div>
   <button class="znav l" id="zPrev" title="Previous page (←)">‹</button>
   <div class="edbar" id="edBar">
     <div class="edtools" id="edTools">
       <button data-tool="select" title="Select / move (V)"></button>
+      <button data-tool="eraser" title="Eraser: click or drag over marks to remove them (E)"></button>
       <span class="edsep"></span>
       <button data-tool="highlight" title="Highlight text (H)"></button>
       <button data-tool="underline" title="Underline (U)"></button>
@@ -959,10 +977,11 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     <span class="sp"></span>
     <button class="btn" id="edUndo" title="Undo mark (⌘Z)">↶</button><button class="btn" id="edRedo" title="Redo mark (⇧⌘Z)">↷</button>
     <span class="edcount" id="edCount"></span>
-    <button class="btn" id="edCancel">Cancel</button>
-    <button class="btn primary" id="edSave">Save ▾</button>
+    <button class="btn" id="edCancel" title="Leave editing and throw the marks away">Discard</button>
+    <button class="btn primary" id="edSaveCopy" title="Keeps the original unchanged: makes “Name - annotated.pdf” next to it">Save as copy</button>
+    <button class="btn" id="edSaveInto" title="Writes the marks into this PDF itself (you can undo with ⌘Z afterwards)">Save into PDF</button>
   </div>
-  <div class="zstage" id="zStage"><div class="zpage" id="zPage"><img id="zImg" alt=""><svg id="zOv" xmlns="http://www.w3.org/2000/svg"></svg><div id="zTextIn" class="ztextin" contenteditable="true" spellcheck="false"></div></div></div>
+  <div class="zstage" id="zStage"><div class="zpage" id="zPage"><img id="zImg" alt=""><svg id="zOv" xmlns="http://www.w3.org/2000/svg"></svg><div id="zTextIn" class="ztextin" contenteditable="true" spellcheck="false"></div><div class="zselui" id="zSelUi"><button data-selop="del" title="Delete this mark (⌫)"></button></div></div></div>
   <button class="znav r" id="zNext" title="Next page (→)">›</button>
 </div>
 <div class="modal" id="splitModal">
@@ -1051,6 +1070,7 @@ const ICONS = {
   arrow:'<path d="M5 19 19 5M10 5h9v9"/>',
   line:'<path d="M5 19 19 5"/>',
   merge:'<path d="M8 4h5l3 3v5M8 4v16h8v-4"/><path d="M13 4v3h3M3 14h9m0 0-3-3m3 3-3 3"/>',
+  eraser:'<path d="m8.5 20 10.3-10.3a2 2 0 0 0 0-2.8l-3.7-3.7a2 2 0 0 0-2.8 0L3 12.5a2 2 0 0 0 0 2.8L7.7 20z"/><path d="M4.5 14 12 21.5M3 21h18"/>',
   chev:'<path d="m9 6 6 6-6 6"/>',
   star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
 };
@@ -1431,13 +1451,13 @@ function preview(f){
       <h2>${esc(f.name)}</h2>
       <div class="info">${esc(f.kind || f.type)} · ${f.pages?pagesText(f)+' · ':''}${size(f.size)}</div>
       <div class="actions">
-        <button class="btn primary" data-act="launch">Open</button>
-        <button class="btn" data-act="reveal">Show in Finder</button>
-        <button class="btn" data-act="quicklook" title="Space">Quick Look</button>
-        ${f.ext==='pdf'?`<button class="btn" data-act="read">Read here</button><button class="btn" data-act="split">✂︎ Split pages</button><button class="btn" data-act="annotate">✎ Annotate</button>`:''}
-        <button class="btn" data-act="pin">${pinned?'★ Pinned':'☆ Pin'}</button>
-        <button class="btn" data-act="share">${svg('share')} Share</button>
-        <button class="btn" data-act="copy">Copy path</button>
+        <button class="btn primary" data-act="launch">${svg('launch')}<span>Open</span></button>
+        <button class="btn" data-act="quicklook" title="Space">${svg('open')}<span>Quick Look</span></button>
+        <button class="btn" data-act="reveal">${svg('finder')}<span>In Finder</span></button>
+        ${f.ext==='pdf'?`<button class="btn" data-act="read">${svg('types')}<span>Read here</span></button><button class="btn" data-act="split">${svg('scissors')}<span>Split pages</span></button><button class="btn" data-act="annotate">${svg('pen')}<span>Annotate</span></button>`:''}
+        <button class="btn ${pinned?'on':''}" data-act="pin">${svg('star', pinned?'currentColor':'none')}<span>${pinned?'Pinned':'Pin'}</span></button>
+        <button class="btn" data-act="share">${svg('share')}<span>Share</span></button>
+        <button class="btn" data-act="copy">${svg('link')}<span>Copy path</span></button>
       </div>
       <dl>
         <dt>Last opened</dt><dd>${f.lastUsed?ago(f.lastUsed):'Not recorded'}</dd>
@@ -1654,8 +1674,9 @@ function renderAppear(){
     <button class="btn reset" data-look="reset">Back to the original look</button>`;
 }
 $('appearBtn').innerHTML = svg('palette');
-document.querySelectorAll('#edTools button').forEach(b => b.innerHTML = svg({select:'cursor',highlight:'marker',underline:'underline',strike:'strike',text:'text',note:'note',pen:'pen',rect:'rect',ellipse:'circle',arrow:'arrow',line:'line'}[b.dataset.tool]));
-$('zEdit').innerHTML = svg('pen') + ' Edit';
+document.querySelectorAll('#edTools button').forEach(b => b.innerHTML = svg({select:'cursor',eraser:'eraser',highlight:'marker',underline:'underline',strike:'strike',text:'text',note:'note',pen:'pen',rect:'rect',ellipse:'circle',arrow:'arrow',line:'line'}[b.dataset.tool]));
+$('zEdit').innerHTML = svg('pen') + ' Annotate';
+$('zSelUi').querySelector('[data-selop="del"]').innerHTML = svg('trash');
 $('appearBtn').onclick = e => { e.stopPropagation(); renderAppear(); $('appear').classList.toggle('on'); loadSystemLook().then(renderAppear); };
 $('appear').addEventListener('click', e => {
   e.stopPropagation();
@@ -2682,7 +2703,7 @@ $('mgResult').addEventListener('click', e => {
 const ED = {on:false, file:null, tool:'highlight', color:'#ffeb3b', size:3, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null};
 const ED_COLORS = ['#ffeb3b','#7ee787','#ff8fab','#79c0ff','#e5484d','#111111','#ffffff'];
 const TOOL_DEFAULT_COLOR = {highlight:'#ffeb3b', underline:'#e5484d', strike:'#e5484d', text:'#111111', note:'#ffeb3b', pen:'#e5484d', rect:'#e5484d', ellipse:'#e5484d', arrow:'#e5484d', line:'#e5484d'};
-const ED_LBL = {text:'Text size', note:'Size', pen:'Pen', highlight:'Size', underline:'Size', strike:'Size', select:'Size'};
+const ED_LBL = {text:'Text size', note:'Size', pen:'Pen', highlight:'Size', underline:'Size', strike:'Size', select:'Size', eraser:'Size'};
 function edPage(){ return (ED.marks[Z.p] ||= []); }
 function edCount(){ return Object.values(ED.marks).reduce((t,l) => t + l.length, 0); }
 async function openAnnotate(f){
@@ -2709,6 +2730,7 @@ function setTool(t){
 function renderColors(){ $('edColors').innerHTML = ED_COLORS.map(c => `<button data-c="${c}" class="${ED.color===c?'on':''}" style="background:${c}" title="${c}"></button>`).join(''); }
 $('edColors').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if(!b) return; ED.color = b.dataset.c; ED.colorPicked = true; renderColors(); if(ED.sel){ ED.sel.color = ED.color; renderMarks(); } });
 $('edTools').addEventListener('click', e => { const b = e.target.closest('[data-tool]'); if(b) setTool(b.dataset.tool); });
+$('zSelUi').addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); if(e.target.closest('[data-selop="del"]') && ED.sel) removeMark(ED.sel); });
 $('edSize').addEventListener('input', e => { ED.size = +e.target.value; if(ED.sel && (ED.sel.width || ED.sel.size)){ if(ED.sel.type==='text') ED.sel.size = 8 + ED.size*3; else ED.sel.width = ED.size; renderMarks(); } });
 function edStatus(){ const n = edCount(); $('edCount').textContent = ED.on ? (n ? `${plural(n,'mark')} on ${plural(Object.keys(ED.marks).filter(p => ED.marks[p].length).length,'page')}` : 'No marks yet') : ''; $('edUndo').disabled = !ED.undo.length; $('edRedo').disabled = !ED.redo.length; }
 function pushUndo(action){ ED.undo.push(action); ED.redo.length = 0; edStatus(); }
@@ -2735,6 +2757,12 @@ function renderMarks(){
     if(m.type==='note'){ const fs = (m.size||12)*pxPt, W = X(m.rect.w), H = Math.max(fs*2, Y(m.rect.h)); return `<g class="mark note${sel}" data-i="${i}"><foreignObject x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${W}" height="${H}"><div xmlns="http://www.w3.org/1999/xhtml" class="snote" style="background:${c};font-size:${fs}px;padding:${fs*.5}px ${fs*.6}px">${esc(m.text||'')}</div></foreignObject></g>`; }
     return '';
   }).join('') + (ED.drawing ? drawPreview(ED.drawing, w, h, pxPt) : '');
+  // selected mark: dashed box around it and a small delete button at its corner
+  const ui = $('zSelUi'); ui.classList.remove('on');
+  const selEl = ov.querySelector('.mark.sel');
+  if(selEl){ try{ const b = selEl.getBBox(); const pad = 6;
+      ov.insertAdjacentHTML('beforeend', `<rect class="selbox" x="${b.x-pad}" y="${b.y-pad}" width="${b.width+2*pad}" height="${b.height+2*pad}" rx="4"/>`);
+      ui.style.left = Math.min(w - 40, b.x + b.width + pad + 4) + 'px'; ui.style.top = Math.max(0, b.y - pad - 34) + 'px'; ui.classList.add('on'); }catch(e){} }
   // notes grow with their text: measure and remember the height, so the saved note has the right size
   ov.querySelectorAll('g.note').forEach(g => { const m = edPage()[+g.dataset.i], div = g.querySelector('.snote'), fo = g.querySelector('foreignObject');
     if(m && div){ const need = div.scrollHeight + 2; if(Math.abs(need - +fo.getAttribute('height')) > 1){ fo.setAttribute('height', need); m.rect.h = need / h; } } });
@@ -2751,6 +2779,12 @@ function drawPreview(d, w, h, pxPt){
 }
 const normRect = d => ({x: Math.min(d.x0, d.x), y: Math.min(d.y0, d.y), w: Math.abs(d.x - d.x0), h: Math.abs(d.y - d.y0)});
 function ovPoint(e){ const r = $('zImg').getBoundingClientRect(); return {x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))}; }
+function eraseAt(target){
+  const el = target && target.closest && target.closest('#zOv .mark'); if(!el) return;
+  const list = edPage(), i = +el.dataset.i, m = list[i]; if(!m) return;
+  list.splice(i, 1); if(ED.drawing) ED.drawing.removed.push([i, m]); if(ED.sel === m) ED.sel = null;
+  renderMarks(); edStatus();
+}
 function addMark(m){ const list = edPage(); list.push(m); pushUndo({undo:()=>{ const i = list.indexOf(m); if(i>=0) list.splice(i,1); }, redo:()=>list.push(m)}); ED.sel = null; renderMarks(); edStatus(); }
 function removeMark(m){ const list = edPage(), i = list.indexOf(m); if(i < 0) return; list.splice(i,1); pushUndo({undo:()=>list.splice(i,0,m), redo:()=>{ const k = list.indexOf(m); if(k>=0) list.splice(k,1); }}); ED.sel = null; renderMarks(); edStatus(); }
 $('zOv').addEventListener('mousedown', e => {
@@ -2759,6 +2793,9 @@ $('zOv').addEventListener('mousedown', e => {
   if($('zTextIn').classList.contains('on')){ commitText(); if(ED.textJustClosed){ ED.textJustClosed = false; } }
   const hit = e.target.closest('.mark'); const hm = hit ? edPage()[+hit.dataset.i] : null;
   if(hm && (hm.type==='text' || hm.type==='note') && (ED.tool==='text' || ED.tool==='note')){ startTextInput({x:hm.rect.x, y:hm.rect.y}, hm); return; }
+  if(ED.tool==='eraser'){
+    ED.drawing = {kind:'erase', removed:[]}; eraseAt(e.target); return;
+  }
   if(ED.tool==='select'){
     const el = e.target.closest('.mark'); const m = el ? edPage()[+el.dataset.i] : null;
     ED.sel = m || null; renderMarks();
@@ -2773,6 +2810,7 @@ $('zOv').addEventListener('mousedown', e => {
 });
 document.addEventListener('mousemove', e => {
   if(!ED.on || !ED.drawing) return; const p = ovPoint(e), d = ED.drawing;
+  if(d.kind==='erase'){ eraseAt(document.elementFromPoint(e.clientX, e.clientY)); return; }
   if(d.kind==='pen'){ const last = d.points[d.points.length-1]; if(Math.hypot(p.x-last[0], p.y-last[1]) > 0.002) d.points.push([p.x,p.y]); }
   else if(d.kind==='move'){ const dx = p.x - d.x0, dy = p.y - d.y0, o = d.orig, m = d.m; d.moved = true;
     if(m.rect) Object.assign(m.rect, {x: o.rect.x + dx, y: o.rect.y + dy}); if(m.points) m.points = o.points.map(q => [q[0]+dx, q[1]+dy]); }
@@ -2781,6 +2819,7 @@ document.addEventListener('mousemove', e => {
 });
 document.addEventListener('mouseup', e => {
   if(!ED.on || !ED.drawing) return; const d = ED.drawing; ED.drawing = null;
+  if(d.kind==='erase'){ if(d.removed.length){ const list = edPage(), gone = d.removed; pushUndo({undo:()=>gone.slice().reverse().forEach(([i,m]) => list.splice(Math.min(i, list.length), 0, m)), redo:()=>gone.forEach(([i,m]) => { const k = list.indexOf(m); if(k>=0) list.splice(k,1); })}); } renderMarks(); edStatus(); return; }
   if(d.kind==='move'){ if(d.moved){ const m = d.m, before = d.orig, after = JSON.parse(JSON.stringify(m)); pushUndo({undo:()=>Object.assign(m, JSON.parse(JSON.stringify(before))), redo:()=>Object.assign(m, JSON.parse(JSON.stringify(after)))}); } renderMarks(); return; }
   if(d.kind==='pen'){ if(d.points.length > 2) addMark({type:'pen', points:d.points, color:ED.color, width:ED.size, opacity: ED.color==='#ffeb3b' ? .5 : 1}); else renderMarks(); return; }
   if(d.kind==='line'){ if(Math.hypot(d.x-d.x0, d.y-d.y0) > 0.01) addMark({type:ED.tool, points:[[d.x0,d.y0],[d.x,d.y]], color:ED.color, width:ED.size}); else renderMarks(); return; }
@@ -2828,20 +2867,14 @@ document.addEventListener('keydown', e => {
   if(e.target.closest && e.target.closest('input,textarea,[contenteditable]')) return;
   const cmd = e.metaKey || e.ctrlKey, k = e.key.toLowerCase();
   if(cmd && k==='z'){ e.preventDefault(); e.stopPropagation(); e.shiftKey ? edRedo() : edUndo(); return; }
-  if(cmd && k==='s'){ e.preventDefault(); e.stopPropagation(); $('edSave').click(); return; }
+  if(cmd && k==='s'){ e.preventDefault(); e.stopPropagation(); $('edSaveCopy').click(); return; }
   if(!cmd && (e.key==='Delete' || e.key==='Backspace') && ED.sel){ e.preventDefault(); e.stopPropagation(); removeMark(ED.sel); return; }
-  const map = {v:'select', h:'highlight', u:'underline', s:'strike', t:'text', n:'note', p:'pen', r:'rect', c:'ellipse', a:'arrow', l:'line'};
+  const map = {v:'select', e:'eraser', h:'highlight', u:'underline', s:'strike', t:'text', n:'note', p:'pen', r:'rect', c:'ellipse', a:'arrow', l:'line'};
   if(!cmd && !e.altKey && map[k]){ e.preventDefault(); e.stopPropagation(); setTool(map[k]); }
 }, true);
 // save
-$('edSave').onclick = e => {
-  const r = $('edSave').getBoundingClientRect(), n = edCount();
-  openMenu({items:[
-    {icon:'dup', label:'Save as a new copy', dis:!n, run:()=>saveMarks('copy')},
-    {icon:'pen', label:'Save into this PDF', dis:!n, run:()=>saveMarks('replace')},
-    '-', {icon:'close', label:'Discard all marks', dis:!n, run:()=>{ ED.marks = {}; ED.undo = []; ED.redo = []; renderMarks(); edStatus(); }},
-  ]}, r.right - 240, r.bottom + 6);
-};
+$('edSaveCopy').onclick = () => edCount() ? saveMarks('copy') : toast('Draw something first: pick a tool and mark the page');
+$('edSaveInto').onclick = () => edCount() ? saveMarks('replace') : toast('Draw something first: pick a tool and mark the page');
 async function saveMarks(mode){
   const annotations = []; for(const [pg, list] of Object.entries(ED.marks)) list.forEach(m => annotations.push(Object.assign({page:+pg}, m)));
   if(!annotations.length) return;
@@ -2856,7 +2889,7 @@ async function saveMarks(mode){
     const f = byPath().get(d.path); if(f) preview(f);
   }catch(e){ toast(e.message); }
 }
-$('edCancel').onclick = async () => { if(edCount() && !(await ask({title:'Leave without saving?', text:`${plural(edCount(),'mark')} will be lost.`, ok:'Leave'}))) return; stopEdit(); };
+$('edCancel').onclick = async () => { if(edCount() && !(await ask({title:'Throw the marks away?', text:`${plural(edCount(),'mark')} will be lost. To keep them, use “Save as copy” or “Save into PDF” instead.`, ok:'Discard'}))) return; stopEdit(); };
 $('zEdit').onclick = () => ED.on ? $('edCancel').click() : startEdit();
 new ResizeObserver(() => { if(ED.on) renderMarks(); }).observe($('zImg'));
 $('zImg').addEventListener('load', () => { if(ED.on) renderMarks(); });
