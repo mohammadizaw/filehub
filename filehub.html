@@ -691,6 +691,23 @@ body:has(#zoom.on.editing:not(.fs)) .toast{top:124px}
 .sighint{font-size:11.5px;color:var(--muted)}
 .sigpad .box{width:min(680px,94vw)}
 .cmp .box{width:min(520px,94vw)}
+.rotask .box{width:min(480px,94vw)}
+.rotask .muted{color:var(--muted);font-size:13px;margin:4px 0 12px}
+.rotchoices{display:grid;gap:8px}
+.rotchoices .btn{display:grid;gap:2px;text-align:left;padding:10px 14px;height:auto;line-height:1.3}
+.rotchoices .btn span{font-size:12px;opacity:.8;font-weight:500}
+.zhint{font-size:12px;color:var(--muted);white-space:nowrap}
+.zoom.editing .zrot,.zoom.editing .zhint{display:none}
+.zpage .prot{position:absolute;top:8px;right:10px;display:none;gap:4px;z-index:3}
+.zpage:hover .prot{display:flex}
+.zoom.editing .zpage .prot,.zoom.fs .zpage .prot{display:none}
+.zpage .prot button{border:0;width:30px;height:28px;border-radius:8px;background:color-mix(in srgb,var(--panel) 92%,transparent);color:var(--text);box-shadow:var(--shadow);cursor:pointer;font-size:15px;line-height:1}
+.zpage .prot button:hover{background:var(--accent);color:#fff}
+.zpage[data-rot="90"],.zpage[data-rot="270"]{aspect-ratio:calc(1 / var(--pa,0.773))}
+.zpage[data-rot="90"] .zimg,.zpage[data-rot="270"] .zimg{position:absolute;left:50%;top:50%;width:calc(100% * var(--pa,0.773));transform:translate(-50%,-50%) rotate(var(--rot))}
+.zpage[data-rot="180"] .zimg{transform:rotate(180deg)}
+.zpage[data-rot]:not([data-rot="0"]) .pno::after{content:" · turned";color:var(--accent)}
+.zoom.fs .zpage[data-rot="90"],.zoom.fs .zpage[data-rot="270"]{width:min(calc(100vw * var(--fz,1)),calc(100vh / var(--pa,0.773) * var(--fz,1)))}
 .cmp .muted{color:var(--muted);font-size:13px;margin:4px 0 12px}
 .cmp .muted.small{font-size:12px;margin:12px 0 0}
 .cmplevels{display:grid;gap:8px}
@@ -1047,6 +1064,16 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 <div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
   <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
   <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
+<div class="rn rotask" id="rotAsk"><div class="box">
+  <h3>Keep the turned pages?</h3>
+  <p class="muted" id="rotAskText"></p>
+  <div class="rotchoices">
+    <button class="btn primary" data-rot-choice="copy"><b>Save as copy</b><span>Makes “Name - rotated.pdf” next to the original</span></button>
+    <button class="btn" data-rot-choice="replace"><b>Save into this PDF</b><span>Changes the file itself (you can undo with ⌘Z afterwards)</span></button>
+    <button class="btn" data-rot-choice="discard"><b>Don't keep</b><span>Pages go back to how they were</span></button>
+  </div>
+  <div class="actions"><button class="btn" data-rot-choice="">Keep viewing</button></div>
+</div></div>
 <div class="rn cmp" id="cmp"><div class="box">
   <h3>Make this PDF smaller</h3>
   <p class="muted" id="cmpWhat"></p>
@@ -1079,6 +1106,8 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
   <div class="zbar">
     <b id="zLabel"><span id="zName"></span> — page <input class="pgjump" id="zPg" inputmode="numeric" title="Type a page number and press Enter"> of <span id="zN"></span></b><span class="sp"></span>
     <span id="zRangeBtns"><button class="btn" id="zFrom">Start split here</button> <button class="btn" id="zTo">End split here</button></span>
+    <span class="zhint" id="zRotHint"></span>
+    <button class="btn zrot" id="zRotPage" title="Turn this page clockwise (⇧R)">↻ Page</button><button class="btn zrot" id="zRotAll" title="Turn every page clockwise">↻ All</button>
     <button class="btn" id="zOut" title="Zoom out (−)">−</button><button class="btn" id="zIn" title="Zoom in (+)">+</button>
     <button class="btn" id="zFull" title="Full screen (F)"></button>
     <button class="btn" id="zEdit" title="Annotate: highlight, write, draw">Annotate</button>
@@ -2874,6 +2903,7 @@ async function openAnnotate(f){
 }
 async function startEdit(){
   if(ED.on && ED.file === Z.file) return;
+  if(rotCount()){ const c = await askRotate(); if(c === null) return; if(c === 'discard') clearRot(); else { if(!(await saveRot(c, false))) return; return startEdit(); } }
   Object.assign(ED, {on:true, file:Z.file, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null, closeAfter:false});
   $('zoom').classList.add('editing'); setTool(ED.tool); if(typeof placeFsBar==='function') placeFsBar();
   try{ ED.info = Z.info || await api('/api/pdfinfo?path='+encodeURIComponent(Z.file.path)); }catch(e){ ED.info = null; }
@@ -3303,6 +3333,7 @@ document.addEventListener('keydown', e => {
     if(e.key==='Escape'){ if($('zoom').classList.contains('fs')) exitFs(); else closeZoom(); }
     else if((e.key==='f' || e.key==='F') && !typing && !(ED.on && e.target.closest && e.target.closest('[contenteditable]'))){ e.preventDefault(); $('zoom').classList.contains('fs') ? exitFs() : enterFs(); }
     else if(e.key===' ' && !typing){ e.preventDefault(); zoomTo(Z.p + (e.shiftKey ? -1 : 1)); }
+    else if(e.key==='R' && e.shiftKey && !typing && !ED.on){ e.preventDefault(); rotatePage(Z.p, 90); }
     else if(e.key==='ArrowRight' || e.key==='PageDown') { e.preventDefault(); zoomTo(Z.p+1); }
     else if(e.key==='ArrowLeft' || e.key==='PageUp') { e.preventDefault(); zoomTo(Z.p-1); }
     else if(e.key==='+' || e.key==='='){ $('zoom').classList.contains('fs') ? fsZoom(0.25) : zoomW(250); }
@@ -3403,12 +3434,12 @@ function buildPages(){
   const sizes = (Z.info && Z.info.sizes) || [];
   $('zPages').innerHTML = Array.from({length: Z.n}, (_, i) => {
     const sz = sizes[i], pa = sz ? ((sz.rot===90||sz.rot===270) ? sz.h / sz.w : sz.w / sz.h) : 0.773;
-    return `<div class="zpage" data-p="${i+1}" style="--pa:${pa.toFixed(4)}"><img class="zimg" alt="" src="${pageImg(i+1, false, Z.file)}" data-big="${pageImg(i+1, true, Z.file)}" style="aspect-ratio:${pa.toFixed(4)}"><svg class="zov" data-p="${i+1}" xmlns="http://www.w3.org/2000/svg"></svg><span class="pno">${i+1}</span></div>`;
+    return `<div class="zpage" data-p="${i+1}" style="--pa:${pa.toFixed(4)}"><img class="zimg" alt="" src="${pageImg(i+1, false, Z.file)}" data-big="${pageImg(i+1, true, Z.file)}" style="aspect-ratio:${pa.toFixed(4)}"><svg class="zov" data-p="${i+1}" xmlns="http://www.w3.org/2000/svg"></svg><span class="pno">${i+1}</span><span class="prot"><button data-rot="-90" title="Turn left">↺</button><button data-rot="90" title="Turn right">↻</button></span></div>`;
   }).join('');
   $('zPages').querySelectorAll('.zimg').forEach(img => { bigIO.observe(img); img.addEventListener('load', () => { if(img.naturalWidth) img.style.aspectRatio = (img.naturalWidth / img.naturalHeight).toFixed(4); if(ED.on) renderPage(+img.parentNode.dataset.p); }); });
 }
 async function openZoom(p, file, n, split){
-  Object.assign(Z, {file, n, split, info: null}); $('zRangeBtns').style.display = split ? '' : 'none';
+  Object.assign(Z, {file, n, split, info: null, rot: {}}); $('zRangeBtns').style.display = split ? '' : 'none'; rotHint();
   $('zoom').classList.add('on');
   buildPages(); zoomTo(p, true);
   try{ const info = await api('/api/pdfinfo?path='+encodeURIComponent(file.path)); if(Z.file === file){ Z.info = info; info.sizes.forEach((sz, i) => { const el = pageEl(i+1); if(el){ const pa = ((sz.rot===90||sz.rot===270) ? sz.h / sz.w : sz.w / sz.h).toFixed(4); el.style.setProperty('--pa', pa); const img = el.querySelector('.zimg'); if(!img.naturalWidth) img.style.aspectRatio = pa; } }); } }catch(e){}
@@ -3435,7 +3466,36 @@ $('zStage').addEventListener('scroll', () => {
   });
 });
 function zoomW(d){ Z.w = Math.max(500, Math.min(2400, Z.w + d)); document.documentElement.style.setProperty('--zw', Z.w+'px'); }
-async function closeZoom(){ if($('zoom').classList.contains('fs')) exitFs(); if(ED.on){ if(edCount() && !(await ask({title:'Leave without saving?', text:`${plural(edCount(),'mark')} will be lost.`, ok:'Leave'}))) return; stopEdit(); } $('zoom').classList.remove('on'); }
+async function closeZoom(){ if($('zoom').classList.contains('fs')) exitFs(); if(ED.on){ if(edCount() && !(await ask({title:'Leave without saving?', text:`${plural(edCount(),'mark')} will be lost.`, ok:'Leave'}))) return; stopEdit(); }
+  if(rotCount()){ const c = await askRotate(); if(c === null) return; if(c === 'discard') clearRot(); else if(!(await saveRot(c, true))) return; }
+  $('zoom').classList.remove('on'); }
+// ---------- turning pages: shown at once, written to the PDF when you close (as a copy or into the file) ----------
+function rotCount(){ return Object.values(Z.rot || {}).filter(d => d % 360).length; }
+function rotHint(){ const n = rotCount(); $('zRotHint').textContent = n ? `${plural(n,'page')} turned — you'll be asked to save when you close` : ''; }
+function applyRot(p){ const el = pageEl(p); if(!el) return; const d = ((Z.rot[p] || 0) % 360 + 360) % 360; el.dataset.rot = d; el.style.setProperty('--rot', d + 'deg'); }
+function rotatePage(p, d){ Z.rot = Z.rot || {}; Z.rot[p] = (((Z.rot[p] || 0) + d) % 360 + 360) % 360; applyRot(p); rotHint(); }
+function rotateAll(d){ for(let p = 1; p <= Z.n; p++) rotatePage(p, d); }
+function clearRot(){ Z.rot = {}; for(let p = 1; p <= Z.n; p++) applyRot(p); rotHint(); }
+function askRotate(){ return new Promise(res => { ROT_ASK = res; $('rotAskText').textContent = `${plural(rotCount(),'page')} of “${Z.file.name}” ${rotCount() === 1 ? 'was' : 'were'} turned on screen only. Where should the turned pages be saved?`; $('rotAsk').classList.add('on'); }); }
+let ROT_ASK = null;
+$('rotAsk').addEventListener('click', e => { const b = e.target.closest('[data-rot-choice]'); if(!b) return; $('rotAsk').classList.remove('on'); const r = ROT_ASK; ROT_ASK = null; if(r) r(b.dataset.rotChoice || null); });
+$('rotAsk').addEventListener('mousedown', e => { if(e.target === $('rotAsk')){ $('rotAsk').classList.remove('on'); const r = ROT_ASK; ROT_ASK = null; if(r) r(null); } });
+async function saveRot(mode, closing){
+  const rotations = {}; for(const [p, d] of Object.entries(Z.rot || {})) if(d % 360) rotations[p] = d;
+  toast('Saving turned pages…');
+  try{
+    const d = await call('/api/rotate', {path: Z.file.path, rotations, mode});
+    if(mode === 'replace') did({type:'annotate', path:d.path, backup:d.backup, msg:`Turned ${plural(d.count,'page')} in “${d.name}”`});
+    else did({type:'copy', sources:[Z.file.path], dest:Z.file.path.slice(0, Z.file.path.lastIndexOf('/')), made:[d.path], msg:`Saved the turned pages as “${d.name}” — the original is unchanged`});
+    Z.rot = {}; rotHint();
+    await refreshHere([d.path]); const f = byPath().get(d.path);
+    if(f){ preview(f); if(!closing) openZoom(Z.p, f, Z.n, false); }
+    return true;
+  }catch(e){ toast(e.message); return false; }
+}
+$('zRotPage').onclick = () => rotatePage(Z.p, 90);
+$('zRotAll').onclick = () => rotateAll(90);
+$('zPages').addEventListener('click', e => { const b = e.target.closest('.prot [data-rot]'); if(!b || ED.on) return; e.stopPropagation(); rotatePage(+b.closest('.zpage').dataset.p, +b.dataset.rot); });
 $('zPrev').onclick = () => zoomTo(Z.p-1);
 $('zNext').onclick = () => zoomTo(Z.p+1);
 $('zIn').onclick = () => zoomW(250); $('zOut').onclick = () => zoomW(-250);
