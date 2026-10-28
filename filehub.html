@@ -377,6 +377,7 @@ select.ctl{font-weight:600}
 .range input,.dest select{border:0;border-radius:12px;background:var(--panel2)}
 .rcard{border:0;border-radius:24px}
 .toast{border-radius:14px;font-weight:600}
+body:has(#zoom.on) .toast{top:68px}  /* in the PDF viewer, keep the notice below the bar so Close stays reachable */
 .empty b{font-weight:800}
 /* slim scrollbars */
 *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent}
@@ -2791,11 +2792,11 @@ async function openAnnotate(f){
   if(!f) return;
   let n = f.pages;
   if(!n){ try{ n = (await api('/api/pdfpages?path='+encodeURIComponent(f.path))).pages; }catch(e){ toast("Can't read this PDF"); return; } }
-  openZoom(1, f, n, false); startEdit();
+  openZoom(1, f, n, false); startEdit(); ED.closeAfter = true;  // opened just to annotate: leaving annotate mode goes back to the files
 }
 async function startEdit(){
   if(ED.on && ED.file === Z.file) return;
-  Object.assign(ED, {on:true, file:Z.file, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null});
+  Object.assign(ED, {on:true, file:Z.file, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null, closeAfter:false});
   $('zoom').classList.add('editing'); setTool(ED.tool); if(typeof placeFsBar==='function') placeFsBar();
   try{ ED.info = Z.info || await api('/api/pdfinfo?path='+encodeURIComponent(Z.file.path)); }catch(e){ ED.info = null; }
   renderMarks(); edStatus();
@@ -2987,13 +2988,15 @@ async function saveMarks(mode){
   try{
     const d = await call('/api/annotate', {path: ED.file.path, annotations, mode});
     if(mode==='replace') did({type:'annotate', path:d.path, backup:d.backup, msg:`Saved ${plural(d.count,'mark')} into “${d.name}”`});
-    else did({type:'copy', sources:[ED.file.path], dest:ED.file.path.slice(0, ED.file.path.lastIndexOf('/')), made:[d.path], msg:`Saved ${plural(d.count,'mark')} as “${d.name}”`});
-    stopEdit(); closeZoom();
+    else did({type:'copy', sources:[ED.file.path], dest:ED.file.path.slice(0, ED.file.path.lastIndexOf('/')), made:[d.path], msg:`Saved ${plural(d.count,'mark')} as a copy, “${d.name}” — you're viewing the copy now; the original is unchanged`});
+    // stay where you were: the viewer keeps the same page, now showing the saved file
+    const page = Z.p, wasFs = $('zoom').classList.contains('fs'), back = ED.closeAfter; stopEdit(); if(back) closeZoom();
     await refreshHere([d.path]);
-    const f = byPath().get(d.path); if(f) preview(f);
+    const f = byPath().get(d.path);
+    if(f){ preview(f); if(!back){ openZoom(page, f, Z.n, false); if(wasFs) fsWake(); } }
   }catch(e){ toast(e.message); }
 }
-$('edCancel').onclick = async () => { if(edCount() && !(await ask({title:'Throw the marks away?', text:`${plural(edCount(),'mark')} will be lost. To keep them, use “Save as copy” or “Save into PDF” instead.`, ok:'Discard'}))) return; stopEdit(); };
+$('edCancel').onclick = async () => { if(edCount() && !(await ask({title:'Throw the marks away?', text:`${plural(edCount(),'mark')} will be lost. To keep them, use “Save as copy” or “Save into PDF” instead.`, ok:'Discard'}))) return; stopEdit(); if(ED.closeAfter) closeZoom(); };
 $('zEdit').onclick = () => ED.on ? $('edCancel').click() : startEdit();
 let roT = null;
 new ResizeObserver(() => { if(!ED.on) return; clearTimeout(roT); roT = setTimeout(renderMarks, 60); }).observe($('zPages'));
@@ -3200,6 +3203,8 @@ const imgOf = p => { const e = pageEl(p); return e && e.querySelector('.zimg'); 
 const ovOf = p => { const e = pageEl(p); return e && e.querySelector('.zov'); };
 const bigIO = new IntersectionObserver(es => es.forEach(e => { if(!e.isIntersecting) return; const img = e.target; bigIO.unobserve(img); if(img.dataset.big){ img.src = img.dataset.big; delete img.dataset.big; } }), {root: null, rootMargin: '1400px 0px'});
 function buildPages(){
+  // the text box and the selection buttons live inside a page while in use: move them out before the pages are rebuilt
+  ['zTextIn','zSelUi'].forEach(id => { const e = $(id); if(e && e.parentNode !== $('zStage')){ e.classList.remove('on'); $('zStage').appendChild(e); } });
   const sizes = (Z.info && Z.info.sizes) || [];
   $('zPages').innerHTML = Array.from({length: Z.n}, (_, i) => {
     const sz = sizes[i], pa = sz ? ((sz.rot===90||sz.rot===270) ? sz.h / sz.w : sz.w / sz.h) : 0.773;
