@@ -663,10 +663,10 @@ select.ctl{font-weight:600}
 .zoom.fs{background:var(--bg)}
 .zoom.fs .zbar,.zoom.fs .znav{display:none!important}
 /* while annotating in full screen, the whole tool bar floats above the page arrows */
-.zoom.fs.editing .edbar{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);z-index:45;margin:0;max-width:calc(100vw - 32px);justify-content:center;transition:opacity .25s,transform .25s;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.zoom.fs.editing .edbar{position:fixed;left:0;right:0;bottom:80px;margin:0 auto;width:max-content;max-width:calc(100vw - 32px);z-index:45;justify-content:center;transition:opacity .25s,transform .25s;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .zoom.fs.editing .edbar .edright{margin-left:0}
 .zoom.fs.editing .edcount{display:none}
-.zoom.fs.idle .edbar{opacity:0;transform:translateX(-50%) translateY(12px);pointer-events:none}
+.zoom.fs.idle .edbar{opacity:0;transform:translateY(12px);pointer-events:none}
 .zoom.fs.editing .zstage{padding-bottom:170px}
 .zoom.fs:not(.editing) .zstage{padding-bottom:80px}
 .zoom.fs.editing #fsEdit{display:none}
