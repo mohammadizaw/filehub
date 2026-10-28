@@ -216,9 +216,11 @@ dd a{color:var(--accent)}
 .zbar .btn{background:var(--panel);color:var(--text);border:0;box-shadow:var(--shadow)}
 .zbar .btn:hover{background:var(--hover)}
 .zbar .btn.primary{background:var(--accent);border-color:var(--accent)}
-.zstage{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:0 60px 30px}
-.zstage .zpage{width:min(100%,var(--zw,1100px));flex:none;transition:width .15s}
-.zstage img{width:100%;height:auto;background:#fff;border-radius:6px;box-shadow:var(--shadow-lg)}
+.zstage{flex:1;overflow:auto;position:relative;padding:0 60px 30px}
+#zPages{display:flex;flex-direction:column;align-items:center;gap:22px;padding-bottom:40px}
+.zpage .pno{position:absolute;right:10px;bottom:8px;font-size:11px;font-weight:700;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent);border-radius:6px;padding:1px 6px;pointer-events:none;line-height:1.4}
+.zpage{width:min(100%,var(--zw,1100px));flex:none;transition:width .15s;position:relative;line-height:0}
+.zimg{display:block;width:100%;height:auto;background:#fff;border-radius:6px;box-shadow:var(--shadow-lg)}
 .znav{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:14px;background:var(--panel);color:var(--text);font-size:26px;cursor:pointer;box-shadow:var(--shadow-lg)}
 .znav:hover{background:var(--hover)}
 .znav:disabled{opacity:.3;cursor:default}
@@ -630,30 +632,30 @@ select.ctl{font-weight:600}
 @media (max-width:1500px){ .edcount{display:none} }
 @media (max-width:1180px){ .edright{margin-left:0;width:100%;justify-content:flex-end} }
 .edcount{font-size:12.5px;color:var(--muted);font-weight:600}
-.zpage{position:relative;display:block;line-height:0}
-.zpage img{display:block}
-#zOv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.zoom.editing #zOv{pointer-events:auto}
-.zoom.editing[data-tool="select"] #zOv{cursor:default}
-.zoom.editing:not([data-tool="select"]) #zOv{cursor:crosshair}
-.zoom.editing[data-tool="pen"] #zOv{cursor:crosshair}
-.zoom.editing[data-tool="eraser"] #zOv{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24' fill='white' stroke='black' stroke-width='1.6' stroke-linejoin='round'><path d='m8.5 20 10.3-10.3a2 2 0 0 0 0-2.8l-3.7-3.7a2 2 0 0 0-2.8 0L3 12.5a2 2 0 0 0 0 2.8L7.7 20z'/><path d='M4.5 14 12 21.5'/></svg>") 6 20, auto}
-#zOv .selbox{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 4;pointer-events:none;vector-effect:non-scaling-stroke}
+
+
+.zov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.zoom.editing .zov{pointer-events:auto}
+.zoom.editing[data-tool="select"] .zov{cursor:default}
+.zoom.editing:not([data-tool="select"]) .zov{cursor:crosshair}
+.zoom.editing[data-tool="pen"] .zov{cursor:crosshair}
+.zoom.editing[data-tool="eraser"] .zov{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24' fill='white' stroke='black' stroke-width='1.6' stroke-linejoin='round'><path d='m8.5 20 10.3-10.3a2 2 0 0 0 0-2.8l-3.7-3.7a2 2 0 0 0-2.8 0L3 12.5a2 2 0 0 0 0 2.8L7.7 20z'/><path d='M4.5 14 12 21.5'/></svg>") 6 20, auto}
+.zov .selbox{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 4;pointer-events:none;vector-effect:non-scaling-stroke}
 .zselui{position:absolute;display:none;gap:4px;z-index:4;background:var(--panel);border-radius:10px;box-shadow:var(--shadow-lg);padding:3px}
 .zselui.on{display:flex}
 .zselui button{border:0;background:none;width:30px;height:28px;border-radius:8px;cursor:pointer;color:#e5484d;display:grid;place-items:center}
 .zselui button:hover{background:color-mix(in srgb,#e5484d 14%,transparent)}
 .zselui button svg{width:16px;height:16px}
-#zOv .mark{pointer-events:auto}
-#zOv .hl{mix-blend-mode:multiply}
+.zov .mark{pointer-events:auto}
+.zov .hl{mix-blend-mode:multiply}
 .ztextin{display:none;position:absolute;min-width:60px;max-width:70%;padding:2px 4px;background:rgba(255,255,255,.9);outline:2px solid var(--accent);border-radius:3px;color:#111;line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;white-space:pre-wrap;word-break:break-word}
 .ztextin.on{display:block}
 .ztextin:empty::before{content:attr(data-placeholder);color:rgba(0,0,0,.35)}
 .ztextin.note{outline:0;border-radius:3px;box-shadow:0 3px 10px rgba(0,0,0,.25);font-family:"Nunito",-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.35}
 .snote{box-sizing:border-box;width:100%;min-height:100%;color:#1a1a1a;border-radius:3px;box-shadow:0 3px 10px rgba(0,0,0,.25);font-family:"Nunito",-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.35;white-space:pre-wrap;word-break:break-word;overflow:hidden}
 .snote::after{content:"";position:absolute;right:0;bottom:0;border-style:solid;border-width:0 0 10px 10px;border-color:transparent transparent rgba(0,0,0,.18) transparent}
-#zOv g.note foreignObject{overflow:visible}
-#zOv g.note .snote{position:relative}
+.zov g.note foreignObject{overflow:visible}
+.zov g.note .snote{position:relative}
 .zoom.editing .znav{top:auto;bottom:26px;height:48px;width:40px;transform:none}
 .zoom.editing .zbar{padding-bottom:8px}
 .zoom.editing #zEdit,.zoom.editing #zClose{display:none}
@@ -681,6 +683,7 @@ select.ctl{font-weight:600}
 .fsbar.inline .fsl{padding:0 4px;font-size:12.5px}
 .fsbar.inline button{height:34px;min-width:34px;padding:0 8px}
 .fsbar.inline .fsx span{display:none}
+.fsbar #fsOut,.fsbar #fsIn{font-size:20px;font-weight:700;min-width:36px}
 /* ===== Full screen reading: page fills the screen, floating toolbar that hides itself ===== */
 .zoom.fs{background:var(--bg)}
 .zoom.fs .zbar,.zoom.fs .znav{display:none!important}
@@ -694,9 +697,10 @@ select.ctl{font-weight:600}
 .zoom.fs:not(.editing) .zstage{padding-bottom:80px}
 .zoom.fs.editing #fsEdit{display:none}
 .zoom.fs .zselui{z-index:46}
-.zoom.fs .zstage{padding:0;align-items:flex-start}
-.zoom.fs .zstage .zpage{width:min(100%,calc(100vh * var(--pa,0.773)));transition:none}
-.zoom.fs .zstage img{border-radius:0;box-shadow:none}
+.zoom.fs .zstage{padding:0}
+.zoom.fs #zPages{gap:12px;padding:0 0 60px;align-items:center;min-width:max-content}
+.zoom.fs .zpage{width:min(calc(100vw * var(--fz,1)),calc(100vh * var(--pa,0.773) * var(--fz,1)));transition:none}
+.zoom.fs .zimg{border-radius:0;box-shadow:none}
 .zoom.fs.idle,.zoom.fs.idle *{cursor:none!important}
 .fsbar{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:45;display:none;align-items:center;gap:4px;padding:6px;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:16px;box-shadow:var(--shadow-lg);color:var(--text);transition:opacity .25s,transform .25s}
 .zoom.fs .fsbar{display:flex}
@@ -1038,12 +1042,15 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
       <button class="btn primary" id="edSaveCopy" title="Keeps the original unchanged: makes “Name - annotated.pdf” next to it">Save as copy</button>
     </div>
   </div>
-  <div class="zstage" id="zStage"><div class="zpage" id="zPage"><img id="zImg" alt=""><svg id="zOv" xmlns="http://www.w3.org/2000/svg"></svg><div id="zTextIn" class="ztextin" contenteditable="true" spellcheck="false"></div><div class="zselui" id="zSelUi"><button data-selop="del" title="Delete this mark (⌫)"></button></div></div></div>
+  <div class="zstage" id="zStage"><div id="zPages"></div><div id="zTextIn" class="ztextin" contenteditable="true" spellcheck="false"></div><div class="zselui" id="zSelUi"><button data-selop="del" title="Delete this mark (⌫)"></button></div></div>
   <button class="znav r" id="zNext" title="Next page (→)">›</button>
   <div class="fsbar" id="fsBar">
     <button id="fsPrev" title="Previous page (←)">‹</button>
     <span class="fsl" id="fsLabel"></span>
     <button id="fsNext" title="Next page (→)">›</button>
+    <span class="fssep"></span>
+    <button id="fsOut" title="Zoom out (−)">−</button>
+    <button id="fsIn" title="Zoom in (+)">+</button>
     <span class="fssep"></span>
     <button class="fsx" id="fsEdit" title="Annotate: highlight, write, draw"></button>
     <button class="fsx" id="fsExit" title="Exit full screen (Esc)"></button>
@@ -2774,7 +2781,8 @@ const ED = {on:false, file:null, tool:'highlight', color:'#ffeb3b', size:3, mark
 const ED_COLORS = ['#ffeb3b','#7ee787','#ff8fab','#79c0ff','#e5484d','#111111','#ffffff'];
 const TOOL_DEFAULT_COLOR = {highlight:'#ffeb3b', underline:'#e5484d', strike:'#e5484d', text:'#111111', note:'#ffeb3b', pen:'#e5484d', rect:'#e5484d', ellipse:'#e5484d', arrow:'#e5484d', line:'#e5484d'};
 const ED_LBL = {text:'Text size', note:'Size', pen:'Pen', highlight:'Size', underline:'Size', strike:'Size', select:'Size', eraser:'Size'};
-function edPage(){ return (ED.marks[Z.p] ||= []); }
+function edPage(p){ return (ED.marks[p || Z.p] ||= []); }
+function pageOfMark(m){ for(const [pg, l] of Object.entries(ED.marks)) if(l.includes(m)) return +pg; return Z.p; }
 function edCount(){ return Object.values(ED.marks).reduce((t,l) => t + l.length, 0); }
 async function openAnnotate(f){
   if(!f) return;
@@ -2786,10 +2794,10 @@ async function startEdit(){
   if(ED.on && ED.file === Z.file) return;
   Object.assign(ED, {on:true, file:Z.file, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null});
   $('zoom').classList.add('editing'); setTool(ED.tool); if(typeof placeFsBar==='function') placeFsBar();
-  try{ ED.info = await api('/api/pdfinfo?path='+encodeURIComponent(Z.file.path)); }catch(e){ ED.info = null; }
+  try{ ED.info = Z.info || await api('/api/pdfinfo?path='+encodeURIComponent(Z.file.path)); }catch(e){ ED.info = null; }
   renderMarks(); edStatus();
 }
-function stopEdit(){ ED.on = false; edPanel('edColorPanel', false); if(typeof placeFsBar==='function') setTimeout(placeFsBar, 0); $('zoom').classList.remove('editing'); $('zOv').innerHTML = ''; $('zTextIn').classList.remove('on'); edStatus(); }
+function stopEdit(){ ED.on = false; edPanel('edColorPanel', false); if(typeof placeFsBar==='function') setTimeout(placeFsBar, 0); $('zoom').classList.remove('editing'); $('zPages').querySelectorAll('.zov').forEach(o => o.innerHTML = ''); $('zTextIn').classList.remove('on'); $('zSelUi').classList.remove('on'); edStatus(); }
 function setTool(t){
   ED.tool = t; $('zoom').dataset.tool = t;
   document.querySelectorAll('#edTools button').forEach(b => b.classList.toggle('on', b.dataset.tool===t));
@@ -2818,13 +2826,17 @@ function pushUndo(action){ ED.undo.push(action); ED.redo.length = 0; edStatus();
 function edUndo(){ const a = ED.undo.pop(); if(!a) return; a.undo(); ED.redo.push(a); renderMarks(); edStatus(); }
 function edRedo(){ const a = ED.redo.pop(); if(!a) return; a.redo(); ED.undo.push(a); renderMarks(); edStatus(); }
 $('edUndo').onclick = edUndo; $('edRedo').onclick = edRedo;
-const ovSize = () => { const img = $('zImg'); return {w: img.clientWidth, h: img.clientHeight}; };
-const ptPerPx = () => { const i = ED.info && ED.info.sizes[Z.p-1]; const {w} = ovSize(); if(!i || !w) return 0.75; const dw = (i.rot===90||i.rot===270) ? i.h : i.w; return dw / w; };
-function renderMarks(){
-  const ov = $('zOv'), {w, h} = ovSize(); if(!w) return;
+const ovSize = p => { const img = imgOf(p); return img ? {w: img.clientWidth, h: img.clientHeight} : {w:0, h:0}; };
+const ptPerPx = p => { const i = ED.info && ED.info.sizes[(p||Z.p)-1]; const {w} = ovSize(p); if(!i || !w) return 0.75; const dw = (i.rot===90||i.rot===270) ? i.h : i.w; return dw / w; };
+function renderMarks(){ if(!ED.on) return; for(let p = 1; p <= Z.n; p++) renderPage(p); placeSelUi(); }
+function renderPage(p){
+  const ov = ovOf(p); if(!ov) return; const {w, h} = ovSize(p); if(!w) return;
+  const list = ED.marks[p] || [];
+  const drawing = ED.drawing && ED.drawing.page === p ? ED.drawing : null;
+  if(!list.length && !drawing){ if(ov.innerHTML) ov.innerHTML = ''; return; }
   ov.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  const pxPt = 1 / ptPerPx();  // pixels per PDF point
-  ov.innerHTML = edPage().map((m, i) => {
+  const pxPt = 1 / ptPerPx(p);  // pixels per PDF point
+  ov.innerHTML = list.map((m, i) => {
     if(m === ED.hidden) return '';
     const sel = m === ED.sel ? ' sel' : '', c = m.color;
     const X = x => x * w, Y = y => y * h;
@@ -2837,16 +2849,20 @@ function renderMarks(){
     if(m.type==='text'){ const fs = m.size*pxPt; const lines = (m.text||'').split('\n'); return `<g class="mark${sel}" data-i="${i}"><rect x="${X(m.rect.x)-2}" y="${Y(m.rect.y)-2}" width="${X(m.rect.w)+4}" height="${Y(m.rect.h)+4}" fill="transparent"/><text x="${X(m.rect.x)}" y="${Y(m.rect.y)}" fill="${c}" font-size="${fs}" font-family="-apple-system,BlinkMacSystemFont,Helvetica Neue,sans-serif">${lines.map((l,k) => `<tspan x="${X(m.rect.x)}" dy="${k?fs*1.25:fs*0.95}">${esc(l)||' '}</tspan>`).join('')}</text></g>`; }
     if(m.type==='note'){ const fs = (m.size||12)*pxPt, W = X(m.rect.w), H = Math.max(fs*2, Y(m.rect.h)); return `<g class="mark note${sel}" data-i="${i}"><foreignObject x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${W}" height="${H}"><div xmlns="http://www.w3.org/1999/xhtml" class="snote" style="background:${c};font-size:${fs}px;padding:${fs*.5}px ${fs*.6}px">${esc(m.text||'')}</div></foreignObject></g>`; }
     return '';
-  }).join('') + (ED.drawing ? drawPreview(ED.drawing, w, h, pxPt) : '');
-  // selected mark: dashed box around it and a small delete button at its corner
-  const ui = $('zSelUi'); ui.classList.remove('on');
-  const selEl = ov.querySelector('.mark.sel');
-  if(selEl){ try{ const b = selEl.getBBox(); const pad = 6;
-      ov.insertAdjacentHTML('beforeend', `<rect class="selbox" x="${b.x-pad}" y="${b.y-pad}" width="${b.width+2*pad}" height="${b.height+2*pad}" rx="4"/>`);
-      ui.style.left = Math.min(w - 40, b.x + b.width + pad + 4) + 'px'; ui.style.top = Math.max(0, b.y - pad - 34) + 'px'; ui.classList.add('on'); }catch(e){} }
+  }).join('') + (drawing ? drawPreview(drawing, w, h, pxPt) : '');
   // notes grow with their text: measure and remember the height, so the saved note has the right size
-  ov.querySelectorAll('g.note').forEach(g => { const m = edPage()[+g.dataset.i], div = g.querySelector('.snote'), fo = g.querySelector('foreignObject');
+  ov.querySelectorAll('g.note').forEach(g => { const m = list[+g.dataset.i], div = g.querySelector('.snote'), fo = g.querySelector('foreignObject');
     if(m && div){ const need = div.scrollHeight + 2; if(Math.abs(need - +fo.getAttribute('height')) > 1){ fo.setAttribute('height', need); m.rect.h = need / h; } } });
+}
+// selected mark: dashed box around it and a small delete button at its corner
+function placeSelUi(){
+  const ui = $('zSelUi'); ui.classList.remove('on');
+  $('zPages').querySelectorAll('.selbox').forEach(x => x.remove());
+  if(!ED.sel) return;
+  const p = pageOfMark(ED.sel), ov = ovOf(p), el = ov && ov.querySelector('.mark.sel'); if(!el) return;
+  try{ const b = el.getBBox(), pad = 6, {w} = ovSize(p);
+    ov.insertAdjacentHTML('beforeend', `<rect class="selbox" x="${b.x-pad}" y="${b.y-pad}" width="${b.width+2*pad}" height="${b.height+2*pad}" rx="4"/>`);
+    pageEl(p).appendChild(ui); ui.style.left = Math.min(w - 40, b.x + b.width + pad + 4) + 'px'; ui.style.top = Math.max(0, b.y - pad - 34) + 'px'; ui.classList.add('on'); }catch(e){}
 }
 function drawPreview(d, w, h, pxPt){
   const c = ED.color;
@@ -2859,59 +2875,62 @@ function drawPreview(d, w, h, pxPt){
   return '';
 }
 const normRect = d => ({x: Math.min(d.x0, d.x), y: Math.min(d.y0, d.y), w: Math.abs(d.x - d.x0), h: Math.abs(d.y - d.y0)});
-function ovPoint(e){ const r = $('zImg').getBoundingClientRect(); return {x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))}; }
+function ovPoint(e, p){ const r = imgOf(p || Z.p).getBoundingClientRect(); return {x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))}; }
 function eraseAt(target){
-  const el = target && target.closest && target.closest('#zOv .mark'); if(!el) return;
-  const list = edPage(), i = +el.dataset.i, m = list[i]; if(!m) return;
-  list.splice(i, 1); if(ED.drawing) ED.drawing.removed.push([i, m]); if(ED.sel === m) ED.sel = null;
-  renderMarks(); edStatus();
+  const el = target && target.closest && target.closest('.zov .mark'); if(!el) return;
+  const p = +el.closest('.zov').dataset.p, list = edPage(p), i = +el.dataset.i, m = list[i]; if(!m) return;
+  list.splice(i, 1); if(ED.drawing) ED.drawing.removed.push([p, i, m]); if(ED.sel === m) ED.sel = null;
+  renderPage(p); placeSelUi(); edStatus();
 }
-function addMark(m){ const list = edPage(); list.push(m); pushUndo({undo:()=>{ const i = list.indexOf(m); if(i>=0) list.splice(i,1); }, redo:()=>list.push(m)}); ED.sel = null; renderMarks(); edStatus(); }
-function removeMark(m){ const list = edPage(), i = list.indexOf(m); if(i < 0) return; list.splice(i,1); pushUndo({undo:()=>list.splice(i,0,m), redo:()=>{ const k = list.indexOf(m); if(k>=0) list.splice(k,1); }}); ED.sel = null; renderMarks(); edStatus(); }
-$('zOv').addEventListener('mousedown', e => {
-  if(!ED.on || e.button !== 0) return;
-  e.preventDefault(); const p = ovPoint(e);
+function addMark(m, page){ const list = edPage(page || ED.pg); list.push(m); pushUndo({undo:()=>{ const i = list.indexOf(m); if(i>=0) list.splice(i,1); }, redo:()=>list.push(m)}); ED.sel = null; renderMarks(); edStatus(); }
+function removeMark(m){ const list = edPage(pageOfMark(m)), i = list.indexOf(m); if(i < 0) return; list.splice(i,1); pushUndo({undo:()=>list.splice(i,0,m), redo:()=>{ const k = list.indexOf(m); if(k>=0) list.splice(k,1); }}); ED.sel = null; renderMarks(); edStatus(); }
+$('zPages').addEventListener('mousedown', e => {
+  const ov = e.target.closest('.zov'); if(!ED.on || e.button !== 0 || !ov) return;
+  e.preventDefault(); const pg = +ov.dataset.p; ED.pg = pg; if(Z.p !== pg){ Z.p = pg; zoomLabels(); }
+  const p = ovPoint(e, pg);
   if($('zTextIn').classList.contains('on')){ commitText(); if(ED.textJustClosed){ ED.textJustClosed = false; } }
-  const hit = e.target.closest('.mark'); const hm = hit ? edPage()[+hit.dataset.i] : null;
+  const hit = e.target.closest('.mark'); const hm = hit ? edPage(pg)[+hit.dataset.i] : null;
   if(hm && (hm.type==='text' || hm.type==='note') && (ED.tool==='text' || ED.tool==='note')){ startTextInput({x:hm.rect.x, y:hm.rect.y}, hm); return; }
   if(ED.tool==='eraser'){
-    ED.drawing = {kind:'erase', removed:[]}; eraseAt(e.target); return;
+    ED.drawing = {kind:'erase', removed:[], page:pg}; eraseAt(e.target); return;
   }
   if(ED.tool==='select'){
-    const el = e.target.closest('.mark'); const m = el ? edPage()[+el.dataset.i] : null;
+    const el = e.target.closest('.mark'); const m = el ? edPage(pg)[+el.dataset.i] : null;
     ED.sel = m || null; renderMarks();
-    if(m){ ED.drawing = {kind:'move', m, x0:p.x, y0:p.y, orig:JSON.parse(JSON.stringify(m)), moved:false}; }
+    if(m){ ED.drawing = {kind:'move', m, page:pg, x0:p.x, y0:p.y, orig:JSON.parse(JSON.stringify(m)), moved:false}; }
     return;
   }
-  if(ED.tool==='text' || ED.tool==='note'){ startTextInput(p, null, ED.tool); return; }
-  if(ED.tool==='pen') ED.drawing = {kind:'pen', points:[[p.x,p.y]]};
-  else if(ED.tool==='line' || ED.tool==='arrow') ED.drawing = {kind:'line', x0:p.x, y0:p.y, x:p.x, y:p.y};
-  else ED.drawing = {kind:'rect', x0:p.x, y0:p.y, x:p.x, y:p.y};
-  renderMarks();
+  if(ED.tool==='text' || ED.tool==='note'){ startTextInput(p, null, ED.tool, pg); return; }
+  if(ED.tool==='pen') ED.drawing = {kind:'pen', page:pg, points:[[p.x,p.y]]};
+  else if(ED.tool==='line' || ED.tool==='arrow') ED.drawing = {kind:'line', page:pg, x0:p.x, y0:p.y, x:p.x, y:p.y};
+  else ED.drawing = {kind:'rect', page:pg, x0:p.x, y0:p.y, x:p.x, y:p.y};
+  renderPage(pg);
 });
 document.addEventListener('mousemove', e => {
-  if(!ED.on || !ED.drawing) return; const p = ovPoint(e), d = ED.drawing;
+  if(!ED.on || !ED.drawing) return; const d = ED.drawing, p = ovPoint(e, d.page);
   if(d.kind==='erase'){ eraseAt(document.elementFromPoint(e.clientX, e.clientY)); return; }
   if(d.kind==='pen'){ const last = d.points[d.points.length-1]; if(Math.hypot(p.x-last[0], p.y-last[1]) > 0.002) d.points.push([p.x,p.y]); }
   else if(d.kind==='move'){ const dx = p.x - d.x0, dy = p.y - d.y0, o = d.orig, m = d.m; d.moved = true;
     if(m.rect) Object.assign(m.rect, {x: o.rect.x + dx, y: o.rect.y + dy}); if(m.points) m.points = o.points.map(q => [q[0]+dx, q[1]+dy]); }
   else { d.x = p.x; d.y = p.y; }
-  renderMarks();
+  renderPage(d.page); if(d.kind==='move') placeSelUi();
 });
 document.addEventListener('mouseup', e => {
   if(!ED.on || !ED.drawing) return; const d = ED.drawing; ED.drawing = null;
-  if(d.kind==='erase'){ if(d.removed.length){ const list = edPage(), gone = d.removed; pushUndo({undo:()=>gone.slice().reverse().forEach(([i,m]) => list.splice(Math.min(i, list.length), 0, m)), redo:()=>gone.forEach(([i,m]) => { const k = list.indexOf(m); if(k>=0) list.splice(k,1); })}); } renderMarks(); edStatus(); return; }
+  if(d.kind==='erase'){ if(d.removed.length){ const gone = d.removed; pushUndo({undo:()=>gone.slice().reverse().forEach(([pg,i,m]) => { const list = edPage(pg); list.splice(Math.min(i, list.length), 0, m); }), redo:()=>gone.forEach(([pg,i,m]) => { const list = edPage(pg), k = list.indexOf(m); if(k>=0) list.splice(k,1); })}); } renderMarks(); edStatus(); return; }
   if(d.kind==='move'){ if(d.moved){ const m = d.m, before = d.orig, after = JSON.parse(JSON.stringify(m)); pushUndo({undo:()=>Object.assign(m, JSON.parse(JSON.stringify(before))), redo:()=>Object.assign(m, JSON.parse(JSON.stringify(after)))}); } renderMarks(); return; }
-  if(d.kind==='pen'){ if(d.points.length > 2) addMark({type:'pen', points:d.points, color:ED.color, width:ED.size, opacity: ED.color==='#ffeb3b' ? .5 : 1}); else renderMarks(); return; }
-  if(d.kind==='line'){ if(Math.hypot(d.x-d.x0, d.y-d.y0) > 0.01) addMark({type:ED.tool, points:[[d.x0,d.y0],[d.x,d.y]], color:ED.color, width:ED.size}); else renderMarks(); return; }
+  if(d.kind==='pen'){ if(d.points.length > 2) addMark({type:'pen', points:d.points, color:ED.color, width:ED.size, opacity: ED.color==='#ffeb3b' ? .5 : 1}, d.page); else renderMarks(); return; }
+  if(d.kind==='line'){ if(Math.hypot(d.x-d.x0, d.y-d.y0) > 0.01) addMark({type:ED.tool, points:[[d.x0,d.y0],[d.x,d.y]], color:ED.color, width:ED.size}, d.page); else renderMarks(); return; }
   const r = normRect(d);
   if(r.w < 0.005 || r.h < 0.004){ renderMarks(); return; }
-  addMark(Object.assign({type:ED.tool, rect:r, color:ED.color}, ED.tool==='rect' || ED.tool==='ellipse' ? {width:ED.size, fill:false} : {}));
+  addMark(Object.assign({type:ED.tool, rect:r, color:ED.color}, ED.tool==='rect' || ED.tool==='ellipse' ? {width:ED.size, fill:false} : {}), d.page);
 });
 // text: type straight on the page
 const NOTE_W = 0.26;  // a sticky note is about a quarter of the page wide
-function startTextInput(p, existing, kind){
-  const inp = $('zTextIn'), {w, h} = ovSize(), pxPt = 1 / ptPerPx();
+function startTextInput(p, existing, kind, page){
+  page = existing ? pageOfMark(existing) : (page || ED.pg || Z.p);
+  const inp = $('zTextIn'), {w, h} = ovSize(page), pxPt = 1 / ptPerPx(page);
+  pageEl(page).appendChild(inp);
   kind = existing ? existing.type : (kind || 'text');
   const size = existing ? existing.size : (kind==='note' ? 12 : 8 + ED.size*3);
   const color = existing ? existing.color : (kind==='note' ? (ED.colorPicked ? ED.color : '#ffeb3b') : ED.color);
@@ -2920,15 +2939,15 @@ function startTextInput(p, existing, kind){
   if(kind==='note'){ inp.style.background = color; inp.style.color = '#1a1a1a'; inp.style.width = (NOTE_W*w) + 'px'; inp.style.padding = `${size*pxPt*.5}px ${size*pxPt*.6}px`; }
   else { inp.style.background = ''; inp.style.color = color; inp.style.width = ''; inp.style.padding = ''; }
   inp.textContent = existing ? existing.text : ''; inp.dataset.placeholder = kind==='note' ? 'Type your note…' : 'Type here…';
-  ED.textAt = {p, size, existing, kind, color}; ED.textCancel = false;
+  ED.textAt = {p, size, existing, kind, color, page}; ED.textCancel = false;
   if(existing){ ED.hidden = existing; renderMarks(); }  // hide the mark while its box is open
   inp.focus();
   if(existing){ const r = document.createRange(); r.selectNodeContents(inp); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
 }
 function commitText(){
   const inp = $('zTextIn'); if(!inp.classList.contains('on')) return;
-  const t = inp.innerText.replace(/\n+$/,''), {p, size, existing, kind, color} = ED.textAt || {}; inp.classList.remove('on'); ED.hidden = null;
-  const {w, h} = ovSize(), pxPt = 1 / ptPerPx();
+  const t = inp.innerText.replace(/\n+$/,''), {p, size, existing, kind, color, page} = ED.textAt || {}; inp.classList.remove('on'); ED.hidden = null;
+  const {w, h} = ovSize(page), pxPt = 1 / ptPerPx(page);
   if(ED.textCancel){ ED.textCancel = false; renderMarks(); return; }           // Esc: leave things as they were
   if(!t.trim()){ if(existing) removeMark(existing); else renderMarks(); return; }  // empty box: nothing is added
   if(existing && existing.text === t){ renderMarks(); return; }                 // nothing changed
@@ -2937,11 +2956,11 @@ function commitText(){
     ? {x:p.x, y:p.y, w: Math.min(1-p.x, NOTE_W), h: (inp.offsetHeight) / h}
     : {x:p.x, y:p.y, w: Math.min(1-p.x, (Math.max(...lines.map(l => l.length)) * size * 0.6 * pxPt) / w + 0.01), h: (lines.length * size * 1.25 * pxPt) / h};
   if(existing){ const before = JSON.parse(JSON.stringify(existing)); Object.assign(existing, {text:t, rect:Object.assign({}, existing.rect, {h:rect.h, w: kind==='note' ? existing.rect.w : rect.w})}); const after = JSON.parse(JSON.stringify(existing)); pushUndo({undo:()=>Object.assign(existing, before), redo:()=>Object.assign(existing, after)}); renderMarks(); }
-  else addMark({type:kind, rect, color, size, text:t});
+  else addMark({type:kind, rect, color, size, text:t}, page);
 }
 $('zTextIn').addEventListener('blur', commitText);
 $('zTextIn').addEventListener('keydown', e => { if(e.key==='Escape'){ e.preventDefault(); ED.textCancel = true; $('zTextIn').blur(); } else if(e.key==='Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $('zTextIn').blur(); } e.stopPropagation(); }, true);
-$('zOv').addEventListener('dblclick', e => { if(!ED.on) return; const el = e.target.closest('.mark'); const m = el && edPage()[+el.dataset.i]; if(m && (m.type==='text' || m.type==='note')) startTextInput({x:m.rect.x, y:m.rect.y}, m); });
+$('zPages').addEventListener('dblclick', e => { if(!ED.on) return; const el = e.target.closest('.mark'); const ov = el && el.closest('.zov'); const m = ov && edPage(+ov.dataset.p)[+el.dataset.i]; if(m && (m.type==='text' || m.type==='note')) startTextInput({x:m.rect.x, y:m.rect.y}, m); });
 // keyboard inside edit mode
 document.addEventListener('keydown', e => {
   if(!ED.on || !$('zoom').classList.contains('on')) return;
@@ -2972,14 +2991,14 @@ async function saveMarks(mode){
 }
 $('edCancel').onclick = async () => { if(edCount() && !(await ask({title:'Throw the marks away?', text:`${plural(edCount(),'mark')} will be lost. To keep them, use “Save as copy” or “Save into PDF” instead.`, ok:'Discard'}))) return; stopEdit(); };
 $('zEdit').onclick = () => ED.on ? $('edCancel').click() : startEdit();
-new ResizeObserver(() => { if(ED.on) renderMarks(); }).observe($('zImg'));
-$('zImg').addEventListener('load', () => { if(ED.on) renderMarks(); });
+let roT = null;
+new ResizeObserver(() => { if(!ED.on) return; clearTimeout(roT); roT = setTimeout(renderMarks, 60); }).observe($('zPages'));
 
 
 // ---------- full screen reading ----------
 let fsIdleT = null, fsEnteredAt = 0;
 function enterFs(){
-  $('zoom').classList.add('fs'); fsWake(); fsEnteredAt = Date.now(); placeFsBar();
+  $('zoom').classList.add('fs'); fsWake(); fsEnteredAt = Date.now(); placeFsBar(); fsZ = 1; document.documentElement.style.setProperty('--fz', 1);
   const el = document.documentElement;
   if(!document.fullscreenElement && el.requestFullscreen){ el.requestFullscreen().catch(() => {}); }
   zoomLabel();
@@ -2995,12 +3014,14 @@ function placeFsBar(){
   if(bar.parentNode !== target) target.appendChild(bar);
   bar.classList.toggle('inline', inline);
 }
+let fsZ = 1;
+function fsZoom(d){ fsZ = Math.max(0.5, Math.min(3, Math.round((fsZ + d) * 4) / 4)); document.documentElement.style.setProperty('--fz', fsZ); fsWake(); toast(`${Math.round(fsZ*100)}%`); }
+$('fsOut').onclick = () => fsZoom(-0.25); $('fsIn').onclick = () => fsZoom(0.25);
 function fsWake(){ const z = $('zoom'); if(!z.classList.contains('fs')) return; z.classList.remove('idle'); clearTimeout(fsIdleT); fsIdleT = setTimeout(() => { if(ED.drawing || $('zTextIn').classList.contains('on') || document.querySelector('.edpanel.on')) return fsWake(); z.classList.add('idle'); }, 2500); }
 document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement && $('zoom').classList.contains('fs') && Date.now() - fsEnteredAt > 600) exitFs(); });
 document.addEventListener('mousemove', e => { if($('zoom').classList.contains('fs')) fsWake(); });
 $('zFull').onclick = enterFs; $('fsExit').onclick = exitFs; $('fsEdit').onclick = () => { startEdit(); fsWake(); };
 $('fsPrev').onclick = () => zoomTo(Z.p-1); $('fsNext').onclick = () => zoomTo(Z.p+1);
-$('zImg').addEventListener('load', () => { const i = $('zImg'); if(i.naturalWidth && i.naturalHeight) document.documentElement.style.setProperty('--pa', (i.naturalWidth / i.naturalHeight).toFixed(4)); });
 function zoomLabel(){ $('fsLabel').textContent = `Page ${Z.p} of ${Z.n}`; $('fsPrev').disabled = Z.p<=1; $('fsNext').disabled = Z.p>=Z.n; }
 
 // ---------- rename (same folder only; never replaces another file) ----------
@@ -3073,8 +3094,8 @@ document.addEventListener('keydown', e => {
     else if(e.key===' ' && !typing){ e.preventDefault(); zoomTo(Z.p + (e.shiftKey ? -1 : 1)); }
     else if(e.key==='ArrowRight' || e.key==='PageDown') { e.preventDefault(); zoomTo(Z.p+1); }
     else if(e.key==='ArrowLeft' || e.key==='PageUp') { e.preventDefault(); zoomTo(Z.p-1); }
-    else if(e.key==='+' || e.key==='=') zoomW(250);
-    else if(e.key==='-') zoomW(-250);
+    else if(e.key==='+' || e.key==='='){ $('zoom').classList.contains('fs') ? fsZoom(0.25) : zoomW(250); }
+    else if(e.key==='-'){ $('zoom').classList.contains('fs') ? fsZoom(-0.25) : zoomW(-250); }
   }
   else if(e.key==='Escape'){ if($('splitModal').classList.contains('open')) closeSplit(); else if(typing){ e.target.blur(); } else if(S.selSet.size > 1){ clearSel(); } else closePreview(); }
   else if(e.key===' ' && !typing && S.sel){ e.preventDefault(); post('/api/quicklook',{path:S.sel}); }
@@ -3160,18 +3181,45 @@ $('spDest').addEventListener('change', async () => {
   store.set('splitDest', $('spDest').value); showDest();
 });
 const Z = {file:null, n:0, p:1, split:false, w:1100};
-function openZoom(p, file, n, split){
-  Object.assign(Z, {file, n, split}); $('zRangeBtns').style.display = split ? '' : 'none';
-  $('zoom').classList.add('on'); zoomTo(p);
+// Pages are stacked vertically and scroll continuously; the big picture of a page loads as you get near it.
+const pageEl = p => $('zPages').querySelector(`.zpage[data-p="${p}"]`);
+const imgOf = p => { const e = pageEl(p); return e && e.querySelector('.zimg'); };
+const ovOf = p => { const e = pageEl(p); return e && e.querySelector('.zov'); };
+const bigIO = new IntersectionObserver(es => es.forEach(e => { if(!e.isIntersecting) return; const img = e.target; bigIO.unobserve(img); if(img.dataset.big){ img.src = img.dataset.big; delete img.dataset.big; } }), {root: null, rootMargin: '1400px 0px'});
+function buildPages(){
+  const sizes = (Z.info && Z.info.sizes) || [];
+  $('zPages').innerHTML = Array.from({length: Z.n}, (_, i) => {
+    const sz = sizes[i], pa = sz ? ((sz.rot===90||sz.rot===270) ? sz.h / sz.w : sz.w / sz.h) : 0.773;
+    return `<div class="zpage" data-p="${i+1}" style="--pa:${pa.toFixed(4)}"><img class="zimg" alt="" src="${pageImg(i+1, false, Z.file)}" data-big="${pageImg(i+1, true, Z.file)}" style="aspect-ratio:${pa.toFixed(4)}"><svg class="zov" data-p="${i+1}" xmlns="http://www.w3.org/2000/svg"></svg><span class="pno">${i+1}</span></div>`;
+  }).join('');
+  $('zPages').querySelectorAll('.zimg').forEach(img => { bigIO.observe(img); img.addEventListener('load', () => { if(img.naturalWidth) img.style.aspectRatio = (img.naturalWidth / img.naturalHeight).toFixed(4); if(ED.on) renderPage(+img.parentNode.dataset.p); }); });
 }
-function zoomTo(p){
+async function openZoom(p, file, n, split){
+  Object.assign(Z, {file, n, split, info: null}); $('zRangeBtns').style.display = split ? '' : 'none';
+  $('zoom').classList.add('on');
+  buildPages(); zoomTo(p, true);
+  try{ const info = await api('/api/pdfinfo?path='+encodeURIComponent(file.path)); if(Z.file === file){ Z.info = info; info.sizes.forEach((sz, i) => { const el = pageEl(i+1); if(el){ const pa = ((sz.rot===90||sz.rot===270) ? sz.h / sz.w : sz.w / sz.h).toFixed(4); el.style.setProperty('--pa', pa); const img = el.querySelector('.zimg'); if(!img.naturalWidth) img.style.aspectRatio = pa; } }); } }catch(e){}
+}
+function zoomTo(p, instant){
   Z.p = Math.max(1, Math.min(Z.n, p));
-  $('zLabel').textContent = `${Z.file.name} — page ${Z.p} of ${Z.n}`;
-  $('zImg').src = pageImg(Z.p, true, Z.file);
-  $('zPrev').disabled = Z.p<=1; $('zNext').disabled = Z.p>=Z.n; if(typeof zoomLabel==='function') zoomLabel();
-  $('zStage').scrollTop = 0; if(ED.on){ ED.sel = null; ED.drawing = null; $('zOv').innerHTML = ''; }
-  if(Z.p < Z.n){ new Image().src = pageImg(Z.p+1, true, Z.file); }  // get the next page ready
+  const el = pageEl(Z.p); if(el){ const st = $('zStage'); const top = el.offsetTop - 6; Z.scrollingTo = Z.p; st.scrollTo({top, behavior: instant ? 'instant' : 'smooth'}); setTimeout(() => { Z.scrollingTo = null; }, instant ? 0 : 600); }
+  zoomLabels();
 }
+function zoomLabels(){
+  $('zLabel').textContent = `${Z.file.name} — page ${Z.p} of ${Z.n}`;
+  $('zPrev').disabled = Z.p<=1; $('zNext').disabled = Z.p>=Z.n; if(typeof zoomLabel==='function') zoomLabel();
+}
+// which page is in view: the one covering the top third of the screen
+let zScrollT = null;
+$('zStage').addEventListener('scroll', () => {
+  if(zScrollT) return;
+  zScrollT = requestAnimationFrame(() => { zScrollT = null;
+    if(Z.scrollingTo) return;
+    const st = $('zStage'), y = st.scrollTop + st.clientHeight * 0.33; let best = Z.p;
+    for(const el of $('zPages').children){ if(el.offsetTop <= y) best = +el.dataset.p; else break; }
+    if(best !== Z.p){ Z.p = best; zoomLabels(); }
+  });
+});
 function zoomW(d){ Z.w = Math.max(500, Math.min(2400, Z.w + d)); document.documentElement.style.setProperty('--zw', Z.w+'px'); }
 async function closeZoom(){ if($('zoom').classList.contains('fs')) exitFs(); if(ED.on){ if(edCount() && !(await ask({title:'Leave without saving?', text:`${plural(edCount(),'mark')} will be lost.`, ok:'Leave'}))) return; stopEdit(); } $('zoom').classList.remove('on'); }
 $('zPrev').onclick = () => zoomTo(Z.p-1);
