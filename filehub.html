@@ -566,6 +566,69 @@ select.ctl{font-weight:600}
 .fpcur b{color:var(--text)}
 .fp .actions{justify-content:flex-end;margin:0;gap:8px}
 .fp .actions #fpNew{margin-right:auto}
+/* ===== Floating bar for a multi-selection ===== */
+.selbar{position:fixed;left:50%;bottom:48px;transform:translateX(-50%) translateY(16px);z-index:30;display:flex;align-items:center;gap:6px;padding:7px 8px 7px 14px;background:color-mix(in srgb,var(--text) 94%,transparent);color:var(--bg);border-radius:16px;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.18s;font-size:13px;font-weight:600;white-space:nowrap}
+.selbar.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
+.selbar .n{margin-right:6px}
+.selbar button{border:0;background:rgba(255,255,255,.1);color:inherit;border-radius:10px;padding:6px 11px;cursor:pointer;font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:6px}
+.selbar button:hover{background:rgba(255,255,255,.2)}
+.selbar button.go{background:var(--accent);color:#fff}
+.selbar button svg{width:14px;height:14px}
+.selbar .x2{padding:6px 8px;opacity:.7}
+/* ===== Merge PDFs ===== */
+.mgbox{height:min(700px,100%)}
+.mglist{overflow-y:auto;padding:16px;background:var(--panel2);display:flex;flex-direction:column;gap:10px}
+.mgi{display:grid;grid-template-columns:22px 64px 1fr auto auto;gap:12px;align-items:center;background:var(--panel);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow);border:2px solid transparent}
+.mgi.dragging{opacity:.4}
+.mgi.over{border-color:var(--accent)}
+.mgi .grip{color:var(--muted);cursor:grab;font-size:18px;letter-spacing:-2px;user-select:none}
+.mgi .th{width:64px;height:80px;border-radius:7px;background:#fff;box-shadow:var(--shadow);overflow:hidden;display:grid;place-items:center}
+.mgi .th img{width:100%;height:100%;object-fit:cover;object-position:top}
+.mgi .nm{min-width:0}
+.mgi .nm b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.mgi .nm small{color:var(--muted)}
+.mgi .rng{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.mgi .rng input{width:52px;padding:6px 7px;border:0;border-radius:8px;background:var(--panel2);font-weight:600;text-align:center}
+.mgi .rng input.bad{outline:2px solid #e5484d}
+.mgi .ops{display:flex;gap:4px}
+.mgi .ops button{border:0;background:var(--panel2);width:28px;height:28px;border-radius:8px;cursor:pointer;color:var(--muted)}
+.mgi .ops button:hover{color:var(--text);background:var(--hover)}
+.mgi .ops button:disabled{opacity:.3;cursor:default}
+.mgi .num{position:absolute}
+.dest input[type=text]{width:100%;margin-top:4px;padding:9px 10px;border:0;border-radius:12px;background:var(--panel2);font-weight:600}
+/* ===== Annotating a PDF (edit mode of the full-screen view) ===== */
+.edbar{display:none;align-items:center;gap:8px;padding:6px 16px 10px;color:#fff;flex-wrap:wrap}
+.edbar .btn{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18)}
+.edbar .btn:hover{background:rgba(255,255,255,.2)}
+.edbar .btn:disabled{opacity:.4}
+.edbar .btn.primary{background:var(--accent);border-color:var(--accent)}
+.zoom.editing .edbar{display:flex}
+.edtools{display:flex;gap:2px;background:rgba(255,255,255,.08);border-radius:12px;padding:4px}
+.edtools button{border:0;background:none;color:#fff;width:36px;height:34px;border-radius:9px;cursor:pointer;display:grid;place-items:center;opacity:.85}
+.edtools button:hover{background:rgba(255,255,255,.12);opacity:1}
+.edtools button.on{background:var(--accent);opacity:1;box-shadow:var(--accent-glow)}
+.edtools button svg{width:18px;height:18px}
+.edsep{width:1px;height:22px;background:rgba(255,255,255,.18);margin:0 4px;align-self:center}
+.edcolors{display:flex;gap:7px;padding:0 6px}
+.edcolors button{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+.edcolors button.on{border-color:#fff;transform:scale(1.15)}
+.edsize{display:flex;align-items:center;gap:8px;font-size:12px;opacity:.9}
+.edsize input{width:90px;accent-color:var(--accent)}
+.edcount{font-size:12.5px;opacity:.8}
+.zpage{position:relative;display:inline-block;line-height:0}
+.zpage img{display:block}
+#zOv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.zoom.editing #zOv{pointer-events:auto}
+.zoom.editing[data-tool="select"] #zOv{cursor:default}
+.zoom.editing:not([data-tool="select"]) #zOv{cursor:crosshair}
+.zoom.editing[data-tool="pen"] #zOv{cursor:crosshair}
+#zOv .mark{pointer-events:auto}
+#zOv .mark.sel{outline:2px dashed var(--accent)}
+#zOv .hl{mix-blend-mode:multiply}
+.ztextin{display:none;position:absolute;min-width:60px;max-width:70%;padding:2px 4px;background:rgba(255,255,255,.9);outline:2px solid var(--accent);border-radius:3px;color:#111;line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;white-space:pre-wrap;word-break:break-word}
+.ztextin.on{display:block}
+.zoom.editing .znav{top:auto;bottom:26px;height:48px;width:40px;transform:none}
+.zoom.editing .zstage{padding-top:6px}
 /* ===== Rename box ===== */
 .rn{position:fixed;inset:0;z-index:70;background:rgba(10,14,22,.35);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding-top:16vh}
 .rn.on{display:flex}
@@ -719,7 +782,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 #content.marqueeing{user-select:none}
 .card,.row,.tile{-webkit-user-drag:element}
 .toast.has-undo{pointer-events:auto;display:flex;align-items:center;gap:12px}
-.toast .tu{border:0;background:color-mix(in srgb,var(--accent) 85%,#000);color:#fff;font-weight:700;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12.5px}
+.toast .tu{border:0;background:color-mix(in srgb,var(--accent) 85%,#000);color:#fff;font-weight:700;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12.5px;white-space:nowrap;flex:none}
 .ctx .ch .ic.multi{width:30px!important;height:30px!important;border-radius:9px;background:var(--accent-grad)!important;color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center}
 
 /* ===== Mac look: the system's own colours and icons ===== */
@@ -831,6 +894,26 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
   <div class="fpfoot"><div class="fpcur" id="fpCur"></div>
     <div class="actions"><button class="btn" id="fpNew">New folder</button><button class="btn" id="fpOther">Other…</button><button class="btn" id="fpCancel">Cancel</button><button class="btn primary" id="fpOk">Move here</button></div></div>
 </div></div>
+<div class="modal" id="mergeModal">
+  <div class="mbox mgbox">
+    <div class="mhead"><h2>Merge PDFs</h2><span class="fn" id="mgSub"></span>
+      <button class="x" id="mgClose" title="Close (Esc)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="mbody">
+      <div class="mglist" id="mgList"></div>
+      <div class="mside">
+        <p class="hint">Drag the PDFs into the order you want (or use the arrows). Each one can use all its pages or just a range.</p>
+        <div class="dest"><label>Name of the new PDF<input type="text" id="mgName" spellcheck="false" autocomplete="off"></label></div>
+        <div class="dest"><label>Save to<select id="mgDest"></select></label><div class="path" id="mgDestPath"></div></div>
+        <div class="summary" id="mgSum"></div>
+        <button class="btn primary" id="mgGo">Merge into one PDF</button>
+        <p class="hint">Your original PDFs are not changed. The merged file is a new file.</p>
+      </div>
+    </div>
+    <div class="busy" id="mgBusy"><div class="bx"><div class="spin"></div>Merging…</div></div>
+    <div class="mresult" id="mgResult"></div>
+  </div>
+</div>
+<div class="selbar" id="selbar"></div>
 <div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
   <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
   <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
@@ -840,10 +923,36 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     <b id="zLabel"></b><span class="sp"></span>
     <span id="zRangeBtns"><button class="btn" id="zFrom">Start split here</button> <button class="btn" id="zTo">End split here</button></span>
     <button class="btn" id="zOut" title="Zoom out (−)">−</button><button class="btn" id="zIn" title="Zoom in (+)">+</button>
+    <button class="btn" id="zEdit" title="Annotate: highlight, write, draw"> Edit</button>
     <button class="btn primary" id="zClose">Close</button>
   </div>
   <button class="znav l" id="zPrev" title="Previous page (←)">‹</button>
-  <div class="zstage" id="zStage"><img id="zImg" alt=""></div>
+  <div class="edbar" id="edBar">
+    <div class="edtools" id="edTools">
+      <button data-tool="select" title="Select / move (V)"></button>
+      <span class="edsep"></span>
+      <button data-tool="highlight" title="Highlight text (H)"></button>
+      <button data-tool="underline" title="Underline (U)"></button>
+      <button data-tool="strike" title="Strike through (S)"></button>
+      <span class="edsep"></span>
+      <button data-tool="text" title="Text (T)"></button>
+      <button data-tool="note" title="Sticky note (N)"></button>
+      <button data-tool="pen" title="Pen (P)"></button>
+      <span class="edsep"></span>
+      <button data-tool="rect" title="Rectangle (R)"></button>
+      <button data-tool="ellipse" title="Circle (C)"></button>
+      <button data-tool="arrow" title="Arrow (A)"></button>
+      <button data-tool="line" title="Line (L)"></button>
+    </div>
+    <div class="edcolors" id="edColors"></div>
+    <label class="edsize" title="Thickness / text size"><span id="edSizeLbl">Size</span><input type="range" id="edSize" min="1" max="8" step="1" value="3"></label>
+    <span class="sp"></span>
+    <button class="btn" id="edUndo" title="Undo mark (⌘Z)">↶</button><button class="btn" id="edRedo" title="Redo mark (⇧⌘Z)">↷</button>
+    <span class="edcount" id="edCount"></span>
+    <button class="btn" id="edCancel">Cancel</button>
+    <button class="btn primary" id="edSave">Save ▾</button>
+  </div>
+  <div class="zstage" id="zStage"><div class="zpage" id="zPage"><img id="zImg" alt=""><svg id="zOv" xmlns="http://www.w3.org/2000/svg"></svg><div id="zTextIn" class="ztextin" contenteditable="true" spellcheck="false"></div></div></div>
   <button class="znav r" id="zNext" title="Next page (→)">›</button>
 </div>
 <div class="modal" id="splitModal">
@@ -921,6 +1030,17 @@ const ICONS = {
   sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
   up:'<path d="m6 15 6-6 6 6"/>', down:'<path d="m6 9 6 6 6-6"/>',
   close:'<path d="M18 6 6 18M6 6l12 12"/>',
+  cursor:'<path d="M5 3l14 8-6.5 1.5L10 19z"/>',
+  marker:'<path d="M4 20h7M14 4l6 6-9 9H6v-5z"/><path d="m12 6 6 6"/>',
+  underline:'<path d="M7 4v6a5 5 0 0 0 10 0V4M5 20h14"/>',
+  strike:'<path d="M5 12h14M8 7c0-2 2-3 4-3s4 1 4 3M8 17c0 2 2 3 4 3s4-1 4-3"/>',
+  note:'<path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9l-5 5H6a2 2 0 0 1-2-2z"/><path d="M15 19v-5h5"/>',
+  pen:'<path d="M12 19l7-7a2.1 2.1 0 0 0-3-3l-7 7-1 4z"/><path d="m14 10 3 3"/>',
+  rect:'<rect x="4" y="5" width="16" height="14" rx="2"/>',
+  circle:'<circle cx="12" cy="12" r="8"/>',
+  arrow:'<path d="M5 19 19 5M10 5h9v9"/>',
+  line:'<path d="M5 19 19 5"/>',
+  merge:'<path d="M8 4h5l3 3v5M8 4v16h8v-4"/><path d="M13 4v3h3M3 14h9m0 0-3-3m3 3-3 3"/>',
   chev:'<path d="m9 6 6 6-6 6"/>',
   star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
 };
@@ -1151,7 +1271,30 @@ function renderStatus(){
     right = `<span class="sel-name">${S.selSet.size} selected${total?' · '+size(total):''}</span>`;
   } else if(f && S.selSet.has(f.path)) right = `<span class="sel-name" title="${esc(f.path)}">${esc(f.name)}${f.size?' · '+size(f.size):''}</span>`;
   $('status').innerHTML = `<span>${parts.join(' · ')}</span>${right}`;
+  renderSelbar();
 }
+// Floating bar for a multi-selection: the common actions, and Merge when they're PDFs.
+function renderSelbar(){
+  const bar = $('selbar'), ks = selKeys(), m = byPath();
+  if(ks.length < 2 || anyOverlay()){ bar.classList.remove('on'); return; }
+  const pdfs = ks.filter(k => { const f = m.get(k); return f && f.ext==='pdf'; });
+  bar.innerHTML = `<span class="n">${ks.length} selected</span>
+    ${pdfs.length >= 2 ? `<button class="go" data-sb="merge">${svg('merge')} Merge ${pdfs.length} PDFs</button>` : ''}
+    <button data-sb="copy">${svg('copy')} Copy</button><button data-sb="move">${svg('folder')} Move to…</button>
+    <button data-sb="share">${svg('share')} Share</button><button data-sb="bin">${svg('trash')} Bin</button>
+    <button class="x2" data-sb="x" title="Deselect (Esc)">✕</button>`;
+  bar.classList.add('on');
+}
+$('selbar').addEventListener('click', e => {
+  const b = e.target.closest('[data-sb]'); if(!b) return;
+  const a = b.dataset.sb, ks = selKeys(), m = byPath();
+  if(a==='merge') openMerge(ks.filter(k => { const f = m.get(k); return f && f.ext==='pdf'; }).map(k => m.get(k)));
+  else if(a==='copy') copySel(ks);
+  else if(a==='move') pickFolderFor('move').then(d => moveSel(ks, d));
+  else if(a==='share'){ const r = b.getBoundingClientRect(); openMenu({items: shareItems(ks.filter(k => m.get(k)))}, r.left, r.top - 8 - 200); }
+  else if(a==='bin') deleteSel(ks);
+  else clearSel();
+});
 
 function sections(groups, opts={}){
   if(!groups.length) return empty('Nothing here yet', opts.emptyMsg||'');
@@ -1281,7 +1424,7 @@ function preview(f){
         <button class="btn primary" data-act="launch">Open</button>
         <button class="btn" data-act="reveal">Show in Finder</button>
         <button class="btn" data-act="quicklook" title="Space">Quick Look</button>
-        ${f.ext==='pdf'?`<button class="btn" data-act="read">Read here</button><button class="btn" data-act="split">✂︎ Split pages</button>`:''}
+        ${f.ext==='pdf'?`<button class="btn" data-act="read">Read here</button><button class="btn" data-act="split">✂︎ Split pages</button><button class="btn" data-act="annotate">✎ Annotate</button>`:''}
         <button class="btn" data-act="pin">${pinned?'★ Pinned':'☆ Pin'}</button>
         <button class="btn" data-act="share">${svg('share')} Share</button>
         <button class="btn" data-act="copy">Copy path</button>
@@ -1376,6 +1519,7 @@ document.addEventListener('click', async e => {
     const a = act.dataset.act;
     if(a==='pin'){ togglePin(S.sel); preview(byPath().get(S.sel)); renderNav(); }
     else if(a==='split'){ openSplit(byPath().get(S.sel)); }
+    else if(a==='annotate'){ openAnnotate(byPath().get(S.sel)); }
     else if(a==='read'){ document.querySelector('.stage').innerHTML = `<iframe src="/api/raw?path=${encodeURIComponent(S.sel)}#view=FitH"></iframe>`; }
     else if(a==='share'){ const r = act.getBoundingClientRect(); openMenu({items: shareItems([S.sel])}, r.left, r.bottom + 6); }
     else if(a==='copy'){ navigator.clipboard.writeText(S.sel).then(()=>toast('Path copied')); }
@@ -1500,6 +1644,8 @@ function renderAppear(){
     <button class="btn reset" data-look="reset">Back to the original look</button>`;
 }
 $('appearBtn').innerHTML = svg('palette');
+document.querySelectorAll('#edTools button').forEach(b => b.innerHTML = svg({select:'cursor',highlight:'marker',underline:'underline',strike:'strike',text:'text',note:'note',pen:'pen',rect:'rect',ellipse:'circle',arrow:'arrow',line:'line'}[b.dataset.tool]));
+$('zEdit').innerHTML = svg('pen') + ' Edit';
 $('appearBtn').onclick = e => { e.stopPropagation(); renderAppear(); $('appear').classList.toggle('on'); loadSystemLook().then(renderAppear); };
 $('appear').addEventListener('click', e => {
   e.stopPropagation();
@@ -1742,6 +1888,7 @@ function menuFor(target){
       {icon:'star', label:allPinned?'Unpin all':'Pin all', dis:!files.length, run:()=>{ files.forEach(k => allPinned ? S.pins.delete(k) : S.pins.add(k)); store.set('pins',[...S.pins]); render(); toast(allPinned?'Unpinned':'Pinned'); }},
       {icon:'link', label:'Copy paths', run:()=>copyText(ks.join('\n'),'Paths copied')},
       {icon:'share', label:'Share', sub: shareItems(files)},
+      ...(files.filter(k => m.get(k).ext==='pdf').length >= 2 ? [{icon:'merge', label:`Merge ${files.filter(k => m.get(k).ext==='pdf').length} PDFs…`, run:()=>openMerge(files.filter(k => m.get(k).ext==='pdf').map(k => m.get(k)))}] : []),
       '-',
       {icon:'grid', label:'Select all', key:K('A'), run:selectAll},
       {icon:'close', label:'Deselect', key:'Esc', run:clearSel},
@@ -1768,7 +1915,7 @@ function menuFor(target){
       {icon:'text', label:'Copy name', run:()=>copyText(f.name,'Name copied')},
       '-',
       {icon:'star', label:pinned?'Unpin':'Pin', run:()=>{ togglePin(f.path); render(); if(S.sel===f.path) preview(f); }},
-      ...(f.ext==='pdf' ? [{icon:'scissors', label:'Split pages…', run:()=>openSplit(f)}] : []),
+      ...(f.ext==='pdf' ? [{icon:'scissors', label:'Split pages…', run:()=>openSplit(f)}, {icon:'pen', label:'Annotate…', run:()=>openAnnotate(f)}] : []),
       {icon:'folder', label:'Open its folder', run:()=>openFolder(f.path.slice(0, f.path.lastIndexOf('/')))},
       ...(inBin(f.path) ? [] : ['-', {icon:'trash', label:'Move to Bin', key:K('⌫'), run:()=>deleteSel([f.path])}]),
     ]};
@@ -2273,7 +2420,8 @@ async function deleteSel(keys = selKeys()){
 async function undo(){
   const op = UNDO.pop(); if(!op){ toast('Nothing to undo'); return; }
   try{
-    if(op.type==='move' || op.type==='rename' || op.type==='trash'){
+    if(op.type==='annotate'){ await call('/api/restore', {path:op.path, backup:op.backup}); }
+    else if(op.type==='move' || op.type==='rename' || op.type==='trash'){
       const back = op.pairs.filter(x => x[1]).map(([a,b]) => [b,a]).reverse();
       if(op.type==='trash' && back.length < op.pairs.length) throw new Error("The Bin didn't say where it put them. Open the Bin to get them back.");
       await call('/api/moveto', {pairs:back}); followPins(back);
@@ -2281,15 +2429,17 @@ async function undo(){
       const d = await call('/api/trash', {paths:op.made});
       if(d.trashed.length < op.made.length) throw new Error("Some copies were changed or FileHub restarted, so they were left alone");
     }
-    if(op.type==='move' || op.type==='rename' || op.type==='trash') removeLocal(op.pairs.map(x=>x[1]).filter(Boolean));
+    if(op.type==='annotate'){}
+    else if(op.type==='move' || op.type==='rename' || op.type==='trash') removeLocal(op.pairs.map(x=>x[1]).filter(Boolean));
     else removeLocal(op.made || []);
     REDO.push(op); toast('Undone: ' + op.msg.toLowerCase());
-    refreshHere(['move','rename','trash'].includes(op.type) ? op.pairs.map(x=>x[0]) : op.sources);
+    refreshHere(op.type==='annotate' ? [op.path] : ['move','rename','trash'].includes(op.type) ? op.pairs.map(x=>x[0]) : op.sources);
   }catch(e){ toast(e.message); }
 }
 async function redo(){
   const op = REDO.pop(); if(!op){ toast('Nothing to redo'); return; }
   try{
+    if(op.type==='annotate'){ toast('Redo isn\'t available for marks saved into a PDF: open it and annotate again'); UNDO.push(op); return; }
     if(op.type==='trash'){ const d = await call('/api/delete', {paths:op.pairs.map(x=>x[0])}); op.pairs = d.pairs; followPins(op.pairs); }
     else if(op.type==='move' || op.type==='rename'){ await call('/api/moveto', {pairs:op.pairs}); followPins(op.pairs); }
     else if(op.type==='dup'){ op.made = (await call('/api/duplicate', {paths:op.sources})).made; }
@@ -2424,6 +2574,263 @@ function shareItems(paths){
     {icon:'finder', label:'Show in Finder', run:()=>{ post('/api/reveal',{path:paths[0]}); toast('Showing in Finder'); }},
   ];
 }
+
+
+// ---------- Merge PDFs ----------
+const MG = {items: [], custom: null};
+function openMerge(files){
+  if(!files || files.length < 1) return;
+  MG.items = files.map(f => ({file: f, from: 1, to: f.pages || null, n: f.pages || null}));
+  $('mgBusy').classList.remove('on'); $('mgResult').classList.remove('on');
+  $('mgName').value = files.length > 1 ? `${files[0].name.replace(/\.pdf$/i,'')} + ${files.length-1} more.pdf` : files[0].name.replace(/\.pdf$/i,'') + ' (merged).pdf';
+  mgFillDest(files[0]);
+  $('mergeModal').classList.add('open');
+  renderMerge();
+  // page counts for PDFs we don't know yet
+  MG.items.forEach(async it => { if(!it.n){ try{ it.n = (await api('/api/pdfpages?path='+encodeURIComponent(it.file.path))).pages; it.to = it.n; }catch(e){ it.n = 0; } renderMerge(); } });
+}
+function renderMerge(){
+  const total = MG.items.reduce((t, it) => t + (it.n ? Math.max(0, Math.min(it.n, it.to||it.n) - Math.max(1, it.from||1) + 1) : 0), 0);
+  $('mgSub').textContent = `${plural(MG.items.length,'PDF')} · ${plural(total,'page')} in the new file`;
+  $('mgSum').textContent = MG.items.length < 2 ? 'Add at least two PDFs: select them together and choose Merge.' : `${plural(MG.items.length,'PDF')} → one PDF with ${plural(total,'page')}`;
+  $('mgGo').disabled = MG.items.length < 1 || !total;
+  $('mgList').innerHTML = MG.items.map((it, i) => `<div class="mgi" draggable="true" data-i="${i}">
+    <span class="grip" title="Drag to reorder">⋮⋮</span>
+    <div class="th"><img src="${pageImg(1, false, it.file)}" alt="" onerror="this.remove()"></div>
+    <div class="nm"><b title="${esc(it.file.path)}">${i+1}. ${esc(it.file.name)}</b><small>${it.n==null ? 'Counting pages…' : plural(it.n,'page')}${it.n && (it.from>1 || it.to<it.n) ? ` · using ${it.from}–${it.to}` : ''}</small></div>
+    <div class="rng">pages <input type="number" min="1" max="${it.n||1}" value="${it.from||1}" data-rng="from"> to <input type="number" min="1" max="${it.n||1}" value="${it.to||it.n||1}" data-rng="to"></div>
+    <div class="ops"><button data-op="up" ${i===0?'disabled':''} title="Move up">↑</button><button data-op="down" ${i===MG.items.length-1?'disabled':''} title="Move down">↓</button><button data-op="rm" title="Remove from the merge">✕</button></div>
+  </div>`).join('') + (MG.items.length < 2 ? '<div class="empty" style="padding:30px">Select two or more PDFs and choose <b>Merge</b> to add them here.</div>' : '');
+  document.querySelectorAll('#mgList select').forEach(enhanceSelect);
+}
+$('mgList').addEventListener('click', e => {
+  const b = e.target.closest('[data-op]'); if(!b) return;
+  const i = +b.closest('.mgi').dataset.i, op = b.dataset.op;
+  if(op==='rm') MG.items.splice(i, 1);
+  else { const j = op==='up' ? i-1 : i+1; if(j < 0 || j >= MG.items.length) return; [MG.items[i], MG.items[j]] = [MG.items[j], MG.items[i]]; }
+  renderMerge();
+});
+$('mgList').addEventListener('change', e => {
+  const inp = e.target.closest('[data-rng]'); if(!inp) return;
+  const it = MG.items[+inp.closest('.mgi').dataset.i]; let v = Math.max(1, Math.min(it.n || 1, +inp.value || 1));
+  if(inp.dataset.rng==='from'){ it.from = v; if(it.to < v) it.to = v; } else { it.to = v; if(it.from > v) it.from = v; }
+  renderMerge();
+});
+let mgDrag = null;
+$('mgList').addEventListener('dragstart', e => { const el = e.target.closest('.mgi'); if(!el) return; mgDrag = +el.dataset.i; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'mg'); e.stopPropagation(); });
+$('mgList').addEventListener('dragover', e => { const el = e.target.closest('.mgi'); if(mgDrag===null || !el) return; e.preventDefault(); e.stopPropagation(); document.querySelectorAll('.mgi.over').forEach(x => x.classList.remove('over')); el.classList.add('over'); });
+$('mgList').addEventListener('drop', e => { const el = e.target.closest('.mgi'); if(mgDrag===null || !el) return; e.preventDefault(); e.stopPropagation(); const j = +el.dataset.i; const [it] = MG.items.splice(mgDrag, 1); MG.items.splice(j, 0, it); mgDrag = null; renderMerge(); });
+$('mgList').addEventListener('dragend', () => { mgDrag = null; document.querySelectorAll('.mgi.over,.mgi.dragging').forEach(x => x.classList.remove('over','dragging')); });
+function mgFillDest(f){
+  const same = f.path.slice(0, f.path.lastIndexOf('/'));
+  const opts = [{v:'', t:'Same folder as the first PDF'}]
+    .concat(S.places.filter(p=>!['home','pictures','trash'].includes(p.icon)).map(p=>({v:p.path, t:p.name})))
+    .concat((S.drives||[]).map(d=>({v:d.path, t:d.name})))
+    .concat(MG.custom ? [{v:MG.custom.path, t:MG.custom.display}] : [])
+    .concat([{v:'__choose', t:'Choose another folder…'}]);
+  const keep = store.get('mergeDest','');
+  $('mgDest').innerHTML = opts.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+  $('mgDest').value = opts.some(o=>o.v===keep) ? keep : '';
+  MG.same = same; mgShowDest();
+}
+function mgShowDest(){ const v = $('mgDest').value; $('mgDestPath').textContent = (v || MG.same).replace(/^\/Users\/[^/]+/, '~').replace(/^\/Volumes\//,''); }
+$('mgDest').addEventListener('change', async () => {
+  if($('mgDest').value === '__choose'){
+    $('mgDestPath').textContent = 'Pick a folder in the window that opened…';
+    const path = await pickFolderFor('copy');
+    if(path){ MG.custom = {path, display: folderName(path)}; mgFillDest(MG.items[0].file); $('mgDest').value = path; }
+    else $('mgDest').value = store.get('mergeDest','') || '';
+  }
+  store.set('mergeDest', $('mgDest').value); mgShowDest();
+});
+const closeMerge = () => $('mergeModal').classList.remove('open');
+$('mgClose').onclick = closeMerge;
+$('mergeModal').addEventListener('click', e => { if(e.target.id==='mergeModal') closeMerge(); });
+$('mgGo').onclick = async () => {
+  const btn = $('mgGo'); btn.disabled = true; $('mgBusy').classList.add('on');
+  try{
+    const d = await call('/api/merge', {items: MG.items.map(it => ({path: it.file.path, from: it.from, to: it.to})), name: $('mgName').value, dest: $('mgDest').value || null});
+    $('mgBusy').classList.remove('on');
+    $('mgResult').innerHTML = `<div class="rcard"><div class="ok">✓</div><h3>Merged into one PDF</h3><div class="hint">${plural(d.pages,'page')}</div>
+      <div class="rthumb"><img src="/api/pdfpage?n=1&path=${encodeURIComponent(d.path)}&v=${Date.now()}" alt="" onerror="this.remove()"></div>
+      <div class="where"><small>Saved as</small>${esc(d.name)}<br><small style="margin-top:6px">In</small>${esc(d.folder)}</div>
+      <div class="actions"><button class="btn primary" data-mgr="open">Open</button><button class="btn" data-mgr="reveal">Show in Finder</button><button class="btn" data-mgr="done">Done</button></div></div>`;
+    $('mgResult').classList.add('on'); MG.result = d;
+    did({type:'copy', sources:[], dest:d.folderPath, made:[d.path], msg:`Merged ${plural(MG.items.length,'PDF')} into “${d.name}”`});
+    refreshHere([d.path]);
+  }catch(e){ $('mgBusy').classList.remove('on'); toast(e.message); }
+  btn.disabled = false;
+};
+$('mgResult').addEventListener('click', e => {
+  const b = e.target.closest('[data-mgr]'); if(!b) return;
+  const a = b.dataset.mgr, d = MG.result;
+  if(a==='open') post('/api/launch', {path:d.path}); else if(a==='reveal') post('/api/reveal', {path:d.path});
+  closeMerge(); const f = byPath().get(d.path); if(f) preview(f);
+});
+
+// ---------- Annotate a PDF: highlight, underline, strike, text, notes, pen, shapes, arrows ----------
+const ED = {on:false, file:null, tool:'highlight', color:'#ffeb3b', size:3, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null};
+const ED_COLORS = ['#ffeb3b','#7ee787','#ff8fab','#79c0ff','#e5484d','#111111','#ffffff'];
+const TOOL_DEFAULT_COLOR = {highlight:'#ffeb3b', underline:'#e5484d', strike:'#e5484d', text:'#111111', note:'#ffd60a', pen:'#e5484d', rect:'#e5484d', ellipse:'#e5484d', arrow:'#e5484d', line:'#e5484d'};
+const ED_LBL = {text:'Text size', note:'Size', pen:'Pen', highlight:'Size', underline:'Size', strike:'Size', select:'Size'};
+function edPage(){ return (ED.marks[Z.p] ||= []); }
+function edCount(){ return Object.values(ED.marks).reduce((t,l) => t + l.length, 0); }
+async function openAnnotate(f){
+  if(!f) return;
+  let n = f.pages;
+  if(!n){ try{ n = (await api('/api/pdfpages?path='+encodeURIComponent(f.path))).pages; }catch(e){ toast("Can't read this PDF"); return; } }
+  openZoom(1, f, n, false); startEdit();
+}
+async function startEdit(){
+  if(ED.on && ED.file === Z.file) return;
+  Object.assign(ED, {on:true, file:Z.file, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null});
+  $('zoom').classList.add('editing'); setTool(ED.tool);
+  try{ ED.info = await api('/api/pdfinfo?path='+encodeURIComponent(Z.file.path)); }catch(e){ ED.info = null; }
+  renderMarks(); edStatus();
+}
+function stopEdit(){ ED.on = false; $('zoom').classList.remove('editing'); $('zOv').innerHTML = ''; $('zTextIn').classList.remove('on'); edStatus(); }
+function setTool(t){
+  ED.tool = t; $('zoom').dataset.tool = t;
+  document.querySelectorAll('#edTools button').forEach(b => b.classList.toggle('on', b.dataset.tool===t));
+  if(t !== 'select' && TOOL_DEFAULT_COLOR[t] && !ED.colorPicked) ED.color = TOOL_DEFAULT_COLOR[t];
+  $('edSizeLbl').textContent = ED_LBL[t] || 'Thickness';
+  renderColors(); ED.sel = null; renderMarks();
+}
+function renderColors(){ $('edColors').innerHTML = ED_COLORS.map(c => `<button data-c="${c}" class="${ED.color===c?'on':''}" style="background:${c}" title="${c}"></button>`).join(''); }
+$('edColors').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if(!b) return; ED.color = b.dataset.c; ED.colorPicked = true; renderColors(); if(ED.sel){ ED.sel.color = ED.color; renderMarks(); } });
+$('edTools').addEventListener('click', e => { const b = e.target.closest('[data-tool]'); if(b) setTool(b.dataset.tool); });
+$('edSize').addEventListener('input', e => { ED.size = +e.target.value; if(ED.sel && (ED.sel.width || ED.sel.size)){ if(ED.sel.type==='text') ED.sel.size = 8 + ED.size*3; else ED.sel.width = ED.size; renderMarks(); } });
+function edStatus(){ const n = edCount(); $('edCount').textContent = ED.on ? (n ? `${plural(n,'mark')} on ${plural(Object.keys(ED.marks).filter(p => ED.marks[p].length).length,'page')}` : 'No marks yet') : ''; $('edUndo').disabled = !ED.undo.length; $('edRedo').disabled = !ED.redo.length; }
+function pushUndo(action){ ED.undo.push(action); ED.redo.length = 0; edStatus(); }
+function edUndo(){ const a = ED.undo.pop(); if(!a) return; a.undo(); ED.redo.push(a); renderMarks(); edStatus(); }
+function edRedo(){ const a = ED.redo.pop(); if(!a) return; a.redo(); ED.undo.push(a); renderMarks(); edStatus(); }
+$('edUndo').onclick = edUndo; $('edRedo').onclick = edRedo;
+const ovSize = () => { const img = $('zImg'); return {w: img.clientWidth, h: img.clientHeight}; };
+const ptPerPx = () => { const i = ED.info && ED.info.sizes[Z.p-1]; const {w} = ovSize(); if(!i || !w) return 0.75; const dw = (i.rot===90||i.rot===270) ? i.h : i.w; return dw / w; };
+function renderMarks(){
+  const ov = $('zOv'), {w, h} = ovSize(); if(!w) return;
+  ov.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  const pxPt = 1 / ptPerPx();  // pixels per PDF point
+  ov.innerHTML = edPage().map((m, i) => {
+    const sel = m === ED.sel ? ' sel' : '', c = m.color;
+    const X = x => x * w, Y = y => y * h;
+    if(m.type==='highlight') return `<rect class="mark hl${sel}" data-i="${i}" x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${X(m.rect.w)}" height="${Y(m.rect.h)}" fill="${c}" opacity=".45" rx="2"/>`;
+    if(m.type==='underline' || m.type==='strike'){ const y = m.type==='underline' ? Y(m.rect.y+m.rect.h) : Y(m.rect.y+m.rect.h/2); return `<g class="mark${sel}" data-i="${i}"><rect x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${X(m.rect.w)}" height="${Y(m.rect.h)}" fill="transparent"/><line x1="${X(m.rect.x)}" x2="${X(m.rect.x+m.rect.w)}" y1="${y}" y2="${y}" stroke="${c}" stroke-width="${1.6*pxPt}"/></g>`; }
+    if(m.type==='rect') return `<rect class="mark${sel}" data-i="${i}" x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${X(m.rect.w)}" height="${Y(m.rect.h)}" fill="${m.fill?c:'transparent'}" fill-opacity="${m.fill?.25:0}" stroke="${c}" stroke-width="${m.width*pxPt}" pointer-events="all"/>`;
+    if(m.type==='ellipse') return `<ellipse class="mark${sel}" data-i="${i}" cx="${X(m.rect.x+m.rect.w/2)}" cy="${Y(m.rect.y+m.rect.h/2)}" rx="${X(m.rect.w/2)}" ry="${Y(m.rect.h/2)}" fill="transparent" stroke="${c}" stroke-width="${m.width*pxPt}" pointer-events="all"/>`;
+    if(m.type==='line' || m.type==='arrow'){ const [a,b] = m.points; const id = `ah${Z.p}_${i}`; return `<g class="mark${sel}" data-i="${i}"><defs><marker id="${id}" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto" markerUnits="strokeWidth"><path d="M0 0 4 2 0 4z" fill="${c}"/></marker></defs><line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="${c}" stroke-width="${m.width*pxPt}" stroke-linecap="round" ${m.type==='arrow'?`marker-end="url(#${id})"`:''}/><line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="transparent" stroke-width="14"/></g>`; }
+    if(m.type==='pen') return `<path class="mark${sel}" data-i="${i}" d="${m.points.map((q,k) => (k?'L':'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1)).join(' ')}" fill="none" stroke="${c}" stroke-width="${m.width*pxPt}" stroke-linecap="round" stroke-linejoin="round" opacity="${m.opacity||1}" pointer-events="stroke"/>`;
+    if(m.type==='text'){ const fs = m.size*pxPt; const lines = (m.text||'').split('\n'); return `<g class="mark${sel}" data-i="${i}"><rect x="${X(m.rect.x)-2}" y="${Y(m.rect.y)-2}" width="${X(m.rect.w)+4}" height="${Y(m.rect.h)+4}" fill="transparent"/><text x="${X(m.rect.x)}" y="${Y(m.rect.y)}" fill="${c}" font-size="${fs}" font-family="-apple-system,BlinkMacSystemFont,Helvetica Neue,sans-serif">${lines.map((l,k) => `<tspan x="${X(m.rect.x)}" dy="${k?fs*1.25:fs*0.95}">${esc(l)||' '}</tspan>`).join('')}</text></g>`; }
+    if(m.type==='note'){ const sz = 22*pxPt; return `<g class="mark${sel}" data-i="${i}" transform="translate(${X(m.rect.x)},${Y(m.rect.y)})"><title>${esc(m.text||'')}</title><path d="M0 0h${sz}v${sz*.7}l-${sz*.3} ${sz*.3}H0z" fill="${c}" stroke="rgba(0,0,0,.35)" stroke-width="1"/><path d="M${sz*.2} ${sz*.3}h${sz*.6}M${sz*.2} ${sz*.5}h${sz*.4}" stroke="rgba(0,0,0,.55)" stroke-width="${Math.max(1,sz*.07)}"/></g>`; }
+    return '';
+  }).join('') + (ED.drawing ? drawPreview(ED.drawing, w, h, pxPt) : '');
+}
+function drawPreview(d, w, h, pxPt){
+  const c = ED.color;
+  if(d.kind==='rect'){ const r = normRect(d); const x = r.x*w, y = r.y*h, W = r.w*w, H = r.h*h;
+    if(ED.tool==='highlight') return `<rect x="${x}" y="${y}" width="${W}" height="${H}" fill="${c}" opacity=".45"/>`;
+    if(ED.tool==='ellipse') return `<ellipse cx="${x+W/2}" cy="${y+H/2}" rx="${W/2}" ry="${H/2}" fill="none" stroke="${c}" stroke-width="${ED.size*pxPt}"/>`;
+    return `<rect x="${x}" y="${y}" width="${W}" height="${H}" fill="none" stroke="${c}" stroke-width="${ED.tool==='rect'?ED.size*pxPt:1}" stroke-dasharray="${ED.tool==='rect'?'':'4 3'}"/>`; }
+  if(d.kind==='line') return `<line x1="${d.x0*w}" y1="${d.y0*h}" x2="${d.x*w}" y2="${d.y*h}" stroke="${c}" stroke-width="${ED.size*pxPt}" stroke-linecap="round"/>`;
+  if(d.kind==='pen') return `<path d="${d.points.map((q,k) => (k?'L':'M') + (q[0]*w).toFixed(1) + ' ' + (q[1]*h).toFixed(1)).join(' ')}" fill="none" stroke="${c}" stroke-width="${ED.size*pxPt}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return '';
+}
+const normRect = d => ({x: Math.min(d.x0, d.x), y: Math.min(d.y0, d.y), w: Math.abs(d.x - d.x0), h: Math.abs(d.y - d.y0)});
+function ovPoint(e){ const r = $('zImg').getBoundingClientRect(); return {x: Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), y: Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))}; }
+function addMark(m){ const list = edPage(); list.push(m); pushUndo({undo:()=>{ const i = list.indexOf(m); if(i>=0) list.splice(i,1); }, redo:()=>list.push(m)}); ED.sel = null; renderMarks(); edStatus(); }
+function removeMark(m){ const list = edPage(), i = list.indexOf(m); if(i < 0) return; list.splice(i,1); pushUndo({undo:()=>list.splice(i,0,m), redo:()=>{ const k = list.indexOf(m); if(k>=0) list.splice(k,1); }}); ED.sel = null; renderMarks(); edStatus(); }
+$('zOv').addEventListener('mousedown', e => {
+  if(!ED.on || e.button !== 0) return;
+  e.preventDefault(); const p = ovPoint(e);
+  if(ED.tool==='select'){
+    const el = e.target.closest('.mark'); const m = el ? edPage()[+el.dataset.i] : null;
+    ED.sel = m || null; renderMarks();
+    if(m){ ED.drawing = {kind:'move', m, x0:p.x, y0:p.y, orig:JSON.parse(JSON.stringify(m)), moved:false}; }
+    return;
+  }
+  if(ED.tool==='text'){ startTextInput(p); return; }
+  if(ED.tool==='note'){ ask({title:'Sticky note', text:'What should the note say?', value:'', ok:'Add note'}).then(t => { if(t) addMark({type:'note', rect:{x:p.x, y:p.y, w:0, h:0}, color:ED.color, text:t}); }); return; }
+  if(ED.tool==='pen') ED.drawing = {kind:'pen', points:[[p.x,p.y]]};
+  else if(ED.tool==='line' || ED.tool==='arrow') ED.drawing = {kind:'line', x0:p.x, y0:p.y, x:p.x, y:p.y};
+  else ED.drawing = {kind:'rect', x0:p.x, y0:p.y, x:p.x, y:p.y};
+  renderMarks();
+});
+document.addEventListener('mousemove', e => {
+  if(!ED.on || !ED.drawing) return; const p = ovPoint(e), d = ED.drawing;
+  if(d.kind==='pen'){ const last = d.points[d.points.length-1]; if(Math.hypot(p.x-last[0], p.y-last[1]) > 0.002) d.points.push([p.x,p.y]); }
+  else if(d.kind==='move'){ const dx = p.x - d.x0, dy = p.y - d.y0, o = d.orig, m = d.m; d.moved = true;
+    if(m.rect) Object.assign(m.rect, {x: o.rect.x + dx, y: o.rect.y + dy}); if(m.points) m.points = o.points.map(q => [q[0]+dx, q[1]+dy]); }
+  else { d.x = p.x; d.y = p.y; }
+  renderMarks();
+});
+document.addEventListener('mouseup', e => {
+  if(!ED.on || !ED.drawing) return; const d = ED.drawing; ED.drawing = null;
+  if(d.kind==='move'){ if(d.moved){ const m = d.m, before = d.orig, after = JSON.parse(JSON.stringify(m)); pushUndo({undo:()=>Object.assign(m, JSON.parse(JSON.stringify(before))), redo:()=>Object.assign(m, JSON.parse(JSON.stringify(after)))}); } renderMarks(); return; }
+  if(d.kind==='pen'){ if(d.points.length > 2) addMark({type:'pen', points:d.points, color:ED.color, width:ED.size, opacity: ED.color==='#ffeb3b' ? .5 : 1}); else renderMarks(); return; }
+  if(d.kind==='line'){ if(Math.hypot(d.x-d.x0, d.y-d.y0) > 0.01) addMark({type:ED.tool, points:[[d.x0,d.y0],[d.x,d.y]], color:ED.color, width:ED.size}); else renderMarks(); return; }
+  const r = normRect(d);
+  if(r.w < 0.005 || r.h < 0.004){ renderMarks(); return; }
+  addMark(Object.assign({type:ED.tool, rect:r, color:ED.color}, ED.tool==='rect' || ED.tool==='ellipse' ? {width:ED.size, fill:false} : {}));
+});
+// text: type straight on the page
+function startTextInput(p, existing){
+  const inp = $('zTextIn'), {w, h} = ovSize(), pxPt = 1 / ptPerPx();
+  const size = existing ? existing.size : 8 + ED.size*3;
+  inp.style.left = (p.x*w) + 'px'; inp.style.top = (p.y*h) + 'px'; inp.style.fontSize = (size*pxPt) + 'px'; inp.style.color = existing ? existing.color : ED.color;
+  inp.textContent = existing ? existing.text : ''; inp.classList.add('on'); inp.focus();
+  ED.textAt = {p, size, existing};
+  if(existing) document.execCommand('selectAll', false, null);
+}
+function commitText(){
+  const inp = $('zTextIn'); if(!inp.classList.contains('on')) return;
+  const t = inp.innerText.replace(/\n+$/,''), {p, size, existing} = ED.textAt || {}; inp.classList.remove('on');
+  const {w, h} = ovSize(), pxPt = 1 / ptPerPx();
+  if(!t.trim()){ if(existing) removeMark(existing); return; }
+  const lines = t.split('\n'), rect = {x:p.x, y:p.y, w: Math.min(1-p.x, (Math.max(...lines.map(l => l.length)) * size * 0.6 * pxPt) / w + 0.01), h: (lines.length * size * 1.25 * pxPt) / h};
+  if(existing){ const before = JSON.parse(JSON.stringify(existing)); Object.assign(existing, {text:t, rect}); const after = JSON.parse(JSON.stringify(existing)); pushUndo({undo:()=>Object.assign(existing, before), redo:()=>Object.assign(existing, after)}); renderMarks(); }
+  else addMark({type:'text', rect, color:ED.color, size, text:t});
+}
+$('zTextIn').addEventListener('blur', commitText);
+$('zTextIn').addEventListener('keydown', e => { if(e.key==='Escape'){ e.preventDefault(); $('zTextIn').textContent = ''; $('zTextIn').blur(); } else if(e.key==='Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $('zTextIn').blur(); } e.stopPropagation(); }, true);
+$('zOv').addEventListener('dblclick', e => { if(!ED.on) return; const el = e.target.closest('.mark'); const m = el && edPage()[+el.dataset.i]; if(m && m.type==='text') startTextInput({x:m.rect.x, y:m.rect.y}, m); else if(m && m.type==='note') ask({title:'Sticky note', value:m.text, ok:'Save'}).then(t => { if(t!==null){ m.text = t; renderMarks(); } }); });
+// keyboard inside edit mode
+document.addEventListener('keydown', e => {
+  if(!ED.on || !$('zoom').classList.contains('on')) return;
+  if(e.target.closest && e.target.closest('input,textarea,[contenteditable]')) return;
+  const cmd = e.metaKey || e.ctrlKey, k = e.key.toLowerCase();
+  if(cmd && k==='z'){ e.preventDefault(); e.stopPropagation(); e.shiftKey ? edRedo() : edUndo(); return; }
+  if(cmd && k==='s'){ e.preventDefault(); e.stopPropagation(); $('edSave').click(); return; }
+  if(!cmd && (e.key==='Delete' || e.key==='Backspace') && ED.sel){ e.preventDefault(); e.stopPropagation(); removeMark(ED.sel); return; }
+  const map = {v:'select', h:'highlight', u:'underline', s:'strike', t:'text', n:'note', p:'pen', r:'rect', c:'ellipse', a:'arrow', l:'line'};
+  if(!cmd && !e.altKey && map[k]){ e.preventDefault(); e.stopPropagation(); setTool(map[k]); }
+}, true);
+// save
+$('edSave').onclick = e => {
+  const r = $('edSave').getBoundingClientRect(), n = edCount();
+  openMenu({items:[
+    {icon:'dup', label:'Save as a new copy', dis:!n, run:()=>saveMarks('copy')},
+    {icon:'pen', label:'Save into this PDF', dis:!n, run:()=>saveMarks('replace')},
+    '-', {icon:'close', label:'Discard all marks', dis:!n, run:()=>{ ED.marks = {}; ED.undo = []; ED.redo = []; renderMarks(); edStatus(); }},
+  ]}, r.right - 240, r.bottom + 6);
+};
+async function saveMarks(mode){
+  const annotations = []; for(const [pg, list] of Object.entries(ED.marks)) list.forEach(m => annotations.push(Object.assign({page:+pg}, m)));
+  if(!annotations.length) return;
+  if(mode==='replace' && !(await ask({title:'Save into this PDF?', text:`The marks are written into “${ED.file.name}” itself. You can undo this afterwards (⌘Z) while FileHub is open.`, ok:'Save into it'}))) return;
+  toast('Saving marks…');
+  try{
+    const d = await call('/api/annotate', {path: ED.file.path, annotations, mode});
+    if(mode==='replace') did({type:'annotate', path:d.path, backup:d.backup, msg:`Saved ${plural(d.count,'mark')} into “${d.name}”`});
+    else did({type:'copy', sources:[ED.file.path], dest:ED.file.path.slice(0, ED.file.path.lastIndexOf('/')), made:[d.path], msg:`Saved ${plural(d.count,'mark')} as “${d.name}”`});
+    stopEdit(); closeZoom();
+    await refreshHere([d.path]);
+    const f = byPath().get(d.path); if(f) preview(f);
+  }catch(e){ toast(e.message); }
+}
+$('edCancel').onclick = async () => { if(edCount() && !(await ask({title:'Leave without saving?', text:`${plural(edCount(),'mark')} will be lost.`, ok:'Leave'}))) return; stopEdit(); };
+$('zEdit').onclick = () => ED.on ? $('edCancel').click() : startEdit();
+new ResizeObserver(() => { if(ED.on) renderMarks(); }).observe($('zImg'));
+$('zImg').addEventListener('load', () => { if(ED.on) renderMarks(); });
 
 // ---------- rename (same folder only; never replaces another file) ----------
 let RN = null;
@@ -2589,11 +2996,11 @@ function zoomTo(p){
   $('zLabel').textContent = `${Z.file.name} — page ${Z.p} of ${Z.n}`;
   $('zImg').src = pageImg(Z.p, true, Z.file);
   $('zPrev').disabled = Z.p<=1; $('zNext').disabled = Z.p>=Z.n;
-  $('zStage').scrollTop = 0;
+  $('zStage').scrollTop = 0; if(ED.on){ ED.sel = null; ED.drawing = null; $('zOv').innerHTML = ''; }
   if(Z.p < Z.n){ new Image().src = pageImg(Z.p+1, true, Z.file); }  // get the next page ready
 }
 function zoomW(d){ Z.w = Math.max(500, Math.min(2400, Z.w + d)); document.documentElement.style.setProperty('--zw', Z.w+'px'); }
-function closeZoom(){ $('zoom').classList.remove('on'); }
+async function closeZoom(){ if(ED.on){ if(edCount() && !(await ask({title:'Leave without saving?', text:`${plural(edCount(),'mark')} will be lost.`, ok:'Leave'}))) return; stopEdit(); } $('zoom').classList.remove('on'); }
 $('zPrev').onclick = () => zoomTo(Z.p-1);
 $('zNext').onclick = () => zoomTo(Z.p+1);
 $('zIn').onclick = () => zoomW(250); $('zOut').onclick = () => zoomW(-250);
