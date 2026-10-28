@@ -212,6 +212,9 @@ dd a{color:var(--accent)}
 .zoom.on{display:flex}
 .zbar{display:flex;align-items:center;gap:10px;padding:12px 16px;color:var(--text)}
 .zbar b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pgjump{width:3em;text-align:center;font:inherit;font-weight:700;color:inherit;background:var(--hover);border:1px solid transparent;border-radius:7px;padding:2px 2px;margin:0 1px;outline:0;-moz-appearance:textfield}
+.pgjump::-webkit-outer-spin-button,.pgjump::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pgjump:focus{border-color:var(--accent);background:var(--panel)}
 .zbar .sp{flex:1}
 .zbar .btn{background:var(--panel);color:var(--text);border:0;box-shadow:var(--shadow)}
 .zbar .btn:hover{background:var(--hover)}
@@ -1003,7 +1006,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 <div class="toast" id="toast"></div>
 <div class="zoom" id="zoom">
   <div class="zbar">
-    <b id="zLabel"></b><span class="sp"></span>
+    <b id="zLabel"><span id="zName"></span> — page <input class="pgjump" id="zPg" inputmode="numeric" title="Type a page number and press Enter"> of <span id="zN"></span></b><span class="sp"></span>
     <span id="zRangeBtns"><button class="btn" id="zFrom">Start split here</button> <button class="btn" id="zTo">End split here</button></span>
     <button class="btn" id="zOut" title="Zoom out (−)">−</button><button class="btn" id="zIn" title="Zoom in (+)">+</button>
     <button class="btn" id="zFull" title="Full screen (F)"></button>
@@ -1046,7 +1049,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
   <button class="znav r" id="zNext" title="Next page (→)">›</button>
   <div class="fsbar" id="fsBar">
     <button id="fsPrev" title="Previous page (←)">‹</button>
-    <span class="fsl" id="fsLabel"></span>
+    <span class="fsl" id="fsLabel">Page <input class="pgjump" id="fsPg" inputmode="numeric" title="Type a page number and press Enter"> of <span id="fsN"></span></span>
     <button id="fsNext" title="Next page (→)">›</button>
     <span class="fssep"></span>
     <button id="fsOut" title="Zoom out (−)">−</button>
@@ -2852,7 +2855,8 @@ function renderPage(p){
   }).join('') + (drawing ? drawPreview(drawing, w, h, pxPt) : '');
   // notes grow with their text: measure and remember the height, so the saved note has the right size
   ov.querySelectorAll('g.note').forEach(g => { const m = list[+g.dataset.i], div = g.querySelector('.snote'), fo = g.querySelector('foreignObject');
-    if(m && div){ const need = div.scrollHeight + 2; if(Math.abs(need - +fo.getAttribute('height')) > 1){ fo.setAttribute('height', need); m.rect.h = need / h; } } });
+    if(m && div){ div.style.minHeight = '0'; const need = Math.ceil(div.scrollHeight); div.style.minHeight = '';
+      if(Math.abs(need - +fo.getAttribute('height')) > 1){ fo.setAttribute('height', need); m.rect.h = need / h; } } });
 }
 // selected mark: dashed box around it and a small delete button at its corner
 function placeSelUi(){
@@ -3022,7 +3026,16 @@ document.addEventListener('fullscreenchange', () => { if(!document.fullscreenEle
 document.addEventListener('mousemove', e => { if($('zoom').classList.contains('fs')) fsWake(); });
 $('zFull').onclick = enterFs; $('fsExit').onclick = exitFs; $('fsEdit').onclick = () => { startEdit(); fsWake(); };
 $('fsPrev').onclick = () => zoomTo(Z.p-1); $('fsNext').onclick = () => zoomTo(Z.p+1);
-function zoomLabel(){ $('fsLabel').textContent = `Page ${Z.p} of ${Z.n}`; $('fsPrev').disabled = Z.p<=1; $('fsNext').disabled = Z.p>=Z.n; }
+function zoomLabel(){ setPg($('fsPg'), Z.p); $('fsN').textContent = Z.n; $('fsPrev').disabled = Z.p<=1; $('fsNext').disabled = Z.p>=Z.n; }
+// the page number is a little box: type a number and press Enter (or click away) to jump there
+function setPg(inp, p){ if(document.activeElement !== inp) inp.value = p; }
+function pageJump(inp){ const n = parseInt(inp.value, 10); if(n >= 1 && n <= Z.n && n !== Z.p) zoomTo(n); else inp.value = Z.p; }
+['zPg','fsPg'].forEach(id => { const inp = $(id);
+  inp.addEventListener('focus', () => { inp.select(); if(id==='fsPg') fsWake(); });
+  inp.addEventListener('blur', () => pageJump(inp));
+  inp.addEventListener('keydown', e => { e.stopPropagation(); if(e.key==='Enter'){ e.preventDefault(); pageJump(inp); inp.blur(); } else if(e.key==='Escape'){ e.preventDefault(); inp.value = Z.p; inp.blur(); } });
+  inp.addEventListener('input', () => { if(id==='fsPg') fsWake(); });
+});
 
 // ---------- rename (same folder only; never replaces another file) ----------
 let RN = null;
@@ -3202,11 +3215,12 @@ async function openZoom(p, file, n, split){
 }
 function zoomTo(p, instant){
   Z.p = Math.max(1, Math.min(Z.n, p));
-  const el = pageEl(Z.p); if(el){ const st = $('zStage'); const top = el.offsetTop - 6; Z.scrollingTo = Z.p; st.scrollTo({top, behavior: instant ? 'instant' : 'smooth'}); setTimeout(() => { Z.scrollingTo = null; }, instant ? 0 : 600); }
+  const el = pageEl(Z.p); if(el){ const st = $('zStage'); const top = Math.max(0, Math.min(el.offsetTop - 6, st.scrollHeight - st.clientHeight)); Z.scrollingTo = Z.p; Z.scrollTarget = top; st.scrollTo({top, behavior: instant ? 'instant' : 'smooth'});
+    clearTimeout(Z.scrollT); Z.scrollT = setTimeout(() => { Z.scrollingTo = null; }, instant ? 0 : 2500); }  // the page label stays put until the smooth scroll has arrived
   zoomLabels();
 }
 function zoomLabels(){
-  $('zLabel').textContent = `${Z.file.name} — page ${Z.p} of ${Z.n}`;
+  $('zName').textContent = Z.file.name; setPg($('zPg'), Z.p); $('zN').textContent = Z.n;
   $('zPrev').disabled = Z.p<=1; $('zNext').disabled = Z.p>=Z.n; if(typeof zoomLabel==='function') zoomLabel();
 }
 // which page is in view: the one covering the top third of the screen
@@ -3214,7 +3228,7 @@ let zScrollT = null;
 $('zStage').addEventListener('scroll', () => {
   if(zScrollT) return;
   zScrollT = requestAnimationFrame(() => { zScrollT = null;
-    if(Z.scrollingTo) return;
+    if(Z.scrollingTo){ if(Math.abs($('zStage').scrollTop - Z.scrollTarget) < 3){ Z.scrollingTo = null; clearTimeout(Z.scrollT); } return; }
     const st = $('zStage'), y = st.scrollTop + st.clientHeight * 0.33; let best = Z.p;
     for(const el of $('zPages').children){ if(el.offsetTop <= y) best = +el.dataset.p; else break; }
     if(best !== Z.p){ Z.p = best; zoomLabels(); }
