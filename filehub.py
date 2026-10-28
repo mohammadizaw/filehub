@@ -1376,15 +1376,27 @@ def move_into(sources, dest):
 TRASH_JS = """ObjC.import('Foundation');
 function run(argv) {
   const fm = $.NSFileManager.defaultManager, out = [];
-  argv.forEach(p => {
-    const where = Ref();
-    if (fm.trashItemAtURLResultingItemURLError($.NSURL.fileURLWithPath(p), where, null)) {
-      let np = null; try { np = where[0].path.js; } catch (e) {}
-      out.push([p, np]);
-    }
-  });
+  for (const p of argv) {
+    try {
+      const where = Ref(), err = Ref();
+      if (fm.trashItemAtURLResultingItemURLError($.NSURL.fileURLWithPath(p), where, err)) {
+        let np = null; try { np = where[0].path.js; } catch (e) {}
+        out.push([p, np]);
+      } else {
+        let msg = ''; try { msg = err[0].localizedDescription.js; } catch (e) {}
+        out.push([p, null, msg || 'could not move']);
+      }
+    } catch (e) { out.push([p, null, String(e)]); }
+  }
   return JSON.stringify(out);
 }"""
+
+
+def _trash_with_finder(path):
+    """Fallback: ask Finder to put one item in the Bin (works everywhere Finder does, keeps Put Back)."""
+    script = 'tell application "Finder" to delete (POSIX file "%s" as alias)' % path.replace('\\', '\\\\').replace('"', '\\"')
+    out = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=60)
+    return out.returncode == 0 and not os.path.lexists(path)
 
 
 def trash(paths, force=False):
@@ -1394,17 +1406,57 @@ def trash(paths, force=False):
     if not ok:
         return []
     out = subprocess.run(["osascript", "-l", "JavaScript", "-e", TRASH_JS] + ok,
-                         capture_output=True, text=True, timeout=60)
+                         capture_output=True, text=True, timeout=120)
     try:
-        pairs = json.loads(out.stdout.strip() or "[]")
+        results = json.loads(out.stdout.strip() or "[]")
     except ValueError:
-        pairs = []
+        results = []
+    pairs, problems = [], []
+    gone = {r[0]: r[1] for r in results if len(r) == 2 or (len(r) >= 3 and not r[2])}
+    for p in ok:
+        if p in gone and not os.path.lexists(p):
+            pairs.append([p, gone[p]])
+            continue
+        # Not moved by the batch: try again on its own, then through Finder.
+        if os.path.lexists(p):
+            try:
+                one = subprocess.run(["osascript", "-l", "JavaScript", "-e", TRASH_JS, p],
+                                     capture_output=True, text=True, timeout=60)
+                r = json.loads(one.stdout.strip() or "[]")
+                if r and len(r[0]) < 3 and not os.path.lexists(p):
+                    pairs.append([p, r[0][1]])
+                    continue
+            except (ValueError, subprocess.SubprocessError):
+                pass
+        if os.path.lexists(p):
+            try:
+                if _trash_with_finder(p):
+                    pairs.append([p, None])
+                    continue
+            except subprocess.SubprocessError:
+                pass
+        if os.path.lexists(p):
+            why = next((r[2] for r in results if r and r[0] == p and len(r) >= 3), "") or (out.stderr or "").strip().split("\n")[-1]
+            problems.append((os.path.basename(p), why))
+        else:
+            pairs.append([p, None])
     for p, where in pairs:
         CREATED.discard(p)
         if where:
             relink(p, where)
     _library["time"] = 0
+    if problems and not pairs:
+        raise ValueError("Couldn't move to the Bin: %s%s" % (problems[0][0], (" — " + problems[0][1]) if problems[0][1] else ""))
+    if problems:
+        names = ", ".join(n for n, _ in problems[:3]) + (" and more" if len(problems) > 3 else "")
+        raise PartialTrash(pairs, "%d of %d moved. Couldn't move: %s" % (len(pairs), len(ok), names))
     return pairs
+
+
+class PartialTrash(Exception):
+    def __init__(self, pairs, msg):
+        super().__init__(msg)
+        self.pairs = pairs
 
 
 def delete_items(paths):
@@ -1604,7 +1656,10 @@ class Handler(BaseHTTPRequestHandler):
         if url.path in ("/api/move", "/api/moveto", "/api/copyto", "/api/trash", "/api/duplicate", "/api/delete", "/api/eject"):
             try:
                 if url.path == "/api/delete":
-                    return self.send(200, {"pairs": delete_items(data.get("paths", []))})
+                    try:
+                        return self.send(200, {"pairs": delete_items(data.get("paths", []))})
+                    except PartialTrash as e:
+                        return self.send(200, {"pairs": e.pairs, "warning": str(e)})
                 if url.path == "/api/eject":
                     eject(p)
                     return self.send(200, {"ok": True})

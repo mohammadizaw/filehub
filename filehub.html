@@ -2633,10 +2633,10 @@ async function deleteSel(keys = selKeys()){
   if(!keys.length) return;
   try{
     const d = await call('/api/delete', {paths:keys});
-    if(!d.pairs.length) return toast("Couldn't move that to the Bin");
+    if(!d.pairs.length) return toast(d.warning || "Couldn't move that to the Bin");
     if(S.sel && d.pairs.some(x => x[0]===S.sel)) closePreview();  // don't keep showing a file that's now in the Bin
     followPins(d.pairs); removeLocal(d.pairs.map(x=>x[0]));
-    did({type:'trash', pairs:d.pairs, msg:`Moved ${plural(d.pairs.length,'item')} to the Bin`});
+    did({type:'trash', pairs:d.pairs, msg: d.warning ? `Moved to the Bin — ${d.warning}` : `Moved ${plural(d.pairs.length,'item')} to the Bin`});
     clearSel(); refreshHere();
   }catch(e){ toast(e.message); }
 }
@@ -2719,6 +2719,7 @@ document.addEventListener('drop', e => {
   if(!d) return;
   e.preventDefault(); e.stopPropagation();
   const paths = DRAG.paths; DRAG = null; $('nav').classList.remove('folder-drag');
+  if(isBin(d.dest)) return deleteSel(paths);
   e.altKey ? copySelTo(paths, d.dest) : moveSel(paths, d.dest);
 }, true);
 
