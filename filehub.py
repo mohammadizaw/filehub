@@ -60,9 +60,55 @@ def file_type(ext):
     return "Other"
 
 
+VOLUMES = "/Volumes"
+
+
+def drives():
+    """Plugged-in USB sticks and external disks (what the Mac shows under /Volumes)."""
+    out = []
+    try:
+        names = sorted(os.listdir(VOLUMES), key=str.lower)
+    except OSError:
+        return out
+    for n in names:
+        full = os.path.join(VOLUMES, n)
+        if n.startswith(".") or not os.path.isdir(full):
+            continue
+        if os.path.realpath(full) == "/":  # the Mac's own startup disk
+            continue
+        try:
+            st = os.statvfs(full)
+            free, total = st.f_bavail * st.f_frsize, st.f_blocks * st.f_frsize
+        except OSError:
+            free = total = 0
+        out.append({"name": n, "path": full, "icon": "drive", "free": free, "total": total})
+    return out
+
+
+def drive_roots():
+    return [d["path"] for d in drives()]
+
+
+def on_drive(path):
+    return any(path == r or path.startswith(r + "/") for r in drive_roots())
+
+
+def is_root(path):
+    """Home itself or the top of a plugged-in drive."""
+    return path == HOME or path in drive_roots()
+
+
+def inside(path, allow_root=False):
+    """Inside your home folder or on a plugged-in drive (never anywhere else on the Mac)."""
+    path = os.path.realpath(path)
+    if allow_root and is_root(path):
+        return True
+    return path.startswith(HOME + "/") or on_drive(path)
+
+
 def allowed(path):
     path = os.path.realpath(path)
-    return path.startswith(HOME + "/") and os.path.exists(path)
+    return os.path.exists(path) and inside(path)
 
 
 ICLOUD = os.path.join(HOME, "Library/Mobile Documents/com~apple~CloudDocs")
@@ -537,6 +583,8 @@ def places():
 
 
 def nice_path(p):
+    if p.startswith(VOLUMES + "/"):
+        return p[len(VOLUMES) + 1:]
     return p.replace(ICLOUD, "iCloud Drive", 1).replace(HOME, "~", 1)
 
 
@@ -555,10 +603,11 @@ def browse(path):
         elif os.path.isfile(full):
             files.append(full)
     crumbs, cur = [], path
-    while cur.startswith(HOME):
+    tops = [HOME, ICLOUD] + drive_roots()
+    while cur.startswith(HOME) or on_drive(cur):
         crumbs.insert(0, {"name": "Home" if cur == HOME else
                           ("iCloud Drive" if cur == ICLOUD else os.path.basename(cur)), "path": cur})
-        if cur in (HOME, ICLOUD):
+        if cur in tops:
             break
         cur = os.path.dirname(cur)
     return {"path": path, "display": nice_path(path), "crumbs": crumbs,
@@ -584,7 +633,7 @@ def split_pdf(path, start, end, dest=None):
     folder, name = os.path.split(path)
     if dest:
         dest = os.path.realpath(dest)
-        if not (dest == HOME or dest.startswith(HOME + "/")) or not os.path.isdir(dest):
+        if not inside(dest, True) or not os.path.isdir(dest):
             raise ValueError("can't save in that folder")
         folder = dest
     stem = os.path.splitext(name)[0]
@@ -676,7 +725,7 @@ def free_name(folder, name, copy_word=False):
 def copy_into(sources, dest):
     """Copy files/folders into dest. Existing files are never replaced."""
     dest = os.path.realpath(dest)
-    if not (dest == HOME or dest.startswith(HOME + "/")) or not os.path.isdir(dest):
+    if not inside(dest, True) or not os.path.isdir(dest):
         raise ValueError("can't paste into that folder")
     made = []
     for src in sources:
@@ -705,7 +754,7 @@ def duplicate(path):
 
 def new_folder(dest):
     dest = os.path.realpath(dest)
-    if not (dest == HOME or dest.startswith(HOME + "/")) or not os.path.isdir(dest):
+    if not inside(dest, True) or not os.path.isdir(dest):
         raise ValueError("can't make a folder there")
     out = os.path.join(dest, "untitled folder")
     i = 2
@@ -744,9 +793,7 @@ def relink(old, new):
             os.replace(tmp, RELATIONS_FILE)
 
 
-def in_home(p, allow_home=False):
-    p = os.path.realpath(p)
-    return (allow_home and p == HOME) or p.startswith(HOME + "/")
+in_home = inside  # kept for older code paths
 
 
 def move_one(src, dst):
@@ -754,8 +801,8 @@ def move_one(src, dst):
     src, dst = os.path.realpath(src), os.path.abspath(dst)
     if not in_home(src) or not os.path.exists(src):
         raise ValueError("“%s” isn't there any more." % os.path.basename(src))
-    if os.path.dirname(src) == HOME:
-        raise ValueError("Main folders like Desktop and Documents can't be moved.")
+    if os.path.dirname(src) == HOME or is_root(src):
+        raise ValueError("Main folders, like Desktop and Documents, and whole drives can't be moved.")
     parent = os.path.realpath(os.path.dirname(dst))
     if not in_home(parent, True) or not os.path.isdir(parent):
         raise ValueError("Can't move things there.")
@@ -801,7 +848,13 @@ def move_into(sources, dest):
 TRASH_JS = """ObjC.import('Foundation');
 function run(argv) {
   const fm = $.NSFileManager.defaultManager, out = [];
-  argv.forEach(p => { if (fm.trashItemAtURLResultingItemURLError($.NSURL.fileURLWithPath(p), null, null)) out.push(p); });
+  argv.forEach(p => {
+    const where = Ref();
+    if (fm.trashItemAtURLResultingItemURLError($.NSURL.fileURLWithPath(p), where, null)) {
+      let np = null; try { np = where[0].path.js; } catch (e) {}
+      out.push([p, np]);
+    }
+  });
   return JSON.stringify(out);
 }"""
 
@@ -815,13 +868,37 @@ def trash(paths, force=False):
     out = subprocess.run(["osascript", "-l", "JavaScript", "-e", TRASH_JS] + ok,
                          capture_output=True, text=True, timeout=60)
     try:
-        done = json.loads(out.stdout.strip() or "[]")
+        pairs = json.loads(out.stdout.strip() or "[]")
     except ValueError:
-        done = []
-    for p in done:
+        pairs = []
+    for p, where in pairs:
         CREATED.discard(p)
+        if where:
+            relink(p, where)
     _library["time"] = 0
-    return done
+    return pairs
+
+
+def delete_items(paths):
+    """Move your own files/folders to the Bin (never deleted for good). Returns [[old, inBin], ...]."""
+    paths = [os.path.realpath(p) for p in paths]
+    for p in paths:
+        if not allowed(p):
+            raise ValueError("“%s” isn't there any more." % os.path.basename(p))
+        if os.path.dirname(p) == HOME or is_root(p):
+            raise ValueError("Main folders, like Desktop and Documents, and whole drives can't be put in the Bin.")
+    return trash(paths, force=True)
+
+
+def eject(path):
+    path = os.path.realpath(path)
+    if path not in drive_roots():
+        raise ValueError("That isn't a plugged-in drive.")
+    out = subprocess.run(["diskutil", "unmount", path], capture_output=True, text=True, timeout=60)
+    if out.returncode != 0:
+        msg = (out.stderr or out.stdout).strip().split("\n")[-1]
+        raise ValueError("Couldn't eject: %s" % (msg or "it's still in use. Close files on it first."))
+    return True
 
 
 def rename_item(path, new_name):
@@ -832,8 +909,8 @@ def rename_item(path, new_name):
             or new_name.startswith(".") or len(new_name.encode()) > 255:
         raise ValueError("Please use a different name (no / or : and not starting with a dot).")
     folder = os.path.dirname(path)
-    if folder == HOME:
-        raise ValueError("Main folders like Desktop and Documents can't be renamed here.")
+    if folder == HOME or is_root(path):
+        raise ValueError("Main folders, like Desktop and Documents, and drives can't be renamed here.")
     new = os.path.join(folder, new_name)
     if new == path:
         return path
@@ -883,9 +960,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, search(qs.get("q", "")) if qs.get("q") else [])
             if url.path == "/api/places":
                 return self.send(200, places())
+            if url.path == "/api/drives":
+                return self.send(200, drives())
             if url.path == "/api/browse":
                 p = os.path.realpath(qs.get("path", HOME) or HOME)
-                if not (p == HOME or allowed(p)) or not os.path.isdir(p):
+                if not inside(p, True) or not os.path.isdir(p):
                     return self.send(404, {"error": "not found"})
                 return self.send(200, browse(p))
             if url.path in ("/api/thumb", "/api/raw"):
@@ -943,8 +1022,13 @@ class Handler(BaseHTTPRequestHandler):
             if not paths:
                 return self.send(404, {"error": "not found"})
             return self.send(200, {"ok": clipboard_set([os.path.realpath(x) for x in paths])})
-        if url.path in ("/api/move", "/api/moveto", "/api/copyto", "/api/trash", "/api/duplicate"):
+        if url.path in ("/api/move", "/api/moveto", "/api/copyto", "/api/trash", "/api/duplicate", "/api/delete", "/api/eject"):
             try:
+                if url.path == "/api/delete":
+                    return self.send(200, {"pairs": delete_items(data.get("paths", []))})
+                if url.path == "/api/eject":
+                    eject(p)
+                    return self.send(200, {"ok": True})
                 if url.path == "/api/move":
                     paths = [x for x in data.get("paths", []) if allowed(x)]
                     return self.send(200, {"pairs": move_into(paths, data.get("dest", ""))})
@@ -959,11 +1043,11 @@ class Handler(BaseHTTPRequestHandler):
                         return self.send(404, {"error": "not found"})
                     return self.send(200, {"made": [duplicate(x) for x in paths], "sources": paths})
                 done = trash(data.get("paths", []))
-                return self.send(200, {"trashed": done})
+                return self.send(200, {"trashed": [x[0] for x in done], "pairs": done})
             except (ValueError, OSError, subprocess.SubprocessError) as e:
                 return self.send(400, {"error": str(e)})
         if url.path in ("/api/paste", "/api/newfolder"):
-            if not (os.path.realpath(p) == HOME or allowed(p)):
+            if not inside(p, True) or not os.path.isdir(p):
                 return self.send(404, {"error": "not found"})
             try:
                 if url.path == "/api/newfolder":

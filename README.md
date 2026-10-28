@@ -21,6 +21,10 @@ or deletes your files, and only renames one when you choose Rename (in the same 
 never over another file). Splitting a PDF, pasting and duplicating always make new files,
 and a paste never replaces a file that is already there.
 
+USB sticks and external disks show up under "Drives" in the sidebar by themselves, with an
+eject button; copy, move and paste work on them like any folder. "Move to Bin" (⌘⌫) only
+ever puts things in the Bin, and can be undone.
+
 Right-click a file, folder or empty space for a menu. Copy (⌘C) puts files on the Mac
 clipboard, so you can paste them in a FileHub folder (⌘V) or in Finder; ⌘D duplicates.
 
