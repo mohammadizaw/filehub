@@ -1000,7 +1000,7 @@ function renderNav(){
       } else {
         const on = S.view==='browse' && !S.q && S.browse && (S.browse===it.path || (!it.home && S.browse.startsWith(it.path+'/')));
         const tip = it.kind==='drive' ? `${it.label} · ${size(it.free)} free of ${size(it.total)}` : it.path.replace(/^\/Users\/[^/]+/,'~');
-        html += `<button draggable="true" data-sid="${esc(it.id)}" class="${on?'on':''}" data-place="${esc(it.path)}" ${it.kind==='drive'?'data-drive="1"':''} title="${esc(tip)}">${svg(it.icon)}<span class="lbl">${esc(it.label)}</span>${it.kind==='drive'?`<button class="ej" data-eject="${esc(it.path)}" title="Eject ${esc(it.label)}">${svg('eject')}</button>`:''}</button>`;
+        html += `<button draggable="true" data-sid="${esc(it.id)}" class="${on?'on':''}" data-place="${esc(it.path)}" ${it.kind==='drive'?'data-drive="1"':''} title="${esc(tip)}">${svg(it.icon)}<span class="lbl">${esc(it.label)}</span>${it.kind==='drive'?`<span class="ej" role="button" data-eject="${esc(it.path)}" title="Eject ${esc(it.label)}">${svg('eject')}</span>`:''}</button>`;
       }
     }
     if(sec.key==='places') html += `<div class="nav-drop">Drop a folder here to add it</div>`;
