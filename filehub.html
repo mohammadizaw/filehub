@@ -2188,6 +2188,7 @@ async function deleteSel(keys = selKeys()){
   try{
     const d = await call('/api/delete', {paths:keys});
     if(!d.pairs.length) return toast("Couldn't move that to the Bin");
+    if(S.sel && d.pairs.some(x => x[0]===S.sel)) closePreview();  // don't keep showing a file that's now in the Bin
     followPins(d.pairs); removeLocal(d.pairs.map(x=>x[0]));
     did({type:'trash', pairs:d.pairs, msg:`Moved ${plural(d.pairs.length,'item')} to the Bin`});
     clearSel(); refreshHere();
