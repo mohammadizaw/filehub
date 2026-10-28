@@ -630,6 +630,12 @@ select.ctl{font-weight:600}
 #zOv .hl{mix-blend-mode:multiply}
 .ztextin{display:none;position:absolute;min-width:60px;max-width:70%;padding:2px 4px;background:rgba(255,255,255,.9);outline:2px solid var(--accent);border-radius:3px;color:#111;line-height:1.25;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;white-space:pre-wrap;word-break:break-word}
 .ztextin.on{display:block}
+.ztextin:empty::before{content:attr(data-placeholder);color:rgba(0,0,0,.35)}
+.ztextin.note{outline:0;border-radius:3px;box-shadow:0 3px 10px rgba(0,0,0,.25);font-family:"Nunito",-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.35}
+.snote{box-sizing:border-box;width:100%;min-height:100%;color:#1a1a1a;border-radius:3px;box-shadow:0 3px 10px rgba(0,0,0,.25);font-family:"Nunito",-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.35;white-space:pre-wrap;word-break:break-word;overflow:hidden}
+.snote::after{content:"";position:absolute;right:0;bottom:0;border-style:solid;border-width:0 0 10px 10px;border-color:transparent transparent rgba(0,0,0,.18) transparent}
+#zOv g.note foreignObject{overflow:visible}
+#zOv g.note .snote{position:relative}
 .zoom.editing .znav{top:auto;bottom:26px;height:48px;width:40px;transform:none}
 .zoom.editing .zbar{padding-bottom:8px}
 .zoom.editing .zstage{padding-top:6px}
@@ -2675,7 +2681,7 @@ $('mgResult').addEventListener('click', e => {
 // ---------- Annotate a PDF: highlight, underline, strike, text, notes, pen, shapes, arrows ----------
 const ED = {on:false, file:null, tool:'highlight', color:'#ffeb3b', size:3, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null};
 const ED_COLORS = ['#ffeb3b','#7ee787','#ff8fab','#79c0ff','#e5484d','#111111','#ffffff'];
-const TOOL_DEFAULT_COLOR = {highlight:'#ffeb3b', underline:'#e5484d', strike:'#e5484d', text:'#111111', note:'#ffd60a', pen:'#e5484d', rect:'#e5484d', ellipse:'#e5484d', arrow:'#e5484d', line:'#e5484d'};
+const TOOL_DEFAULT_COLOR = {highlight:'#ffeb3b', underline:'#e5484d', strike:'#e5484d', text:'#111111', note:'#ffeb3b', pen:'#e5484d', rect:'#e5484d', ellipse:'#e5484d', arrow:'#e5484d', line:'#e5484d'};
 const ED_LBL = {text:'Text size', note:'Size', pen:'Pen', highlight:'Size', underline:'Size', strike:'Size', select:'Size'};
 function edPage(){ return (ED.marks[Z.p] ||= []); }
 function edCount(){ return Object.values(ED.marks).reduce((t,l) => t + l.length, 0); }
@@ -2716,6 +2722,7 @@ function renderMarks(){
   ov.setAttribute('viewBox', `0 0 ${w} ${h}`);
   const pxPt = 1 / ptPerPx();  // pixels per PDF point
   ov.innerHTML = edPage().map((m, i) => {
+    if(m === ED.hidden) return '';
     const sel = m === ED.sel ? ' sel' : '', c = m.color;
     const X = x => x * w, Y = y => y * h;
     if(m.type==='highlight') return `<rect class="mark hl${sel}" data-i="${i}" x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${X(m.rect.w)}" height="${Y(m.rect.h)}" fill="${c}" opacity=".45" rx="2"/>`;
@@ -2725,9 +2732,12 @@ function renderMarks(){
     if(m.type==='line' || m.type==='arrow'){ const [a,b] = m.points; const id = `ah${Z.p}_${i}`; return `<g class="mark${sel}" data-i="${i}"><defs><marker id="${id}" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto" markerUnits="strokeWidth"><path d="M0 0 4 2 0 4z" fill="${c}"/></marker></defs><line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="${c}" stroke-width="${m.width*pxPt}" stroke-linecap="round" ${m.type==='arrow'?`marker-end="url(#${id})"`:''}/><line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="transparent" stroke-width="14"/></g>`; }
     if(m.type==='pen') return `<path class="mark${sel}" data-i="${i}" d="${m.points.map((q,k) => (k?'L':'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1)).join(' ')}" fill="none" stroke="${c}" stroke-width="${m.width*pxPt}" stroke-linecap="round" stroke-linejoin="round" opacity="${m.opacity||1}" pointer-events="stroke"/>`;
     if(m.type==='text'){ const fs = m.size*pxPt; const lines = (m.text||'').split('\n'); return `<g class="mark${sel}" data-i="${i}"><rect x="${X(m.rect.x)-2}" y="${Y(m.rect.y)-2}" width="${X(m.rect.w)+4}" height="${Y(m.rect.h)+4}" fill="transparent"/><text x="${X(m.rect.x)}" y="${Y(m.rect.y)}" fill="${c}" font-size="${fs}" font-family="-apple-system,BlinkMacSystemFont,Helvetica Neue,sans-serif">${lines.map((l,k) => `<tspan x="${X(m.rect.x)}" dy="${k?fs*1.25:fs*0.95}">${esc(l)||' '}</tspan>`).join('')}</text></g>`; }
-    if(m.type==='note'){ const sz = 22*pxPt; return `<g class="mark${sel}" data-i="${i}" transform="translate(${X(m.rect.x)},${Y(m.rect.y)})"><title>${esc(m.text||'')}</title><path d="M0 0h${sz}v${sz*.7}l-${sz*.3} ${sz*.3}H0z" fill="${c}" stroke="rgba(0,0,0,.35)" stroke-width="1"/><path d="M${sz*.2} ${sz*.3}h${sz*.6}M${sz*.2} ${sz*.5}h${sz*.4}" stroke="rgba(0,0,0,.55)" stroke-width="${Math.max(1,sz*.07)}"/></g>`; }
+    if(m.type==='note'){ const fs = (m.size||12)*pxPt, W = X(m.rect.w), H = Math.max(fs*2, Y(m.rect.h)); return `<g class="mark note${sel}" data-i="${i}"><foreignObject x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${W}" height="${H}"><div xmlns="http://www.w3.org/1999/xhtml" class="snote" style="background:${c};font-size:${fs}px;padding:${fs*.5}px ${fs*.6}px">${esc(m.text||'')}</div></foreignObject></g>`; }
     return '';
   }).join('') + (ED.drawing ? drawPreview(ED.drawing, w, h, pxPt) : '');
+  // notes grow with their text: measure and remember the height, so the saved note has the right size
+  ov.querySelectorAll('g.note').forEach(g => { const m = edPage()[+g.dataset.i], div = g.querySelector('.snote'), fo = g.querySelector('foreignObject');
+    if(m && div){ const need = div.scrollHeight + 2; if(Math.abs(need - +fo.getAttribute('height')) > 1){ fo.setAttribute('height', need); m.rect.h = need / h; } } });
 }
 function drawPreview(d, w, h, pxPt){
   const c = ED.color;
@@ -2746,14 +2756,16 @@ function removeMark(m){ const list = edPage(), i = list.indexOf(m); if(i < 0) re
 $('zOv').addEventListener('mousedown', e => {
   if(!ED.on || e.button !== 0) return;
   e.preventDefault(); const p = ovPoint(e);
+  if($('zTextIn').classList.contains('on')){ commitText(); if(ED.textJustClosed){ ED.textJustClosed = false; } }
+  const hit = e.target.closest('.mark'); const hm = hit ? edPage()[+hit.dataset.i] : null;
+  if(hm && (hm.type==='text' || hm.type==='note') && (ED.tool==='text' || ED.tool==='note')){ startTextInput({x:hm.rect.x, y:hm.rect.y}, hm); return; }
   if(ED.tool==='select'){
     const el = e.target.closest('.mark'); const m = el ? edPage()[+el.dataset.i] : null;
     ED.sel = m || null; renderMarks();
     if(m){ ED.drawing = {kind:'move', m, x0:p.x, y0:p.y, orig:JSON.parse(JSON.stringify(m)), moved:false}; }
     return;
   }
-  if(ED.tool==='text'){ startTextInput(p); return; }
-  if(ED.tool==='note'){ ask({title:'Sticky note', text:'What should the note say?', value:'', ok:'Add note'}).then(t => { if(t) addMark({type:'note', rect:{x:p.x, y:p.y, w:0, h:0}, color:ED.color, text:t}); }); return; }
+  if(ED.tool==='text' || ED.tool==='note'){ startTextInput(p, null, ED.tool); return; }
   if(ED.tool==='pen') ED.drawing = {kind:'pen', points:[[p.x,p.y]]};
   else if(ED.tool==='line' || ED.tool==='arrow') ED.drawing = {kind:'line', x0:p.x, y0:p.y, x:p.x, y:p.y};
   else ED.drawing = {kind:'rect', x0:p.x, y0:p.y, x:p.x, y:p.y};
@@ -2777,26 +2789,39 @@ document.addEventListener('mouseup', e => {
   addMark(Object.assign({type:ED.tool, rect:r, color:ED.color}, ED.tool==='rect' || ED.tool==='ellipse' ? {width:ED.size, fill:false} : {}));
 });
 // text: type straight on the page
-function startTextInput(p, existing){
+const NOTE_W = 0.26;  // a sticky note is about a quarter of the page wide
+function startTextInput(p, existing, kind){
   const inp = $('zTextIn'), {w, h} = ovSize(), pxPt = 1 / ptPerPx();
-  const size = existing ? existing.size : 8 + ED.size*3;
-  inp.style.left = (p.x*w) + 'px'; inp.style.top = (p.y*h) + 'px'; inp.style.fontSize = (size*pxPt) + 'px'; inp.style.color = existing ? existing.color : ED.color;
-  inp.textContent = existing ? existing.text : ''; inp.classList.add('on'); inp.focus();
-  ED.textAt = {p, size, existing};
-  if(existing) document.execCommand('selectAll', false, null);
+  kind = existing ? existing.type : (kind || 'text');
+  const size = existing ? existing.size : (kind==='note' ? 12 : 8 + ED.size*3);
+  const color = existing ? existing.color : (kind==='note' ? (ED.colorPicked ? ED.color : '#ffeb3b') : ED.color);
+  inp.className = 'ztextin on ' + kind;
+  inp.style.left = (p.x*w) + 'px'; inp.style.top = (p.y*h) + 'px'; inp.style.fontSize = (size*pxPt) + 'px';
+  if(kind==='note'){ inp.style.background = color; inp.style.color = '#1a1a1a'; inp.style.width = (NOTE_W*w) + 'px'; inp.style.padding = `${size*pxPt*.5}px ${size*pxPt*.6}px`; }
+  else { inp.style.background = ''; inp.style.color = color; inp.style.width = ''; inp.style.padding = ''; }
+  inp.textContent = existing ? existing.text : ''; inp.dataset.placeholder = kind==='note' ? 'Type your note…' : 'Type here…';
+  ED.textAt = {p, size, existing, kind, color}; ED.textCancel = false;
+  if(existing){ ED.hidden = existing; renderMarks(); }  // hide the mark while its box is open
+  inp.focus();
+  if(existing){ const r = document.createRange(); r.selectNodeContents(inp); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
 }
 function commitText(){
   const inp = $('zTextIn'); if(!inp.classList.contains('on')) return;
-  const t = inp.innerText.replace(/\n+$/,''), {p, size, existing} = ED.textAt || {}; inp.classList.remove('on');
+  const t = inp.innerText.replace(/\n+$/,''), {p, size, existing, kind, color} = ED.textAt || {}; inp.classList.remove('on'); ED.hidden = null;
   const {w, h} = ovSize(), pxPt = 1 / ptPerPx();
-  if(!t.trim()){ if(existing) removeMark(existing); return; }
-  const lines = t.split('\n'), rect = {x:p.x, y:p.y, w: Math.min(1-p.x, (Math.max(...lines.map(l => l.length)) * size * 0.6 * pxPt) / w + 0.01), h: (lines.length * size * 1.25 * pxPt) / h};
-  if(existing){ const before = JSON.parse(JSON.stringify(existing)); Object.assign(existing, {text:t, rect}); const after = JSON.parse(JSON.stringify(existing)); pushUndo({undo:()=>Object.assign(existing, before), redo:()=>Object.assign(existing, after)}); renderMarks(); }
-  else addMark({type:'text', rect, color:ED.color, size, text:t});
+  if(ED.textCancel){ ED.textCancel = false; renderMarks(); return; }           // Esc: leave things as they were
+  if(!t.trim()){ if(existing) removeMark(existing); else renderMarks(); return; }  // empty box: nothing is added
+  if(existing && existing.text === t){ renderMarks(); return; }                 // nothing changed
+  const lines = t.split('\n');
+  const rect = kind==='note'
+    ? {x:p.x, y:p.y, w: Math.min(1-p.x, NOTE_W), h: (inp.offsetHeight) / h}
+    : {x:p.x, y:p.y, w: Math.min(1-p.x, (Math.max(...lines.map(l => l.length)) * size * 0.6 * pxPt) / w + 0.01), h: (lines.length * size * 1.25 * pxPt) / h};
+  if(existing){ const before = JSON.parse(JSON.stringify(existing)); Object.assign(existing, {text:t, rect:Object.assign({}, existing.rect, {h:rect.h, w: kind==='note' ? existing.rect.w : rect.w})}); const after = JSON.parse(JSON.stringify(existing)); pushUndo({undo:()=>Object.assign(existing, before), redo:()=>Object.assign(existing, after)}); renderMarks(); }
+  else addMark({type:kind, rect, color, size, text:t});
 }
 $('zTextIn').addEventListener('blur', commitText);
-$('zTextIn').addEventListener('keydown', e => { if(e.key==='Escape'){ e.preventDefault(); $('zTextIn').textContent = ''; $('zTextIn').blur(); } else if(e.key==='Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $('zTextIn').blur(); } e.stopPropagation(); }, true);
-$('zOv').addEventListener('dblclick', e => { if(!ED.on) return; const el = e.target.closest('.mark'); const m = el && edPage()[+el.dataset.i]; if(m && m.type==='text') startTextInput({x:m.rect.x, y:m.rect.y}, m); else if(m && m.type==='note') ask({title:'Sticky note', value:m.text, ok:'Save'}).then(t => { if(t!==null){ m.text = t; renderMarks(); } }); });
+$('zTextIn').addEventListener('keydown', e => { if(e.key==='Escape'){ e.preventDefault(); ED.textCancel = true; $('zTextIn').blur(); } else if(e.key==='Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $('zTextIn').blur(); } e.stopPropagation(); }, true);
+$('zOv').addEventListener('dblclick', e => { if(!ED.on) return; const el = e.target.closest('.mark'); const m = el && edPage()[+el.dataset.i]; if(m && (m.type==='text' || m.type==='note')) startTextInput({x:m.rect.x, y:m.rect.y}, m); });
 // keyboard inside edit mode
 document.addEventListener('keydown', e => {
   if(!ED.on || !$('zoom').classList.contains('on')) return;
