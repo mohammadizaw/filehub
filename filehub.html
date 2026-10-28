@@ -378,6 +378,7 @@ select.ctl{font-weight:600}
 .rcard{border:0;border-radius:24px}
 .toast{border-radius:14px;font-weight:600}
 body:has(#zoom.on) .toast{top:68px}  /* in the PDF viewer, keep the notice below the bar so Close stays reachable */
+body:has(#zoom.on.editing:not(.fs)) .toast{top:124px}
 .empty b{font-weight:800}
 /* slim scrollbars */
 *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent}
@@ -674,6 +675,34 @@ body:has(#zoom.on) .toast{top:68px}  /* in the PDF viewer, keep the notice below
 .edpop b{font-size:13px;min-width:14px;text-align:center}
 .edpanel{position:absolute;top:calc(100% + 8px);left:var(--px,0);display:none;align-items:center;gap:12px;background:var(--panel);border-radius:14px;box-shadow:var(--shadow-lg);padding:12px 14px;z-index:50;animation:popin .14s ease-out}
 .edpanel.on{display:flex}
+.edpanel.sigpanel{flex-direction:column;align-items:stretch;gap:8px;width:min(380px,92vw)}
+.sigtitle{font-weight:700;font-size:13px}
+.siglist{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:260px;overflow:auto}
+.siglist:empty::after{content:"No signatures yet. Draw one or use a picture.";color:var(--muted);font-size:12.5px;grid-column:1/-1;padding:6px 2px}
+.sigitem{position:relative;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:8px 8px 6px;cursor:pointer;text-align:left}
+.sigitem:hover,.sigitem.on{border-color:var(--accent);box-shadow:var(--accent-glow)}
+.sigitem svg{width:100%;height:54px;display:block}
+.sigitem .nm{font-size:12px;font-weight:600;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.sigitem .x{position:absolute;top:4px;right:4px;width:22px;height:22px;border:0;border-radius:7px;background:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;display:none}
+.sigitem:hover .x{display:block}
+.sigitem .x:hover{background:color-mix(in srgb,#e5484d 14%,transparent);color:#e5484d}
+.sigacts{display:flex;gap:8px}
+.sigacts .btn{flex:1}
+.sighint{font-size:11.5px;color:var(--muted)}
+.sigpad .box{width:min(680px,94vw)}
+.sigcanvaswrap{position:relative;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden;margin:10px 0}
+.sigcanvaswrap canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+.sigline{position:absolute;left:8%;right:8%;bottom:22%;border-bottom:1px dashed #bbb;pointer-events:none}
+.sigtools{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.sigtools label{display:flex;align-items:center;gap:6px}
+.sigtools input[type=range]{width:110px;accent-color:var(--accent)}
+.sigcolors{display:flex;gap:6px}
+.sigcolors button{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.sigcolors button.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--panel) inset}
+.sigpad .muted{color:var(--muted);font-size:12.5px;margin:4px 0 0}
+.zov .mark.sig{cursor:move}
+.zov .selhandle{fill:var(--panel);stroke:var(--accent);stroke-width:2;cursor:nwse-resize;pointer-events:all}
+.zoom.editing[data-tool="sig"] .zov{cursor:copy}
 .zoom.fs .edpanel{top:auto;bottom:calc(100% + 8px)}
 .edpanel .edcolors{padding:0}
 .edpanel input[type=range]{width:160px;accent-color:var(--accent)}
@@ -1004,6 +1033,20 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 <div class="rn" id="rn"><div class="box"><h3>Rename</h3><p id="rnWhere"></p>
   <input id="rnInput" spellcheck="false" autocomplete="off"><div class="err" id="rnErr"></div>
   <div class="actions"><button class="btn" id="rnCancel">Cancel</button><button class="btn primary" id="rnSave">Rename</button></div></div></div>
+<div class="rn sigpad" id="sigPad"><div class="box">
+  <h3 id="sigPadTitle">New signature</h3>
+  <p class="muted" id="sigPadHint">Sign in the box below with the mouse or trackpad.</p>
+  <div class="sigcanvaswrap"><canvas id="sigCanvas" width="1200" height="420"></canvas><div class="sigline"></div></div>
+  <div class="sigtools">
+    <span class="sigcolors"><button data-sc="#111111" class="on" style="background:#111111" title="Black"></button><button data-sc="#1c4fd6" style="background:#1c4fd6" title="Blue"></button></span>
+    <label>Pen <input type="range" id="sigPen" min="1" max="8" value="3"></label>
+    <span class="sp"></span><button class="btn" id="sigClear">Clear</button>
+  </div>
+  <input id="sigName" placeholder="Name, e.g. My signature" spellcheck="false" autocomplete="off" maxlength="60">
+  <div class="err" id="sigErr"></div>
+  <div class="actions"><button class="btn" id="sigCancel">Cancel</button><button class="btn primary" id="sigSave">Save signature</button></div>
+</div></div>
+<input type="file" id="sigFile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none">
 <div class="toast" id="toast"></div>
 <div class="zoom" id="zoom">
   <div class="zbar">
@@ -1027,6 +1070,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
       <button data-tool="text" title="Text (T)"></button>
       <button data-tool="note" title="Sticky note (N)"></button>
       <button data-tool="pen" title="Pen (P)"></button>
+      <button data-tool="sig" title="Signature: place a saved signature (G)"></button>
       <span class="edsep"></span>
       <button data-tool="rect" title="Rectangle (R)"></button>
       <button data-tool="ellipse" title="Circle (C)"></button>
@@ -1036,6 +1080,9 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     <button class="edpop" id="edColorBtn" title="Colour"><span class="cdot" id="edColorDot"></span><span class="lbl">Colour</span></button>
     <button class="edpop" id="edSizeBtn" title="Thickness / text size"><span class="lbl" id="edSizeLbl">Size</span><b id="edSizeVal">3</b></button>
     <div class="edpanel" id="edColorPanel"><div class="edcolors" id="edColors"></div></div>
+    <div class="edpanel sigpanel" id="edSigPanel"><div class="sigtitle">Your signatures</div><div class="siglist" id="sigList"></div>
+      <div class="sigacts"><button class="btn" id="sigDraw">Draw new…</button><button class="btn" id="sigImport">From a picture…</button></div>
+      <div class="sighint">Or right-click a PNG/JPG in FileHub → “Save as signature”.</div></div>
     <div class="edpanel" id="edSizePanel"><input type="range" id="edSize" min="1" max="8" step="1" value="3"><span class="edprev"><i id="edSizePrev"></i></span></div>
     <div class="edright" id="edRight">
       <button class="btn" id="edUndo" title="Undo mark (⌘Z)">↶</button><button class="btn" id="edRedo" title="Redo mark (⇧⌘Z)">↷</button>
@@ -1141,6 +1188,7 @@ const ICONS = {
   strike:'<path d="M5 12h14M8 7c0-2 2-3 4-3s4 1 4 3M8 17c0 2 2 3 4 3s4-1 4-3"/>',
   note:'<path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9l-5 5H6a2 2 0 0 1-2-2z"/><path d="M15 19v-5h5"/>',
   pen:'<path d="M12 19l7-7a2.1 2.1 0 0 0-3-3l-7 7-1 4z"/><path d="m14 10 3 3"/>',
+  signature:'<path d="M3 17c2.5-6 5-9 6.5-9s.5 7 2 7 2.5-4 3.5-4 .5 4 2 4 2-3 4-3"/><path d="M3 21h18"/>',
   rect:'<rect x="4" y="5" width="16" height="14" rx="2"/>',
   circle:'<circle cx="12" cy="12" r="8"/>',
   arrow:'<path d="M5 19 19 5M10 5h9v9"/>',
@@ -1752,7 +1800,7 @@ function renderAppear(){
     <button class="btn reset" data-look="reset">Back to the original look</button>`;
 }
 $('appearBtn').innerHTML = svg('palette');
-document.querySelectorAll('#edTools button').forEach(b => b.innerHTML = svg({select:'cursor',eraser:'eraser',highlight:'marker',underline:'underline',strike:'strike',text:'text',note:'note',pen:'pen',rect:'rect',ellipse:'circle',arrow:'arrow',line:'line'}[b.dataset.tool]));
+document.querySelectorAll('#edTools button').forEach(b => b.innerHTML = svg({select:'cursor',eraser:'eraser',highlight:'marker',underline:'underline',strike:'strike',text:'text',note:'note',pen:'pen',sig:'signature',rect:'rect',ellipse:'circle',arrow:'arrow',line:'line'}[b.dataset.tool]));
 $('zEdit').innerHTML = svg('pen') + ' Annotate';
 $('zFull').innerHTML = svg('fullscreen');
 $('fsExit').innerHTML = svg('exitfs') + '<span>Exit full screen</span>';
@@ -2028,6 +2076,7 @@ function menuFor(target){
       '-',
       {icon:'star', label:pinned?'Unpin':'Pin', run:()=>{ togglePin(f.path); render(); if(S.sel===f.path) preview(f); }},
       ...(f.ext==='pdf' ? [{icon:'scissors', label:'Split pages…', run:()=>openSplit(f)}, {icon:'pen', label:'Annotate…', run:()=>openAnnotate(f)}] : []),
+      ...(['png','jpg','jpeg','webp','gif'].includes(f.ext) ? [{icon:'signature', label:'Save as signature…', run:()=>sigFromFile(f)}] : []),
       {icon:'folder', label:'Open its folder', run:()=>openFolder(f.path.slice(0, f.path.lastIndexOf('/')))},
       ...(inBin(f.path) ? [] : ['-', {icon:'trash', label:'Move to Bin', key:K('⌫'), run:()=>deleteSel([f.path])}]),
     ]};
@@ -2784,7 +2833,7 @@ $('mgResult').addEventListener('click', e => {
 const ED = {on:false, file:null, tool:'highlight', color:'#ffeb3b', size:3, marks:{}, undo:[], redo:[], sel:null, info:null, drawing:null};
 const ED_COLORS = ['#ffeb3b','#7ee787','#ff8fab','#79c0ff','#e5484d','#111111','#ffffff'];
 const TOOL_DEFAULT_COLOR = {highlight:'#ffeb3b', underline:'#e5484d', strike:'#e5484d', text:'#111111', note:'#ffeb3b', pen:'#e5484d', rect:'#e5484d', ellipse:'#e5484d', arrow:'#e5484d', line:'#e5484d'};
-const ED_LBL = {text:'Text size', note:'Size', pen:'Pen', highlight:'Size', underline:'Size', strike:'Size', select:'Size', eraser:'Size'};
+const ED_LBL = {text:'Text size', note:'Size', pen:'Pen', highlight:'Size', underline:'Size', strike:'Size', select:'Size', eraser:'Size', sig:'Size'};
 function edPage(p){ return (ED.marks[p || Z.p] ||= []); }
 function pageOfMark(m){ for(const [pg, l] of Object.entries(ED.marks)) if(l.includes(m)) return +pg; return Z.p; }
 function edCount(){ return Object.values(ED.marks).reduce((t,l) => t + l.length, 0); }
@@ -2808,12 +2857,13 @@ function setTool(t){
   if(t !== 'select' && TOOL_DEFAULT_COLOR[t] && !ED.colorPicked) ED.color = TOOL_DEFAULT_COLOR[t];
   $('edSizeLbl').textContent = ED_LBL[t] || 'Thickness';
   renderColors(); sizeShow(); edPanel('edColorPanel', false); ED.sel = null; renderMarks();
+  if(t === 'sig') openSigPanel();
 }
 function renderColors(){ $('edColors').innerHTML = ED_COLORS.map(c => `<button data-c="${c}" class="${ED.color===c?'on':''}" style="background:${c}" title="${c}"></button>`).join(''); $('edColorDot').style.background = ED.color; }
 function sizeShow(){ $('edSizeVal').textContent = ED.size; const d = 6 + ED.size*3; Object.assign($('edSizePrev').style, {width:d+'px', height:d+'px', background: ED.color}); }
 function edPanel(id, open){
-  const pnl = $(id), btn = id==='edColorPanel' ? $('edColorBtn') : $('edSizeBtn');
-  ['edColorPanel','edSizePanel'].forEach(x => { if(x!==id){ $(x).classList.remove('on'); } }); $('edColorBtn').classList.remove('on'); $('edSizeBtn').classList.remove('on');
+  const pnl = $(id), btn = id==='edColorPanel' ? $('edColorBtn') : id==='edSizePanel' ? $('edSizeBtn') : $('edTools').querySelector('[data-tool="sig"]');
+  ['edColorPanel','edSizePanel','edSigPanel'].forEach(x => { if(x!==id){ $(x).classList.remove('on'); } }); $('edColorBtn').classList.remove('on'); $('edSizeBtn').classList.remove('on');
   const on = open==null ? !pnl.classList.contains('on') : open;
   pnl.classList.toggle('on', on); btn.classList.toggle('on', on);
   if(on){ const bar = $('edBar').getBoundingClientRect(), b = btn.getBoundingClientRect(); pnl.style.setProperty('--px', Math.max(6, Math.min(b.left - bar.left, bar.width - pnl.offsetWidth - 6)) + 'px'); }
@@ -2846,6 +2896,7 @@ function renderPage(p){
     const X = x => x * w, Y = y => y * h;
     if(m.type==='highlight') return `<rect class="mark hl${sel}" data-i="${i}" x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${X(m.rect.w)}" height="${Y(m.rect.h)}" fill="${c}" opacity=".45" rx="2"/>`;
     if(m.type==='underline' || m.type==='strike'){ const y = m.type==='underline' ? Y(m.rect.y+m.rect.h) : Y(m.rect.y+m.rect.h/2); return `<g class="mark${sel}" data-i="${i}"><rect x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${X(m.rect.w)}" height="${Y(m.rect.h)}" fill="transparent"/><line x1="${X(m.rect.x)}" x2="${X(m.rect.x+m.rect.w)}" y1="${y}" y2="${y}" stroke="${c}" stroke-width="${1.6*pxPt}"/></g>`; }
+    if(m.type==='sig') return `<g class="mark sig${sel}" data-i="${i}"><rect x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${X(m.rect.w)}" height="${Y(m.rect.h)}" fill="transparent" pointer-events="all"/><path d="${sigPath(m.strokes, X(m.rect.x), Y(m.rect.y), X(m.rect.w), Y(m.rect.h))}" fill="none" stroke="${c}" stroke-width="${Math.max(0.6, m.width * X(m.rect.w))}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/></g>`;
     if(m.type==='rect') return `<rect class="mark${sel}" data-i="${i}" x="${X(m.rect.x)}" y="${Y(m.rect.y)}" width="${X(m.rect.w)}" height="${Y(m.rect.h)}" fill="${m.fill?c:'transparent'}" fill-opacity="${m.fill?.25:0}" stroke="${c}" stroke-width="${m.width*pxPt}" pointer-events="all"/>`;
     if(m.type==='ellipse') return `<ellipse class="mark${sel}" data-i="${i}" cx="${X(m.rect.x+m.rect.w/2)}" cy="${Y(m.rect.y+m.rect.h/2)}" rx="${X(m.rect.w/2)}" ry="${Y(m.rect.h/2)}" fill="transparent" stroke="${c}" stroke-width="${m.width*pxPt}" pointer-events="all"/>`;
     if(m.type==='line' || m.type==='arrow'){ const [a,b] = m.points; const id = `ah${Z.p}_${i}`; return `<g class="mark${sel}" data-i="${i}"><defs><marker id="${id}" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto" markerUnits="strokeWidth"><path d="M0 0 4 2 0 4z" fill="${c}"/></marker></defs><line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="${c}" stroke-width="${m.width*pxPt}" stroke-linecap="round" ${m.type==='arrow'?`marker-end="url(#${id})"`:''}/><line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="transparent" stroke-width="14"/></g>`; }
@@ -2866,7 +2917,8 @@ function placeSelUi(){
   if(!ED.sel) return;
   const p = pageOfMark(ED.sel), ov = ovOf(p), el = ov && ov.querySelector('.mark.sel'); if(!el) return;
   try{ const b = el.getBBox(), pad = 6, {w} = ovSize(p);
-    ov.insertAdjacentHTML('beforeend', `<rect class="selbox" x="${b.x-pad}" y="${b.y-pad}" width="${b.width+2*pad}" height="${b.height+2*pad}" rx="4"/>`);
+    ov.insertAdjacentHTML('beforeend', `<rect class="selbox" x="${b.x-pad}" y="${b.y-pad}" width="${b.width+2*pad}" height="${b.height+2*pad}" rx="4"/>` +
+      (['sig','rect','ellipse','highlight'].includes(ED.sel.type) ? `<circle class="selhandle" cx="${b.x+b.width+pad}" cy="${b.y+b.height+pad}" r="6"><title>Drag to resize</title></circle>` : ''));
     pageEl(p).appendChild(ui); ui.style.left = Math.min(w - 40, b.x + b.width + pad + 4) + 'px'; ui.style.top = Math.max(0, b.y - pad - 34) + 'px'; ui.classList.add('on'); }catch(e){}
 }
 function drawPreview(d, w, h, pxPt){
@@ -2899,6 +2951,9 @@ $('zPages').addEventListener('mousedown', e => {
   if(ED.tool==='eraser'){
     ED.drawing = {kind:'erase', removed:[], page:pg}; eraseAt(e.target); return;
   }
+  if(ED.tool==='select' && e.target.closest('.selhandle') && ED.sel && ED.sel.rect){
+    const m = ED.sel; ED.drawing = {kind:'resize', m, page:pg, orig:JSON.parse(JSON.stringify(m)), moved:false}; return;
+  }
   if(ED.tool==='select'){
     const el = e.target.closest('.mark'); const m = el ? edPage(pg)[+el.dataset.i] : null;
     ED.sel = m || null; renderMarks();
@@ -2906,6 +2961,7 @@ $('zPages').addEventListener('mousedown', e => {
     return;
   }
   if(ED.tool==='text' || ED.tool==='note'){ startTextInput(p, null, ED.tool, pg); return; }
+  if(ED.tool==='sig'){ placeSig(p, pg); return; }
   if(ED.tool==='pen') ED.drawing = {kind:'pen', page:pg, points:[[p.x,p.y]]};
   else if(ED.tool==='line' || ED.tool==='arrow') ED.drawing = {kind:'line', page:pg, x0:p.x, y0:p.y, x:p.x, y:p.y};
   else ED.drawing = {kind:'rect', page:pg, x0:p.x, y0:p.y, x:p.x, y:p.y};
@@ -2917,19 +2973,106 @@ document.addEventListener('mousemove', e => {
   if(d.kind==='pen'){ const last = d.points[d.points.length-1]; if(Math.hypot(p.x-last[0], p.y-last[1]) > 0.002) d.points.push([p.x,p.y]); }
   else if(d.kind==='move'){ const dx = p.x - d.x0, dy = p.y - d.y0, o = d.orig, m = d.m; d.moved = true;
     if(m.rect) Object.assign(m.rect, {x: o.rect.x + dx, y: o.rect.y + dy}); if(m.points) m.points = o.points.map(q => [q[0]+dx, q[1]+dy]); }
+  else if(d.kind==='resize'){ const o = d.orig.rect, m = d.m; d.moved = true;
+    let w = Math.max(0.02, p.x - o.x), h = Math.max(0.01, p.y - o.y);
+    if(m.type==='sig') h = w * o.h / o.w;  // a signature keeps its shape
+    Object.assign(m.rect, {w, h}); }
   else { d.x = p.x; d.y = p.y; }
-  renderPage(d.page); if(d.kind==='move') placeSelUi();
+  renderPage(d.page); if(d.kind==='move' || d.kind==='resize') placeSelUi();
 });
 document.addEventListener('mouseup', e => {
   if(!ED.on || !ED.drawing) return; const d = ED.drawing; ED.drawing = null;
   if(d.kind==='erase'){ if(d.removed.length){ const gone = d.removed; pushUndo({undo:()=>gone.slice().reverse().forEach(([pg,i,m]) => { const list = edPage(pg); list.splice(Math.min(i, list.length), 0, m); }), redo:()=>gone.forEach(([pg,i,m]) => { const list = edPage(pg), k = list.indexOf(m); if(k>=0) list.splice(k,1); })}); } renderMarks(); edStatus(); return; }
-  if(d.kind==='move'){ if(d.moved){ const m = d.m, before = d.orig, after = JSON.parse(JSON.stringify(m)); pushUndo({undo:()=>Object.assign(m, JSON.parse(JSON.stringify(before))), redo:()=>Object.assign(m, JSON.parse(JSON.stringify(after)))}); } renderMarks(); return; }
+  if(d.kind==='resize' && d.m.type==='sig' && d.moved) store.set('sigW', d.m.rect.w);  // next signature starts at this size
+  if(d.kind==='move' || d.kind==='resize'){ if(d.moved){ const m = d.m, before = d.orig, after = JSON.parse(JSON.stringify(m)); pushUndo({undo:()=>Object.assign(m, JSON.parse(JSON.stringify(before))), redo:()=>Object.assign(m, JSON.parse(JSON.stringify(after)))}); } renderMarks(); return; }
   if(d.kind==='pen'){ if(d.points.length > 2) addMark({type:'pen', points:d.points, color:ED.color, width:ED.size, opacity: ED.color==='#ffeb3b' ? .5 : 1}, d.page); else renderMarks(); return; }
   if(d.kind==='line'){ if(Math.hypot(d.x-d.x0, d.y-d.y0) > 0.01) addMark({type:ED.tool, points:[[d.x0,d.y0],[d.x,d.y]], color:ED.color, width:ED.size}, d.page); else renderMarks(); return; }
   const r = normRect(d);
   if(r.w < 0.005 || r.h < 0.004){ renderMarks(); return; }
   addMark(Object.assign({type:ED.tool, rect:r, color:ED.color}, ED.tool==='rect' || ED.tool==='ellipse' ? {width:ED.size, fill:false} : {}), d.page);
 });
+// ---------- signatures: draw once, place on any page ----------
+const SIG = {items:[], chosen:null, loaded:false, color:'#111111', pen:3, strokes:[], cur:null};
+const sigPath = (strokes, x, y, w, h) => strokes.map(st => st.map((q, k) => (k ? 'L' : 'M') + (x + q[0]*w).toFixed(1) + ' ' + (y + q[1]*h).toFixed(1)).join(' ') + (st.length === 1 ? ' l0.1 0' : '')).join(' ');
+const sigThumb = (s, cls='') => `<svg class="${cls}" viewBox="0 0 ${s.aspect.toFixed(3)} 1" preserveAspectRatio="xMidYMid meet"><path d="${sigPath(s.strokes, 0, 0, s.aspect, 1)}" fill="none" stroke="${s.color || '#111'}" stroke-width="${(s.width * s.aspect).toFixed(4)}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+async function loadSigs(){ try{ SIG.items = (await api('/api/signatures')).items || []; }catch(e){ SIG.items = []; } SIG.loaded = true; renderSigList(); }
+function renderSigList(){
+  $('sigList').innerHTML = SIG.items.map(s => `<div class="sigitem${SIG.chosen && SIG.chosen.id===s.id ? ' on' : ''}" data-sid="${s.id}" title="Click, then click on the page to place it">${sigThumb(s)}<div class="nm">${esc(s.name)}</div><button class="x" data-del="${s.id}" title="Delete this signature">✕</button></div>`).join('');
+}
+function openSigPanel(){ edPanel('edSigPanel', true); if(!SIG.loaded) loadSigs(); else renderSigList(); }
+$('sigList').addEventListener('click', async e => {
+  const del = e.target.closest('[data-del]');
+  if(del){ e.stopPropagation(); const s = SIG.items.find(x => x.id === del.dataset.del); if(!s) return;
+    if(!(await ask({title:'Delete this signature?', text:`“${s.name}” is removed from your saved signatures. Signatures already placed in PDFs are not affected.`, ok:'Delete'}))) return;
+    try{ await call('/api/signatures/delete', {id:s.id}); SIG.items = SIG.items.filter(x => x !== s); if(SIG.chosen === s) SIG.chosen = null; renderSigList(); }catch(err){ toast(err.message); } return; }
+  const it = e.target.closest('[data-sid]'); if(!it) return;
+  SIG.chosen = SIG.items.find(x => x.id === it.dataset.sid) || null; edPanel('edSigPanel', false);
+  if(SIG.chosen) toast(`Click on the page where “${SIG.chosen.name}” should go`);
+});
+$('edSigPanel').addEventListener('mousedown', e => e.stopPropagation());
+function placeSig(p, pg){
+  const s = SIG.chosen; if(!s){ openSigPanel(); return; }
+  const {w, h} = ovSize(pg); if(!w) return;
+  const wf = Math.min(0.9, store.get('sigW', 0.28)), hf = (wf * w / s.aspect) / h;   // keep its shape on this page
+  const rect = {x: Math.max(0, Math.min(1 - wf, p.x - wf/2)), y: Math.max(0, Math.min(1 - hf, p.y - hf/2)), w: wf, h: hf};
+  const m = {type:'sig', rect, strokes:s.strokes, width:s.width, color: s.color || '#111111', name:s.name};
+  addMark(m, pg); setTool('select'); ED.sel = m; renderMarks();
+  toast('Placed. Drag it to move, use the corner dot to resize, ⌫ to remove.');
+}
+// the drawing pad
+const sigCtx = $('sigCanvas').getContext('2d');
+function sigPadOpen(){ SIG.strokes = []; SIG.cur = null; sigRedraw(); $('sigName').value = ''; $('sigErr').textContent = ''; $('sigPad').classList.add('on'); setTimeout(() => $('sigName').focus(), 50); }
+function sigPadClose(){ $('sigPad').classList.remove('on'); }
+function sigRedraw(){ const c = $('sigCanvas'); sigCtx.clearRect(0, 0, c.width, c.height); sigCtx.lineCap = 'round'; sigCtx.lineJoin = 'round';
+  for(const st of SIG.strokes.concat(SIG.cur ? [SIG.cur] : [])){ sigCtx.strokeStyle = st.color; sigCtx.lineWidth = st.w; sigCtx.beginPath(); st.pts.forEach((q, k) => k ? sigCtx.lineTo(q[0], q[1]) : sigCtx.moveTo(q[0], q[1])); if(st.pts.length === 1) sigCtx.lineTo(st.pts[0][0] + 0.1, st.pts[0][1]); sigCtx.stroke(); } }
+const sigPt = e => { const c = $('sigCanvas'), r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
+$('sigCanvas').addEventListener('pointerdown', e => { e.preventDefault(); $('sigCanvas').setPointerCapture(e.pointerId); SIG.cur = {pts:[sigPt(e)], color:SIG.color, w: SIG.pen * 2.2}; sigRedraw(); });
+$('sigCanvas').addEventListener('pointermove', e => { if(!SIG.cur) return; const q = sigPt(e), l = SIG.cur.pts[SIG.cur.pts.length-1]; if(Math.hypot(q[0]-l[0], q[1]-l[1]) > 1.5) SIG.cur.pts.push(q); sigRedraw(); });
+const sigEnd = () => { if(SIG.cur){ SIG.strokes.push(SIG.cur); SIG.cur = null; sigRedraw(); } };
+$('sigCanvas').addEventListener('pointerup', sigEnd); $('sigCanvas').addEventListener('pointercancel', sigEnd);
+document.querySelectorAll('#sigPad .sigcolors button').forEach(b => b.onclick = () => { SIG.color = b.dataset.sc; document.querySelectorAll('#sigPad .sigcolors button').forEach(x => x.classList.toggle('on', x === b)); });
+$('sigPen').addEventListener('input', e => SIG.pen = +e.target.value);
+$('sigClear').onclick = () => { SIG.strokes = []; SIG.cur = null; sigRedraw(); };
+$('sigCancel').onclick = sigPadClose;
+$('sigPad').addEventListener('mousedown', e => { if(e.target === $('sigPad')) sigPadClose(); });
+$('sigName').addEventListener('keydown', e => { if(e.key==='Enter') $('sigSave').click(); if(e.key==='Escape') sigPadClose(); e.stopPropagation(); });
+$('sigSave').onclick = async () => {
+  if(!SIG.strokes.length){ $('sigErr').textContent = 'Sign in the box first.'; return; }
+  const name = $('sigName').value.trim() || `Signature ${SIG.items.length + 1}`;
+  // keep only the drawn area, with a little room around it
+  const all = SIG.strokes.flatMap(st => st.pts), pad = Math.max(...SIG.strokes.map(st => st.w)) + 2;
+  const x0 = Math.min(...all.map(q => q[0])) - pad, y0 = Math.min(...all.map(q => q[1])) - pad, x1 = Math.max(...all.map(q => q[0])) + pad, y1 = Math.max(...all.map(q => q[1])) + pad;
+  const bw = Math.max(1, x1 - x0), bh = Math.max(1, y1 - y0);
+  const strokes = SIG.strokes.map(st => st.pts.map(q => [(q[0] - x0) / bw, (q[1] - y0) / bh]));
+  const w = SIG.strokes[0].w / bw;
+  try{ const d = await call('/api/signatures/add', {name, strokes, aspect: bw / bh, width: w}); d.color = SIG.color; SIG.items.push(d); SIG.chosen = d; renderSigList(); sigPadClose();
+    if(ED.on){ setTool('sig'); edPanel('edSigPanel', false); toast(`Saved “${d.name}”. Click on the page to place it.`); } else toast(`Saved “${d.name}”`); }
+  catch(err){ $('sigErr').textContent = err.message; }
+};
+$('sigDraw').onclick = e => { e.stopPropagation(); edPanel('edSigPanel', false); sigPadOpen(); };
+$('sigImport').onclick = e => { e.stopPropagation(); $('sigFile').value = ''; $('sigFile').click(); };
+$('sigFile').addEventListener('change', () => { const f = $('sigFile').files[0]; if(f) sigFromImage(URL.createObjectURL(f), f.name.replace(/\.[^.]+$/, '')); });
+async function sigFromFile(f){ sigFromImage('/api/raw?path=' + encodeURIComponent(f.path), f.name.replace(/\.[^.]+$/, '')); }
+// a picture becomes a signature: the dark pixels are traced into thin pen lines (so it is saved as real ink, not a photo)
+async function sigFromImage(src, suggested){
+  const img = new Image(); img.src = src;
+  try{ await img.decode(); }catch(e){ toast("Couldn't read that picture"); return; }
+  const maxW = 360, sc = Math.min(1, maxW / img.naturalWidth), W = Math.max(1, Math.round(img.naturalWidth * sc)), H = Math.max(1, Math.round(img.naturalHeight * sc));
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d', {willReadFrequently:true}); g.drawImage(img, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, dark = (x, y) => { const i = (y * W + x) * 4; return d[i+3] > 90 && (d[i] * .3 + d[i+1] * .59 + d[i+2] * .11) < 150; };
+  // find the drawing's box, then trace every row of dark pixels into short lines
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for(let y = 0; y < H; y++) for(let x = 0; x < W; x++) if(dark(x, y)){ if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y; }
+  if(x1 < 0){ toast('No dark lines found in that picture. Use a signature on a light background.'); return; }
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, strokes = [];
+  for(let y = y0; y <= y1; y++){ let run = -1;
+    for(let x = x0; x <= x1 + 1; x++){ const on = x <= x1 && dark(x, y);
+      if(on && run < 0) run = x; else if(!on && run >= 0){ strokes.push([[(run - x0) / bw, (y - y0 + .5) / bh], [(x - x0) / bw, (y - y0 + .5) / bh]]); run = -1; } } }
+  const name = await ask({title:'Save as signature', text:'Give this signature a name.', value: suggested || 'Signature', ok:'Save'}); if(name === null || name === false) return;
+  try{ const r = await call('/api/signatures/add', {name: String(name).trim() || suggested || 'Signature', strokes, aspect: bw / bh, width: 1.25 / bw}); r.color = '#111111'; SIG.items.push(r); SIG.chosen = r; renderSigList();
+    if(ED.on){ setTool('sig'); edPanel('edSigPanel', false); toast(`Saved “${r.name}”. Click on the page to place it.`); } else toast(`Saved “${r.name}” — find it under the signature tool when you annotate a PDF`); }
+  catch(err){ toast(err.message); }
+}
 // text: type straight on the page
 const NOTE_W = 0.26;  // a sticky note is about a quarter of the page wide
 function startTextInput(p, existing, kind, page){
@@ -2968,13 +3111,14 @@ $('zTextIn').addEventListener('keydown', e => { if(e.key==='Escape'){ e.preventD
 $('zPages').addEventListener('dblclick', e => { if(!ED.on) return; const el = e.target.closest('.mark'); const ov = el && el.closest('.zov'); const m = ov && edPage(+ov.dataset.p)[+el.dataset.i]; if(m && (m.type==='text' || m.type==='note')) startTextInput({x:m.rect.x, y:m.rect.y}, m); });
 // keyboard inside edit mode
 document.addEventListener('keydown', e => {
+  if($('sigPad').classList.contains('on')){ if(e.key==='Escape'){ e.preventDefault(); sigPadClose(); } e.stopPropagation(); return; }  // the signature pad has the keyboard
   if(!ED.on || !$('zoom').classList.contains('on')) return;
   if(e.target.closest && e.target.closest('input,textarea,[contenteditable]')) return;
   const cmd = e.metaKey || e.ctrlKey, k = e.key.toLowerCase();
   if(cmd && k==='z'){ e.preventDefault(); e.stopPropagation(); e.shiftKey ? edRedo() : edUndo(); return; }
   if(cmd && k==='s'){ e.preventDefault(); e.stopPropagation(); $('edSaveCopy').click(); return; }
   if(!cmd && (e.key==='Delete' || e.key==='Backspace') && ED.sel){ e.preventDefault(); e.stopPropagation(); removeMark(ED.sel); return; }
-  const map = {v:'select', e:'eraser', h:'highlight', u:'underline', s:'strike', t:'text', n:'note', p:'pen', r:'rect', c:'ellipse', a:'arrow', l:'line'};
+  const map = {v:'select', e:'eraser', h:'highlight', u:'underline', s:'strike', t:'text', n:'note', p:'pen', g:'sig', r:'rect', c:'ellipse', a:'arrow', l:'line'};
   if(!cmd && !e.altKey && map[k]){ e.preventDefault(); e.stopPropagation(); setTool(map[k]); }
 }, true);
 // save
