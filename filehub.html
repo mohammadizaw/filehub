@@ -721,6 +721,45 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .toast.has-undo{pointer-events:auto;display:flex;align-items:center;gap:12px}
 .toast .tu{border:0;background:color-mix(in srgb,var(--accent) 85%,#000);color:#fff;font-weight:700;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12.5px}
 .ctx .ch .ic.multi{width:30px!important;height:30px!important;border-radius:9px;background:var(--accent-grad)!important;color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center}
+
+/* ===== Mac look: the system's own colours and icons ===== */
+.fi.mac{background:none!important;box-shadow:none!important;border-radius:0;clip-path:none;width:var(--s)}
+.fi.mac::before,.fi.mac::after{display:none}
+.fi.mac i{display:none}
+.fi.mac img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.12))}
+.fo.mac{background:none!important;box-shadow:none!important}
+.fo.mac svg{display:none}
+.fo.mac::before{display:none!important}
+.fo.mac img{width:92%;height:92%;object-fit:contain}
+:root[data-mac="1"]{--bg:#f2f2f7;--panel:#ffffff;--panel2:#f5f5f7;--line:#e2e2e7;--text:#1d1d1f;--muted:#6e6e73;--hover:#f0f0f5;--tint:#50506a;--accent-soft:color-mix(in srgb,var(--accent) 12%,#fff)}
+:root[data-mac="1"][data-theme="medium"]{--bg:#e6e6eb;--panel:#f6f6f8;--panel2:#ececf0;--line:#d6d6dc;--text:#1d1d1f;--muted:#636366}
+:root[data-mac="1"]:is([data-theme="dark"],[data-theme="dim"]){--bg:#1e1e1e;--panel:#2a2a2a;--panel2:#323232;--line:#3d3d3d;--text:#f5f5f7;--muted:#98989d;--hover:#363636;--accent-soft:color-mix(in srgb,var(--accent) 24%,#2a2a2a)}
+:root[data-mac="1"][data-theme="dim"]{--bg:#2b2b2d;--panel:#363638;--panel2:#3f3f42;--line:#4a4a4e}
+@media (prefers-color-scheme:dark){:root[data-mac="1"]:not([data-theme]){--bg:#1e1e1e;--panel:#2a2a2a;--panel2:#323232;--line:#3d3d3d;--text:#f5f5f7;--muted:#98989d;--hover:#363636;--accent-soft:color-mix(in srgb,var(--accent) 24%,#2a2a2a)}}
+/* Style: Mac (Finder-like: flat, small corners, sidebar blends with the window) */
+:root[data-style="mac"] body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;font-size:13px}
+:root[data-style="mac"] .app{padding:0}
+:root[data-style="mac"] :is(.side,.prev,.card,.tile,.list,.ftile,.family,.search,.ctl,.seg,.chip,.sizer,.btn){box-shadow:none;border:1px solid var(--line);border-radius:7px}
+:root[data-style="mac"] .side{border-radius:0;border-width:0 1px 0 0;margin-right:0;background:var(--panel2)}
+:root[data-style="mac"] .prev{border-radius:0;border-width:0 0 0 1px;margin-left:0}
+:root[data-style="mac"] .prev.open{margin-left:0}
+:root[data-style="mac"] .top{padding:8px 12px 6px;background:var(--panel);border-bottom:1px solid var(--line)}
+:root[data-style="mac"] .phead{padding-left:14px;padding-right:14px}
+:root[data-style="mac"] .content{padding-left:14px;padding-right:14px}
+:root[data-style="mac"] .nav button{border-radius:6px;padding:5px 10px;font-weight:500}
+:root[data-style="mac"] .nav button.on{background:var(--accent);color:#fff;box-shadow:none}
+:root[data-style="mac"] .nav button.on :is(svg,.n){color:#fff}
+:root[data-style="mac"] :is(.chip.on,.btn.primary){background:var(--accent);box-shadow:none;color:#fff}
+:root[data-style="mac"] :is(.card,.tile,.ftile):hover{transform:none;box-shadow:none;border-color:color-mix(in srgb,var(--text) 25%,transparent)}
+:root[data-style="mac"] :is(.card.sel,.tile.sel,.ftile.sel){border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)!important;background:var(--accent-soft)!important}
+:root[data-style="mac"] .thumb{border-radius:5px}
+:root[data-style="mac"] .row.sel{background:var(--accent);color:#fff}
+:root[data-style="mac"] .row.sel :is(.c,small){color:rgba(255,255,255,.8)}
+:root[data-style="mac"] :is(.row .ic,.badge){background-image:none;box-shadow:none}
+:root[data-style="mac"] .title h1{font-size:20px;font-weight:700;letter-spacing:0}
+:root[data-style="mac"] .brand .logo{border-radius:7px;box-shadow:none}
+:root[data-style="mac"] .ftile .fo{border-radius:6px;background:none}
+:root[data-style="mac"] .status,:root[data-style="mac"] .statusbar{background:var(--panel);border-top:1px solid var(--line);padding-top:4px}
 </style>
 </head>
 <body>
@@ -1086,8 +1125,8 @@ function row(f){
 }
 const LIST_HEAD = `<div class="row hd"><div></div><div>Name</div><div class="c hide-s">Came from</div><div class="c">Last used</div><div class="c hide-s">Opened</div></div>`;
 // File and folder icons: drawn in the icon style chosen in Appearance (badge, paper, line, 3D, hexagon).
-const fileIcon = f => `<span class="fi" style="--c:${color(f.type)}"><i>${esc((f.ext||'?').slice(0,4))}</i></span>`;
-const folderIcon = () => `<span class="fo">${svg('folder')}</span>`;
+const fileIcon = f => look().icons==='mac' ? `<span class="fi mac" style="--c:${color(f.type)}"><img src="/api/icon?path=${encodeURIComponent(f.path)}" alt="" loading="lazy" onerror="this.parentNode.classList.remove('mac');this.remove()"><i>${esc((f.ext||'?').slice(0,4))}</i></span>` : `<span class="fi" style="--c:${color(f.type)}"><i>${esc((f.ext||'?').slice(0,4))}</i></span>`;
+const folderIcon = (path) => look().icons==='mac' && path ? `<span class="fo mac"><img src="/api/icon?path=${encodeURIComponent(path)}" alt="" loading="lazy" onerror="this.parentNode.classList.remove('mac');this.remove()">${svg('folder')}</span>` : `<span class="fo">${svg('folder')}</span>`;
 function tile(f){
   const pinned = S.pins.has(f.path);
   return `<div class="tile ${S.selSet.has(f.path)?'sel':''}" draggable="true" data-path="${esc(f.path)}" title="${esc(f.folder)}">${fileIcon(f)}
@@ -1187,7 +1226,7 @@ function render(){
       title = d.crumbs.length ? d.crumbs[d.crumbs.length-1].name : d.display; sub = d.display;
       const crumbs = `<div class="crumbs">${d.crumbs.map((c,i)=>`${i?'<span style="color:var(--muted)">›</span>':''}<button data-browse="${esc(c.path)}">${esc(c.name)}</button>`).join('')}
         <button data-reveal-folder="${esc(d.path)}" style="margin-left:auto;color:var(--accent)">Open in Finder ↗</button></div>`;
-      const folders = d.folders.length ? `<div class="section-h">Folders <span class="count">${d.folders.length}</span></div><div class="folders">${d.folders.map(f=>`<div class="ftile ${S.selSet.has(f.path)?'sel':''}" draggable="true" data-browse="${esc(f.path)}">${folderIcon()}<div><b>${esc(f.name)}</b><small>${f.count} item${f.count===1?'':'s'}</small></div></div>`).join('')}</div>` : '';
+      const folders = d.folders.length ? `<div class="section-h">Folders <span class="count">${d.folders.length}</span></div><div class="folders">${d.folders.map(f=>`<div class="ftile ${S.selSet.has(f.path)?'sel':''}" draggable="true" data-browse="${esc(f.path)}">${folderIcon(f.path)}<div><b>${esc(f.name)}</b><small>${f.count} item${f.count===1?'':'s'}</small></div></div>`).join('')}</div>` : '';
       const fl = filt(d.files);
       const files = d.files.length ? `<div class="section-h">Files <span class="count">${d.files.length}</span></div>${fl.length?block(sorted(fl)):empty('No files of this type','')}` : '';
       tools = crumbs + (d.files.length ? typeChips(d.files) : '');
@@ -1366,6 +1405,7 @@ function isDark(){ const t = store.get('theme', null); return t ? DARKISH.includ
 function applyTheme(){
   const t = store.get('theme', null);
   if(t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  try{ applyLook(); }catch(e){}  // the look code is defined a bit further down; at start-up it runs itself
   const dark = isDark();
   $('theme').innerHTML = svg(dark ? 'sun' : 'moon');
   $('theme').title = dark ? 'Switch to light' : 'Switch to dark';
@@ -1395,6 +1435,7 @@ const THEMES = [
   {id:'nord',     name:'Nord',     h:215, sat:.35},
   {id:'paper',    name:'Paper',    h:45,  sat:.22},
   {id:'graphite', name:'Graphite', h:220, sat:.12},
+  {id:'mac',      name:'Mac',      h:220, sat:.05, mac:true},
 ];
 const ACCENTS = [
   {id:'orange',   name:'Orange',   c:'#ff7a4d', a:'#ff9466', b:'#ff6a3d'},
@@ -1413,33 +1454,43 @@ const ACCENTS = [
   {id:'amber',    name:'Amber',    c:'#e08b00', a:'#fbbf24', b:'#d97706'},
   {id:'mocha',    name:'Mocha',    c:'#9a6b4f', a:'#b5876a', b:'#835a41'},
   {id:'graphite', name:'Graphite', c:'#4b5568', a:'#64748b', b:'#334155'},
+  {id:'system',   name:'Mac',      c:'#007aff', a:'#2b8dff', b:'#0066e0', system:true},
 ];
 const LOOK_DEFAULT = {theme:'lavender', accent:'orange', style:'soft', density:'comfortable', font:'rounded', icons:'badge'};
 const look = () => Object.assign({}, LOOK_DEFAULT, store.get('look', {}));
+// The Mac's own accent colour (from System Settings), fetched from the helper
+S.sys = null;
+async function loadSystemLook(){ try{ S.sys = await api('/api/systemlook'); }catch(e){} applyLook(); }
+function mix(hex, amt){ // lighten (+) or darken (-) a colour a little, for the gradient ends
+  const n = parseInt(hex.slice(1), 16), f = v => Math.max(0, Math.min(255, Math.round(v + amt))).toString(16).padStart(2, '0');
+  return '#' + f(n >> 16) + f((n >> 8) & 255) + f(n & 255);
+}
 function applyLook(){
   const L = look(), r = document.documentElement;
   const t = THEMES.find(x=>x.id===L.theme) || THEMES[0];
-  const a = ACCENTS.find(x=>x.id===L.accent) || ACCENTS[0];
+  let a = ACCENTS.find(x=>x.id===L.accent) || ACCENTS[0];
+  if(a.system){ const c = S.sys ? (typeof isDark==='function' && isDark() ? S.sys.accent.dark : S.sys.accent.light) : a.c; a = {c, a:mix(c, 22), b:mix(c, -18)}; }
   r.style.setProperty('--h', t.h); r.style.setProperty('--sat', t.sat);
   r.style.setProperty('--accent', a.c); r.style.setProperty('--accent1', a.a); r.style.setProperty('--accent2', a.b);
   r.dataset.style = L.style; r.dataset.density = L.density; r.dataset.font = L.font; r.dataset.icons = L.icons;
+  r.dataset.mac = t.mac ? '1' : '';
 }
-function setLook(k, v){ const L = look(); L[k] = v; store.set('look', L); applyLook(); renderAppear(); }
+function setLook(k, v){ const L = look(); L[k] = v; store.set('look', L); applyLook(); renderAppear(); if(k==='icons') render(); }
 function renderAppear(){
   const L = look(), mode = store.get('theme', null) || 'auto';
   const opts = (key, list, cur) => `<div class="opts">${list.map(([v,t])=>`<button class="${cur===v?'on':''}" data-look="${key}" data-v="${v}">${t}</button>`).join('')}</div>`;
   $('appear').innerHTML = `<h3>Appearance</h3>
     <div class="ah">Mode</div>${opts('mode', [['auto','Auto'],['light','Light'],['medium','Medium'],['dim','Dim'],['dark','Dark']], mode)}
-    <div class="ah">Theme</div><div class="swatches">${THEMES.map(t=>`<button class="sw ${L.theme===t.id?'on':''}" data-look="theme" data-v="${t.id}"><i style="background:hsl(${t.h} ${38*t.sat}% 90%)"></i>${t.name}</button>`).join('')}</div>
-    <div class="ah">Accent colour</div><div class="dots">${ACCENTS.map(a=>`<button class="dot ${L.accent===a.id?'on':''}" title="${a.name}" data-look="accent" data-v="${a.id}" style="background:linear-gradient(135deg,${a.a},${a.b})">${svg('check')}</button>`).join('')}</div>
-    <div class="ah">Style</div>${opts('style', [['soft','Soft'],['flat','Flat'],['glass','Glass'],['clay','Clay'],['outline','Outline'],['sketch','Sketch']], L.style)}
-    <div class="ah">File icons</div>${opts('icons', [['badge','Badge'],['paper','Paper'],['line','Line'],['3d','3D'],['hex','Hexagon']], L.icons)}
+    <div class="ah">Theme</div><div class="swatches">${THEMES.map(t=>`<button class="sw ${L.theme===t.id?'on':''}" data-look="theme" data-v="${t.id}"><i style="background:${t.mac?'#e8e8ed':`hsl(${t.h} ${38*t.sat}% 90%)`}"></i>${t.name}</button>`).join('')}</div>
+    <div class="ah">Accent colour</div><div class="dots">${ACCENTS.map(a=>`<button class="dot ${L.accent===a.id?'on':''}" title="${a.system?'Mac: the accent colour from System Settings':a.name}" data-look="accent" data-v="${a.id}" style="background:${a.system?(S.sys?`linear-gradient(135deg,${S.sys.accent.light},${S.sys.accent.dark})`:'conic-gradient(#ff3b30,#ff9500,#ffcc00,#28cd41,#007aff,#af52de,#ff2d55,#ff3b30)'):`linear-gradient(135deg,${a.a},${a.b})`}">${svg('check')}</button>`).join('')}</div>
+    <div class="ah">Style</div>${opts('style', [['soft','Soft'],['flat','Flat'],['glass','Glass'],['clay','Clay'],['outline','Outline'],['sketch','Sketch'],['mac','Mac']], L.style)}
+    <div class="ah">File icons</div>${opts('icons', [['badge','Badge'],['paper','Paper'],['line','Line'],['3d','3D'],['hex','Hexagon'],['mac','Mac']], L.icons)}
     <div class="ah">Size</div>${opts('density', [['comfortable','Comfortable'],['compact','Compact']], L.density)}
     <div class="ah">Font</div>${opts('font', [['rounded','Rounded'],['system','Mac'],['serif','Classic'],['hand','Hand']], L.font)}
     <button class="btn reset" data-look="reset">Back to the original look</button>`;
 }
 $('appearBtn').innerHTML = svg('palette');
-$('appearBtn').onclick = e => { e.stopPropagation(); renderAppear(); $('appear').classList.toggle('on'); };
+$('appearBtn').onclick = e => { e.stopPropagation(); renderAppear(); $('appear').classList.toggle('on'); loadSystemLook().then(renderAppear); };
 $('appear').addEventListener('click', e => {
   e.stopPropagation();
   const b = e.target.closest('[data-look]'); if(!b) return;
@@ -1451,6 +1502,7 @@ $('appear').addEventListener('click', e => {
 document.addEventListener('click', e => { if(!e.target.closest('#appear,#appearBtn')) $('appear').classList.remove('on'); });
 document.addEventListener('keydown', e => { if(e.key==='Escape' && $('appear').classList.contains('on')){ $('appear').classList.remove('on'); e.stopPropagation(); } }, true);
 applyLook();
+loadSystemLook(); setInterval(loadSystemLook, 60000);
 
 // ---------- our own drop-down menus, message boxes and tooltips (no Mac menus) ----------
 const _selValue = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
@@ -1652,6 +1704,7 @@ function menuFor(target){
       {icon:'finder', label:'Open in Finder', run:()=>post('/api/launch',{path})},
       {icon:'paste', label:pasteLabel()+' into it', dis:!clip.files.length, run:()=>pasteInto(path)},
       {icon:'link', label:'Copy path', run:()=>copyText(path,'Path copied')},
+      ...(isBin(path) ? ['-', {icon:'trash', label:'Empty Bin…', run:emptyBin}] : []),
       ...(navEl.dataset.drive ? ['-', {icon:'eject', label:'Eject', run:()=>ejectDrive(path)}] : []),
       ...(navEl.dataset.drive ? [] : arrange)]};
   }
@@ -1682,8 +1735,7 @@ function menuFor(target){
       '-',
       {icon:'grid', label:'Select all', key:K('A'), run:selectAll},
       {icon:'close', label:'Deselect', key:'Esc', run:clearSel},
-      '-',
-      {icon:'trash', label:`Move ${plural(ks.length,'item')} to Bin`, key:K('⌫'), run:()=>deleteSel(ks)},
+      ...(ks.every(inBin) ? [] : ['-', {icon:'trash', label:`Move ${plural(ks.length,'item')} to Bin`, key:K('⌫'), run:()=>deleteSel(ks)}]),
     ]};
   }
   if(fileEl && !folderEl){
@@ -1708,8 +1760,7 @@ function menuFor(target){
       {icon:'star', label:pinned?'Unpin':'Pin', run:()=>{ togglePin(f.path); render(); if(S.sel===f.path) preview(f); }},
       ...(f.ext==='pdf' ? [{icon:'scissors', label:'Split pages…', run:()=>openSplit(f)}] : []),
       {icon:'folder', label:'Open its folder', run:()=>openFolder(f.path.slice(0, f.path.lastIndexOf('/')))},
-      '-',
-      {icon:'trash', label:'Move to Bin', key:K('⌫'), run:()=>deleteSel([f.path])},
+      ...(inBin(f.path) ? [] : ['-', {icon:'trash', label:'Move to Bin', key:K('⌫'), run:()=>deleteSel([f.path])}]),
     ]};
   }
   if(folderEl){
@@ -1732,6 +1783,10 @@ function menuFor(target){
     ]};
   }
   const here = S.view==='browse' && !S.q ? S.browse : null;
+  if(here && isBin(here)) return {items:[
+      {icon:'finder', label:'Open Bin in Finder', run:()=>post('/api/launch',{path:here})},
+      {icon:'trash', label:'Empty Bin…', run:emptyBin},
+      '-', ...general]};
   return {items: here ? [
       {icon:'paste', label:pasteLabel(), key:K('V'), dis:!clip.files.length, run:()=>pasteInto(here)},
       {icon:'newfolder', label:'New folder', run:()=>newFolder(here)},
@@ -2183,7 +2238,18 @@ document.addEventListener('keydown', e => {
   else if(e.key==='Backspace' && !e.target.closest('input')){ e.preventDefault(); e.stopPropagation(); $('fpUp').click(); }
 }, true);
 
+const binPath = () => (S.places.find(p => p.icon==='trash') || {}).path || null;
+const isBin = p => !!binPath() && p === binPath();
+const inBin = p => !!binPath() && (p === binPath() || p.startsWith(binPath() + '/'));
+async function emptyBin(){
+  const d = S.view==='browse' && isBin(S.browse) && S.browseData ? S.browseData : null;
+  const n = d ? d.files.length + d.folders.length : null;
+  const ok = await ask({title:'Empty the Bin?', text:`${n!=null ? plural(n,'item') + ' will be' : 'Everything in the Bin will be'} deleted for good. This can't be undone.`, ok:'Empty Bin'});
+  if(!ok) return;
+  try{ await call('/api/emptybin', {}); toast('The Bin is empty'); refreshHere(); }catch(e){ toast(e.message); }
+}
 async function deleteSel(keys = selKeys()){
+  keys = keys.filter(k => !inBin(k));
   if(!keys.length) return;
   try{
     const d = await call('/api/delete', {paths:keys});

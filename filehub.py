@@ -61,6 +61,7 @@ def file_type(ext):
 
 
 VOLUMES = "/Volumes"
+TRASH = os.path.join(HOME, ".Trash")
 
 
 def drives():
@@ -410,6 +411,77 @@ def search(q):
     return metadata(paths)
 
 
+# ---------- The Mac's own look: its accent colour and its real file icons ----------
+ACCENT_JS = """ObjC.import('AppKit');
+function hex(c){ c = c.colorUsingColorSpace($.NSColorSpace.sRGBColorSpace);
+  return '#' + [c.redComponent, c.greenComponent, c.blueComponent].map(v => ('0' + Math.round(v * 255).toString(16)).slice(-2)).join(''); }
+function run(){
+  $.NSApplication.sharedApplication;
+  const out = {};
+  ['NSAppearanceNameAqua', 'NSAppearanceNameDarkAqua'].forEach((n, i) => {
+    $.NSApp.appearance = $.NSAppearance.appearanceNamed($[n]);
+    out[i ? 'dark' : 'light'] = hex($.NSColor.controlAccentColor);
+  });
+  return JSON.stringify(out);
+}"""
+# Apple's documented accent colours, used when the script above can't run
+ACCENT_TABLE = {-1: ("#8e8e93", "#98989d"), 0: ("#ff3b30", "#ff453a"), 1: ("#ff9500", "#ff9f0a"),
+                2: ("#ffcc00", "#ffd60a"), 3: ("#28cd41", "#32d74b"), 4: ("#007aff", "#0a84ff"),
+                5: ("#af52de", "#bf5af2"), 6: ("#ff2d55", "#ff375f")}
+_sys_look = {"time": 0, "data": None}
+
+
+def system_look():
+    """The accent colour chosen in System Settings (light and dark versions) and the current mode."""
+    if time.time() - _sys_look["time"] < 20 and _sys_look["data"]:
+        return _sys_look["data"]
+    light, dark = ACCENT_TABLE[4]
+    try:
+        out = subprocess.run(["defaults", "read", "-g", "AppleAccentColor"], capture_output=True, text=True, timeout=5)
+        light, dark = ACCENT_TABLE.get(int(out.stdout.strip()), ACCENT_TABLE[4])
+    except Exception:
+        pass
+    try:
+        out = subprocess.run(["osascript", "-l", "JavaScript", "-e", ACCENT_JS], capture_output=True, text=True, timeout=10)
+        got = json.loads(out.stdout.strip())
+        if got.get("light") and got.get("dark"):
+            light, dark = got["light"], got["dark"]
+    except Exception:
+        pass
+    mode = subprocess.run(["defaults", "read", "-g", "AppleInterfaceStyle"], capture_output=True, text=True, timeout=5).stdout.strip()
+    data = {"accent": {"light": light, "dark": dark}, "dark": mode.lower() == "dark"}
+    _sys_look.update(time=time.time(), data=data)
+    return data
+
+
+ICON_JS = """ObjC.import('AppKit');
+function run(argv) {
+  const [path, size, out] = argv, n = parseInt(size, 10);
+  const img = $.NSWorkspace.sharedWorkspace.iconForFile(path);
+  const rep = $.NSBitmapImageRep.alloc.initWithBitmapDataPlanesPixelsWidePixelsHighBitsPerSampleSamplesPerPixelHasAlphaIsPlanarColorSpaceNameBytesPerRowBitsPerPixel(null, n, n, 8, 4, true, false, $.NSDeviceRGBColorSpace, 0, 0);
+  $.NSGraphicsContext.saveGraphicsState;
+  $.NSGraphicsContext.currentContext = $.NSGraphicsContext.graphicsContextWithBitmapImageRep(rep);
+  img.drawInRectFromRectOperationFraction($.NSMakeRect(0, 0, n, n), $.NSZeroRect, $.NSCompositingOperationSourceOver, 1);
+  $.NSGraphicsContext.restoreGraphicsState;
+  rep.representationUsingTypeProperties($.NSBitmapImageFileTypePNG, $()).writeToFileAtomically(out, true);
+  return 'ok';
+}"""
+ICONS_DIR = os.path.join(THUMBS, "mac-icons")
+os.makedirs(ICONS_DIR, exist_ok=True)
+
+
+def mac_icon(path, size=128):
+    """The icon the Mac itself shows for this file (cached per file type)."""
+    key = "folder" if os.path.isdir(path) else (os.path.splitext(path)[1].lower().lstrip(".") or "file")
+    if path.endswith(".app"):
+        key = "app-" + os.path.basename(path)
+    out = os.path.join(ICONS_DIR, "%s-%d.png" % (re.sub(r"[^a-z0-9.-]", "_", key), size))
+    if not os.path.exists(out):
+        subprocess.run(["osascript", "-l", "JavaScript", "-e", ICON_JS, path, str(size), out],
+                       capture_output=True, timeout=20)
+    return out if os.path.exists(out) else None
+
+
 def thumbnail(path, size=480):
     key = re.sub(r"[^A-Za-z0-9]", "_", path)[-150:] + "_%d" % size
     out_dir = os.path.join(THUMBS, key)
@@ -581,12 +653,15 @@ def places():
         out.append({"name": "iCloud Drive", "path": ICLOUD, "icon": "icloud"})
     out.append({"name": "Pictures", "path": os.path.join(HOME, "Pictures"), "icon": "pictures"})
     out.append({"name": "Home", "path": HOME, "icon": "home"})
+    out.append({"name": "Bin", "path": TRASH, "icon": "trash"})
     return [p for p in out if os.path.isdir(p["path"])]
 
 
 def nice_path(p):
     if p.startswith(VOLUMES + "/"):
         return p[len(VOLUMES) + 1:]
+    if p == TRASH or p.startswith(TRASH + "/"):
+        return "Bin" + p[len(TRASH):]
     return p.replace(ICLOUD, "iCloud Drive", 1).replace(HOME, "~", 1)
 
 
@@ -605,10 +680,10 @@ def browse(path):
         elif os.path.isfile(full):
             files.append(full)
     crumbs, cur = [], path
-    tops = [HOME, ICLOUD] + drive_roots()
+    tops = [HOME, ICLOUD, TRASH] + drive_roots()
     while cur.startswith(HOME) or on_drive(cur):
-        crumbs.insert(0, {"name": "Home" if cur == HOME else
-                          ("iCloud Drive" if cur == ICLOUD else os.path.basename(cur)), "path": cur})
+        crumbs.insert(0, {"name": "Home" if cur == HOME else ("Bin" if cur == TRASH else
+                          ("iCloud Drive" if cur == ICLOUD else os.path.basename(cur))), "path": cur})
         if cur in tops:
             break
         cur = os.path.dirname(cur)
@@ -895,6 +970,15 @@ def delete_items(paths):
     return trash(paths, force=True)
 
 
+def empty_bin():
+    out = subprocess.run(["osascript", "-e", 'tell application "Finder" to empty trash'],
+                         capture_output=True, text=True, timeout=600)
+    if out.returncode != 0:
+        raise ValueError("Couldn't empty the Bin: " + (out.stderr.strip().split("\n")[-1] or "Finder said no"))
+    _library["time"] = 0
+    return True
+
+
 def eject(path):
     path = os.path.realpath(path)
     if path not in drive_roots():
@@ -969,6 +1053,23 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, places())
             if url.path == "/api/drives":
                 return self.send(200, drives())
+            if url.path == "/api/systemlook":
+                return self.send(200, system_look())
+            if url.path == "/api/icon":
+                p = qs.get("path", "")
+                if not (inside(p, True) and os.path.exists(p)):
+                    return self.send(404, {"error": "not found"})
+                ic = mac_icon(p, int(qs.get("s", 128)))
+                if not ic:
+                    return self.send(404, {"error": "no icon"})
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Cache-Control", "max-age=86400")
+                with open(ic, "rb") as fh:
+                    body = fh.read()
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                return self.wfile.write(body)
             if url.path == "/api/stamp":  # cheap: has this folder changed? (files added, removed, renamed)
                 p = os.path.realpath(qs.get("path", "") or HOME)
                 if not inside(p, True) or not os.path.isdir(p):
@@ -1074,6 +1175,12 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send(400, {"error": "Nothing to paste. Copy a file first."})
                 return self.send(200, {"made": copy_into(files, p), "sources": files})
             except (ValueError, OSError, subprocess.SubprocessError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/emptybin":
+            try:
+                empty_bin()
+                return self.send(200, {"ok": True})
+            except (ValueError, subprocess.SubprocessError) as e:
                 return self.send(400, {"error": str(e)})
         if url.path == "/api/choosefolder":
             chosen = choose_folder(data.get("for") or "split")
