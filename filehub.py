@@ -20,6 +20,10 @@ import time
 import webbrowser
 import zipfile
 import urllib.request
+import urllib.error
+import struct
+import uuid
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
@@ -894,6 +898,393 @@ def rotate_pdf(path, rotations, mode="copy"):
         os.unlink(spec)
 
 
+# ---------- Scanning from network printers / scanners (eSCL, the "AirScan" standard) ----------
+# Most network scanners made since ~2015 (HP, Canon, Epson, Brother, Xerox...) answer eSCL over HTTP.
+# FileHub finds them with Bonjour (dns-sd), asks what they can do, runs the scan and keeps the pages
+# until you choose what to make of them: JPEG, PNG, one PDF per page or one PDF with every page.
+ESCL_NS = {"scan": "http://schemas.hp.com/imaging/escl/2011/05/03", "pwg": "http://www.pwg.org/schemas/2010/12/sm"}
+SCAN_DIR = os.path.join(THUMBS, "scans")
+SCANNERS_FILE = os.path.join(HOME, "Library", "Application Support", "FileHub", "scanners.json")
+PAPER = {  # width x height in 1/300 inch, the unit eSCL uses
+    "a4": (2480, 3508), "letter": (2550, 3300), "legal": (2550, 4200), "a5": (1748, 2480), "a3": (3508, 4961),
+}
+_scan_jobs = {}      # job id -> {"state", "pages": [paths], "error", "dpi", ...}
+_scanners_cache = {"time": 0, "items": []}
+
+
+def _dns_sd(args, timeout):
+    """Run dns-sd (it never exits on its own) for a short while and return what it printed."""
+    try:
+        proc = subprocess.Popen(["dns-sd"] + args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+    except OSError:
+        return ""
+    try:
+        out, _ = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        out, _ = proc.communicate()
+    return out or ""
+
+
+def _unescape_dns(name):
+    return re.sub(r"\\(\d{3})", lambda m: chr(int(m.group(1))), name).replace("\\.", ".")
+
+
+def discover_scanners(timeout=3.0):
+    """Scanners announcing eSCL on the local network, via Bonjour's zone listing (-Z)."""
+    found = {}
+    for service, scheme in (("_uscan._tcp", "http"), ("_uscans._tcp", "https")):
+        out = _dns_sd(["-Z", service, "local."], timeout)
+        srv, txt = {}, {}
+        for line in out.splitlines():
+            parts = line.split()
+            if len(parts) >= 6 and parts[1] == "SRV":
+                srv[parts[0]] = (parts[5].rstrip("."), int(parts[4]))
+            elif len(parts) >= 3 and parts[1] == "TXT":
+                txt[parts[0]] = dict(kv.split("=", 1) for kv in re.findall(r'"([^"]*)"', line) if "=" in kv)
+        for key, (host, port) in srv.items():
+            t = txt.get(key, {})
+            rs = (t.get("rs") or "eSCL").strip("/")
+            name = _unescape_dns(key.split("._uscan")[0])
+            sid = re.sub(r"[^a-z0-9]+", "-", (name + "-" + host).lower()).strip("-")
+            found[sid] = {"id": sid, "name": name, "host": host, "port": port, "base": "%s://%s:%d/%s" % (scheme, host, port, rs),
+                          "model": t.get("ty") or "", "source": "network"}
+    return list(found.values())
+
+
+def _load_manual_scanners():
+    try:
+        with open(SCANNERS_FILE) as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return []
+
+
+def _save_manual_scanners(items):
+    os.makedirs(os.path.dirname(SCANNERS_FILE), exist_ok=True)
+    with open(SCANNERS_FILE, "w") as fh:
+        json.dump(items, fh)
+
+
+def scanners(refresh=False):
+    if refresh or time.time() - _scanners_cache["time"] > 60:
+        _scanners_cache["items"] = discover_scanners()
+        _scanners_cache["time"] = time.time()
+    items = list(_scanners_cache["items"])
+    ids = {x["id"] for x in items}
+    for m in _load_manual_scanners():
+        if m["id"] not in ids:
+            items.append(m)
+    return items
+
+
+def scanner_by_id(sid):
+    for x in scanners():
+        if x["id"] == sid:
+            return x
+    raise ValueError("That scanner isn't on the network right now. Press Refresh, or check it is switched on.")
+
+
+def _http(url, data=None, method=None, timeout=30, headers=None):
+    req = urllib.request.Request(url, data=data, method=method or ("POST" if data else "GET"))
+    req.add_header("User-Agent", "FileHub")
+    for k, v in (headers or {}).items():
+        req.add_header(k, v)
+    import ssl
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE  # scanners use self-signed certificates on the local network
+    return urllib.request.urlopen(req, timeout=timeout, context=ctx)
+
+
+def add_scanner_by_address(address):
+    """Add a scanner by IP or name (for ones Bonjour doesn't see). Checks it really answers eSCL."""
+    address = (address or "").strip().rstrip("/")
+    if not address:
+        raise ValueError("Type the scanner's address, like 192.168.1.20")
+    tries = [address] if "://" in address else ["http://%s" % address, "http://%s:8080" % address, "https://%s" % address]
+    last = None
+    for base in tries:
+        for path in ("/eSCL", ""):
+            try:
+                with _http(base + path + "/ScannerCapabilities", timeout=6) as r:
+                    caps = parse_caps(r.read())
+                    host = re.sub(r"^https?://", "", base).split(":")[0]
+                    sid = "manual-" + re.sub(r"[^a-z0-9]+", "-", host.lower()).strip("-")
+                    item = {"id": sid, "name": caps.get("name") or host, "host": host, "port": 0, "base": base + path,
+                            "model": caps.get("model", ""), "source": "manual"}
+                    items = [x for x in _load_manual_scanners() if x["id"] != sid] + [item]
+                    _save_manual_scanners(items)
+                    return item
+            except Exception as e:  # noqa: BLE001 - any network problem just means "not this address"
+                last = e
+    raise ValueError("No scanner answered at “%s” (%s). Check the address and that the scanner is on." % (address, last))
+
+
+def forget_scanner(sid):
+    _save_manual_scanners([x for x in _load_manual_scanners() if x["id"] != sid])
+
+
+def parse_caps(xml_bytes):
+    """What the scanner can do, in plain lists."""
+    root = ET.fromstring(xml_bytes)
+    f = lambda path: root.find(path, ESCL_NS)  # noqa: E731
+    t = lambda path: (f(path).text.strip() if f(path) is not None and f(path).text else "")  # noqa: E731
+    caps = {"name": t("pwg:MakeAndModel") or t("scan:MakeAndModel"), "model": t("pwg:MakeAndModel"), "sources": {}}
+    for key, path in (("platen", "scan:Platen/scan:PlatenInputCaps"), ("feeder", "scan:Adf/scan:AdfSimplexInputCaps"),
+                      ("duplex", "scan:Adf/scan:AdfDuplexInputCaps")):
+        node = f(path)
+        if node is None:
+            continue
+        modes = sorted({m.text.strip() for m in node.findall(".//scan:ColorMode", ESCL_NS) if m.text})
+        res = sorted({int(r.text) for r in node.findall(".//scan:DiscreteResolution/scan:XResolution", ESCL_NS) if r.text and r.text.isdigit()})
+        fmts = sorted({d.text.strip() for d in node.findall(".//pwg:DocumentFormat", ESCL_NS) if d.text} |
+                      {d.text.strip() for d in node.findall(".//scan:DocumentFormatExt", ESCL_NS) if d.text})
+        mw = node.find("scan:MaxWidth", ESCL_NS)
+        mh = node.find("scan:MaxHeight", ESCL_NS)
+        caps["sources"][key] = {"colors": modes, "resolutions": res or [300], "formats": fmts,
+                                "maxW": int(mw.text) if mw is not None and mw.text else 2550,
+                                "maxH": int(mh.text) if mh is not None and mh.text else 3508}
+    if not caps["sources"]:
+        raise ValueError("That device answered, but doesn't describe a scanner.")
+    return caps
+
+
+def scanner_caps(sid):
+    sc = scanner_by_id(sid)
+    try:
+        with _http(sc["base"] + "/ScannerCapabilities", timeout=10) as r:
+            caps = parse_caps(r.read())
+    except (urllib.error.URLError, OSError, ET.ParseError) as e:
+        raise ValueError("Couldn't talk to “%s” (%s). Is it switched on and awake?" % (sc["name"], e))
+    caps["scanner"] = sc
+    return caps
+
+
+def _scan_settings_xml(source, color, dpi, width, height, duplex):
+    fmt = "image/jpeg"
+    src = "Feeder" if source in ("feeder", "duplex") else "Platen"
+    cm = {"color": "RGB24", "grey": "Grayscale8", "bw": "BlackAndWhite1"}.get(color, "RGB24")
+    dup = "<scan:Duplex>true</scan:Duplex>" if source == "duplex" else ""
+    return ('<?xml version="1.0" encoding="UTF-8"?>'
+            '<scan:ScanSettings xmlns:pwg="%s" xmlns:scan="%s"><pwg:Version>2.0</pwg:Version>'
+            '<pwg:ScanRegions><pwg:ScanRegion><pwg:ContentRegionUnits>escl:ThreeHundredthsOfInches</pwg:ContentRegionUnits>'
+            '<pwg:Height>%d</pwg:Height><pwg:Width>%d</pwg:Width><pwg:XOffset>0</pwg:XOffset><pwg:YOffset>0</pwg:YOffset>'
+            '</pwg:ScanRegion></pwg:ScanRegions><pwg:InputSource>%s</pwg:InputSource><scan:ColorMode>%s</scan:ColorMode>'
+            '<scan:XResolution>%d</scan:XResolution><scan:YResolution>%d</scan:YResolution>'
+            '<pwg:DocumentFormat>%s</pwg:DocumentFormat>%s</scan:ScanSettings>'
+            % (ESCL_NS["pwg"], ESCL_NS["scan"], height, width, src, cm, dpi, dpi, fmt, dup)).encode()
+
+
+def start_scan(sid, source="platen", color="color", dpi=300, paper="a4", job=None):
+    """Begin a scan in the background. Pages are added to the job as they arrive."""
+    sc = scanner_by_id(sid)
+    caps = scanner_caps(sid)
+    src = caps["sources"].get(source) or caps["sources"].get("platen") or list(caps["sources"].values())[0]
+    if source not in caps["sources"]:
+        source = "platen" if "platen" in caps["sources"] else list(caps["sources"])[0]
+    if dpi not in src["resolutions"]:
+        dpi = min(src["resolutions"], key=lambda r: abs(r - dpi))
+    pw, ph = PAPER.get(paper, (src["maxW"], src["maxH"]))
+    pw, ph = min(pw, src["maxW"]), min(ph, src["maxH"])
+    jid = job or uuid.uuid4().hex[:12]
+    j = _scan_jobs.setdefault(jid, {"id": jid, "pages": [], "state": "idle", "error": None, "dpi": dpi})
+    if j["state"] == "scanning":
+        raise ValueError("Already scanning. Wait for it to finish.")
+    j.update({"state": "scanning", "error": None, "dpi": dpi, "scanner": sc["name"]})
+    os.makedirs(os.path.join(SCAN_DIR, jid), exist_ok=True)
+    threading.Thread(target=_run_scan, args=(j, sc, source, color, dpi, pw, ph), daemon=True).start()
+    return {"job": jid, "dpi": dpi, "source": source}
+
+
+def _run_scan(j, sc, source, color, dpi, pw, ph):
+    try:
+        body = _scan_settings_xml(source, color, dpi, pw, ph, source == "duplex")
+        try:
+            with _http(sc["base"] + "/ScanJobs", data=body, timeout=30, headers={"Content-Type": "text/xml"}) as r:
+                loc = r.headers.get("Location") or ""
+        except urllib.error.HTTPError as e:
+            if e.code == 409:
+                raise ValueError("The scanner is busy or nothing is in the feeder. Put the paper in and try again.")
+            if e.code == 503:
+                raise ValueError("The scanner says it is busy. Try again in a moment.")
+            raise ValueError("The scanner refused the job (%s)." % e.code)
+        if not loc:
+            raise ValueError("The scanner didn't say where the scan is.")
+        if loc.startswith("/"):
+            m = re.match(r"^(https?://[^/]+)", sc["base"])
+            loc = m.group(1) + loc
+        n = len(j["pages"])
+        waits = 0
+        while True:
+            try:
+                with _http(loc.rstrip("/") + "/NextDocument", timeout=120) as r:
+                    data = r.read()
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    break  # no more pages
+                if e.code in (503, 409) and waits < 60:
+                    waits += 1
+                    time.sleep(1)
+                    continue
+                raise ValueError("The scanner stopped early (%s)." % e.code)
+            if not data:
+                break
+            n += 1
+            path = os.path.join(SCAN_DIR, j["id"], "p%03d.jpg" % n)
+            with open(path, "wb") as fh:
+                fh.write(data)
+            j["pages"].append({"n": n, "path": path, "rot": 0, "size": jpeg_info(data), "dpi": dpi})
+            if source == "platen":
+                break  # a flatbed gives one page per scan
+        try:
+            _http(loc, method="DELETE", timeout=5).close()
+        except Exception:  # noqa: BLE001
+            pass
+        if not j["pages"]:
+            raise ValueError("Nothing came back. Is there paper on the glass or in the feeder?")
+        j["state"] = "done"
+    except Exception as e:  # noqa: BLE001 - whatever went wrong, the page must hear about it
+        j["state"] = "error"
+        j["error"] = str(e)
+
+
+def scan_status(jid):
+    j = _scan_jobs.get(jid)
+    if not j:
+        raise ValueError("That scan is gone.")
+    return {"job": jid, "state": j["state"], "error": j["error"], "dpi": j["dpi"],
+            "pages": [{"n": p["n"], "rot": p["rot"], "w": p["size"][0], "h": p["size"][1], "dpi": p.get("dpi", j["dpi"])} for p in j["pages"]]}
+
+
+def scan_page_path(jid, n):
+    j = _scan_jobs.get(jid)
+    for p in (j or {}).get("pages", []):
+        if p["n"] == int(n):
+            return p["path"]
+    return None
+
+
+def scan_edit(jid, pages):
+    """Keep only these pages, in this order, with these turns: [{"n":1,"rot":90}, ...]"""
+    j = _scan_jobs.get(jid)
+    if not j:
+        raise ValueError("That scan is gone.")
+    by_n = {p["n"]: p for p in j["pages"]}
+    kept = []
+    for it in pages:
+        p = by_n.get(int(it.get("n", 0)))
+        if p:
+            p["rot"] = int(it.get("rot", 0)) % 360
+            kept.append(p)
+    j["pages"] = kept
+    return scan_status(jid)
+
+
+def jpeg_info(data):
+    """(width, height, components) of a JPEG, read from its header."""
+    i = 2
+    while i + 9 < len(data):
+        if data[i] != 0xFF:
+            i += 1
+            continue
+        marker = data[i + 1]
+        if marker in (0xD8, 0x01) or 0xD0 <= marker <= 0xD7:
+            i += 2
+            continue
+        length = struct.unpack(">H", data[i + 2:i + 4])[0]
+        if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+            h, w = struct.unpack(">HH", data[i + 5:i + 9])
+            return (w, h, data[i + 9])
+        i += 2 + length
+    return (0, 0, 3)
+
+
+def pdf_from_jpegs(pages, dpi):
+    """A PDF with one JPEG page each, at real paper size. pages: [(jpeg bytes, rotation[, dpi])]. Pure Python."""
+    objs = []  # list of bytes, object i+1
+
+    def add(b):
+        objs.append(b)
+        return len(objs)
+    page_ids = []
+    pages_id_placeholder = None
+    kids = []
+    # objects: 1 catalog, 2 pages, then per page: image, content, page
+    objs.append(b"")  # 1 catalog (filled later)
+    objs.append(b"")  # 2 pages (filled later)
+    for item in pages:
+        data, rot = item[0], item[1]
+        d = item[2] if len(item) > 2 and item[2] else dpi
+        w, h, comps = jpeg_info(data)
+        cs = b"/DeviceGray" if comps == 1 else (b"/DeviceCMYK" if comps == 4 else b"/DeviceRGB")
+        pw, ph = w * 72.0 / d, h * 72.0 / d
+        img = add(b"<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace %s /BitsPerComponent 8 /Filter /DCTDecode /Length %d >>\nstream\n" % (w, h, cs, len(data)) + data + b"\nendstream")
+        content = ("q %.2f 0 0 %.2f 0 0 cm /Im1 Do Q" % (pw, ph)).encode()
+        cid = add(b"<< /Length %d >>\nstream\n" % len(content) + content + b"\nendstream")
+        pid = add(("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2f %.2f] /Rotate %d /Resources << /XObject << /Im1 %d 0 R >> >> /Contents %d 0 R >>" % (pw, ph, rot % 360, img, cid)).encode())
+        kids.append(pid)
+    objs[1] = ("<< /Type /Pages /Kids [%s] /Count %d >>" % (" ".join("%d 0 R" % k for k in kids), len(kids))).encode()
+    objs[0] = b"<< /Type /Catalog /Pages 2 0 R >>"
+    out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = []
+    for i, body in enumerate(objs):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % (i + 1) + body + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1)
+    for off in offsets:
+        out += b"%010d 00000 n \n" % off
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objs) + 1, xref)
+    return bytes(out)
+
+
+def _sips(args):
+    out = subprocess.run(["sips"] + args, capture_output=True, text=True, timeout=120)
+    if out.returncode != 0:
+        raise ValueError("Couldn't convert the picture: " + (out.stderr.strip().split("\n")[-1] or "sips failed"))
+
+
+def save_scan(jid, fmt="pdf", mode="one", dest=None, name=None):
+    """Write the scanned pages as files in dest. fmt: jpeg | png | pdf; mode (pdf): one | separate."""
+    j = _scan_jobs.get(jid)
+    if not j or not j["pages"]:
+        raise ValueError("There are no scanned pages yet.")
+    dest = os.path.realpath(dest or os.path.join(HOME, "Documents", "Scans"))
+    if not inside(dest, True):
+        raise ValueError("Can't save there.")
+    os.makedirs(dest, exist_ok=True)
+    name = re.sub(r'[/:\\]', "-", (name or "").strip()) or ("Scan " + datetime.now().strftime("%Y-%m-%d %H.%M"))
+    made = []
+    pages = j["pages"]
+    if fmt == "pdf" and mode == "one":
+        out = free_name(dest, name + ".pdf")
+        with open(out, "wb") as fh:
+            fh.write(pdf_from_jpegs([(open(p["path"], "rb").read(), p["rot"], p.get("dpi")) for p in pages], j["dpi"]))
+        made.append(out)
+    else:
+        for k, p in enumerate(pages, 1):
+            stem = name if len(pages) == 1 else "%s - page %d" % (name, k)
+            if fmt == "pdf":
+                out = free_name(dest, stem + ".pdf")
+                with open(out, "wb") as fh:
+                    fh.write(pdf_from_jpegs([(open(p["path"], "rb").read(), p["rot"], p.get("dpi"))], j["dpi"]))
+            elif fmt == "png":
+                out = free_name(dest, stem + ".png")
+                _sips(["-s", "format", "png"] + (["-r", str(p["rot"])] if p["rot"] else []) + [p["path"], "--out", out])
+            else:
+                out = free_name(dest, stem + ".jpg")
+                if p["rot"]:
+                    _sips(["-r", str(p["rot"]), p["path"], "--out", out])
+                else:
+                    shutil.copy2(p["path"], out)
+            made.append(out)
+    for m in made:
+        CREATED.add(m)
+    _library["time"] = 0
+    return {"made": made, "folder": dest, "names": [os.path.basename(m) for m in made]}
+
+
 COMPRESS_LEVELS = {  # name: (dots per inch, JPEG quality)
     "small": (100, 0.5),
     "balanced": (150, 0.7),
@@ -1598,6 +1989,21 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_file(t, "image/png") if t else self.send(404, {"error": "no preview"})
             if url.path == "/api/signatures":
                 return self.send(200, {"items": signatures()})
+            if url.path == "/api/scanners":
+                return self.send(200, {"items": scanners(refresh=qs.get("refresh") == "1")})
+            if url.path == "/api/scanner/caps":
+                try:
+                    return self.send(200, scanner_caps(qs.get("id", "")))
+                except ValueError as e:
+                    return self.send(400, {"error": str(e)})
+            if url.path == "/api/scan/status":
+                try:
+                    return self.send(200, scan_status(qs.get("job", "")))
+                except ValueError as e:
+                    return self.send(400, {"error": str(e)})
+            if url.path == "/api/scan/page":
+                path = scan_page_path(qs.get("job", ""), qs.get("n", "0"))
+                return self.send_file(path, "image/jpeg") if path else self.send(404, {"error": "no page"})
             if url.path == "/api/pdfinfo":
                 p = qs.get("path", "")
                 if not allowed(p) or not p.lower().endswith(".pdf"):
@@ -1695,6 +2101,31 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/merge":
             try:
                 return self.send(200, merge_pdfs(data.get("items", []), data.get("name"), data.get("dest") or None))
+            except (ValueError, OSError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/scanners/add":
+            try:
+                return self.send(200, add_scanner_by_address(data.get("address", "")))
+            except ValueError as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/scanners/forget":
+            forget_scanner(data.get("id", ""))
+            return self.send(200, {"ok": True})
+        if url.path == "/api/scan/start":
+            try:
+                return self.send(200, start_scan(data.get("scanner", ""), data.get("source", "platen"), data.get("color", "color"),
+                                                 int(data.get("dpi", 300)), data.get("paper", "a4"), data.get("job")))
+            except (ValueError, TypeError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/scan/edit":
+            try:
+                return self.send(200, scan_edit(data.get("job", ""), data.get("pages", [])))
+            except (ValueError, TypeError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/scan/save":
+            try:
+                return self.send(200, save_scan(data.get("job", ""), data.get("format", "pdf"), data.get("mode", "one"),
+                                                data.get("dest") or None, data.get("name")))
             except (ValueError, OSError) as e:
                 return self.send(400, {"error": str(e)})
         if url.path == "/api/signatures/add":

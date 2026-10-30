@@ -185,6 +185,46 @@ dd a{color:var(--accent)}
 /* Split window */
 .modal{position:fixed;inset:0;background:rgba(10,14,22,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:20;padding:24px}
 .modal.open{display:flex}
+/* ---- Scan window: big, touch-friendly ---- */
+.scanwin{z-index:40;padding:12px}
+.scanbox{width:min(1240px,100%);height:min(900px,100%);background:var(--bg);border-radius:22px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden;animation:popin .14s ease-out}
+.scanhead{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--panel);flex-wrap:wrap}
+.scanhead h2{margin:0;font-size:20px}
+.scandev{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.scandev select{min-height:44px;font-size:15px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);max-width:320px}
+.scanhead .btn,.scanfoot .btn{min-height:44px;font-size:15px;padding:0 16px}
+.scanbody{flex:1;display:grid;grid-template-columns:minmax(300px,380px) 1fr;min-height:0}
+.scanopts{padding:18px;overflow:auto;display:flex;flex-direction:column;gap:16px;border-right:1px solid var(--line)}
+.og{display:flex;flex-direction:column;gap:6px}
+.og.grow{flex:1;min-width:160px}
+.ol{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.scchips{display:flex;flex-wrap:wrap;gap:8px}
+.scchips button{min-height:46px;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:15px;font-weight:600;cursor:pointer;flex:1 1 auto}
+.scchips button:hover{border-color:var(--accent)}
+.scchips button.on{background:var(--accent-grad);color:#fff;border-color:transparent;box-shadow:var(--accent-glow)}
+.scchips button:disabled{opacity:.35;cursor:default}
+.scanbig{min-height:72px;border:0;border-radius:18px;background:var(--accent-grad);color:#fff;font:inherit;font-size:22px;font-weight:800;cursor:pointer;box-shadow:var(--accent-glow);display:flex;align-items:center;justify-content:center;gap:10px}
+.scanbig:disabled{opacity:.5;cursor:default}
+.scanbig.busy::before{content:"";width:22px;height:22px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:s .8s linear infinite}
+.scanmsg{font-size:14px;color:var(--muted);min-height:20px;line-height:1.4}
+.scanmsg.err{color:#e5484d}
+.scanpages{display:flex;flex-direction:column;min-height:0}
+.scanstriphead{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line);font-size:14px}
+.scanstrip{flex:1;overflow:auto;padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;align-content:start}
+.scanempty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 20px;font-size:15px;line-height:1.5}
+.scanempty .ic{font-size:40px;margin-bottom:8px}
+.scpg{background:var(--panel);border-radius:16px;padding:10px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.scpg .im{aspect-ratio:1/1.3;display:grid;place-items:center;background:var(--bg);border-radius:10px;overflow:hidden}
+.scpg img{max-width:100%;max-height:100%;transition:transform .2s;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.scpg .nm{font-size:13px;font-weight:700;text-align:center}
+.scpg .acts{display:flex;gap:4px;justify-content:center}
+.scpg .acts button{min-width:36px;min-height:40px;flex:1;border:0;border-radius:10px;background:var(--bg);color:var(--text);font-size:17px;cursor:pointer}
+.scpg .acts button:hover{background:var(--hover)}
+.scpg .acts button.del{color:#e5484d}
+.scanfoot{display:flex;align-items:flex-end;gap:16px;padding:14px 18px;background:var(--panel);flex-wrap:wrap}
+.scanfoot input{min-height:44px;font-size:15px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);width:100%}
+.scansave{min-width:140px;font-weight:800}
+@media (max-width:900px){.scanbody{grid-template-columns:1fr;overflow:auto}.scanopts{border-right:0;border-bottom:1px solid var(--line)}}
 .mbox{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:min(1180px,100%);height:min(820px,100%);display:flex;flex-direction:column;overflow:hidden}
 .mhead{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
 .mhead h2{font-size:16px;margin:0}
@@ -1006,6 +1046,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
         <button data-v="tiles" title="Tiles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="8" height="7" rx="1.5"/><rect x="13" y="4" width="8" height="7" rx="1.5"/><rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/><path d="M5.5 7.5h3M15.5 7.5h3M5.5 16.5h3M15.5 16.5h3"/></svg></button>
         <button data-v="list" title="List"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
       </div>
+      <button class="ctl" id="scanBtn" title="Scan from a printer or scanner on the network"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h16M6 14V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M8 17h2"/></svg></button>
       <button class="ctl" id="refresh" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
       <button class="ctl" id="appearBtn" title="Appearance: themes, accent colour and style"></button>
       <button class="ctl" id="theme" title="Light / dark"></button>
@@ -1167,6 +1208,39 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
     <button class="fsx" id="fsExit" title="Exit full screen (Esc)"></button>
   </div>
 </div>
+<div class="modal scanwin" id="scanModal"><div class="scanbox">
+  <div class="scanhead">
+    <h2>Scan</h2>
+    <div class="scandev">
+      <select id="scDev" title="Which scanner"></select>
+      <button class="btn" id="scRefresh" title="Look for scanners on the network again">↻ Look again</button>
+      <button class="btn" id="scAdd" title="Add a scanner that wasn't found, by its address">Add by address…</button>
+    </div>
+    <span class="sp"></span>
+    <button class="btn" id="scClose">Close</button>
+  </div>
+  <div class="scanbody">
+    <div class="scanopts" id="scOpts">
+      <div class="og"><div class="ol">Colour</div><div class="scchips" data-opt="color"><button data-v="color">Colour</button><button data-v="grey">Grey</button><button data-v="bw">Black &amp; white</button></div></div>
+      <div class="og"><div class="ol">Paper is</div><div class="scchips" data-opt="source"><button data-v="platen">On the glass</button><button data-v="feeder">In the feeder</button><button data-v="duplex">In the feeder, both sides</button></div></div>
+      <div class="og"><div class="ol">Sharpness</div><div class="scchips" data-opt="dpi"></div></div>
+      <div class="og"><div class="ol">Paper size</div><div class="scchips" data-opt="paper"><button data-v="a4">A4</button><button data-v="letter">Letter</button><button data-v="a5">A5</button><button data-v="legal">Legal</button><button data-v="max">Whole glass</button></div></div>
+      <button class="scanbig" id="scGo"><span id="scGoLbl">Scan</span></button>
+      <div class="scanmsg" id="scMsg">Choose a scanner to start.</div>
+    </div>
+    <div class="scanpages">
+      <div class="scanstriphead"><b id="scCount">No pages yet</b><span class="sp"></span><button class="btn" id="scClear" title="Throw these pages away and start again">Start again</button></div>
+      <div class="scanstrip" id="scPages"><div class="scanempty" id="scEmpty"><div class="ic">📄</div>Scanned pages appear here.<br>Turn, remove or reorder them before saving.</div></div>
+    </div>
+  </div>
+  <div class="scanfoot">
+    <div class="og"><div class="ol">Save as</div><div class="scchips" data-opt="format"><button data-v="pdf">PDF</button><button data-v="jpeg">JPEG</button><button data-v="png">PNG</button></div></div>
+    <div class="og" id="scModeRow"><div class="ol">PDF</div><div class="scchips" data-opt="mode"><button data-v="one">All pages in one file</button><button data-v="separate">One file per page</button></div></div>
+    <div class="og grow"><div class="ol">Name</div><input id="scName" spellcheck="false" autocomplete="off"></div>
+    <div class="og"><div class="ol">Folder</div><button class="btn" id="scDest" title="Where the files are saved">Documents › Scans</button></div>
+    <button class="btn primary scansave" id="scSave" disabled>Save</button>
+  </div>
+</div></div>
 <div class="modal" id="splitModal">
   <div class="mbox">
     <div class="mhead"><h2>Split PDF</h2><span class="fn" id="spName"></span>
@@ -2557,9 +2631,9 @@ function pickFolderFor(purpose){
     const home = (S.places.find(p => p.icon==='home') || {}).path || '/';
     const start = S.view==='browse' && S.browse ? S.browse : (S.places[0] || {}).path || home;
     FP = {res, purpose, moving: items, sel: null, path: start, home};
-    $('fpTitle').textContent = purpose==='copy' ? 'Copy to…' : 'Move to…';
-    $('fpWhat').textContent = `${plural(items.length,'item')}: open the folder you want, or click a folder once to pick it.`;
-    $('fpOk').textContent = purpose==='copy' ? 'Copy here' : 'Move here';
+    $('fpTitle').textContent = purpose==='copy' ? 'Copy to…' : purpose==='scan' ? 'Save scans in…' : 'Move to…';
+    $('fpWhat').textContent = purpose==='scan' ? 'Open the folder you want, or click a folder once to pick it.' : `${plural(items.length,'item')}: open the folder you want, or click a folder once to pick it.`;
+    $('fpOk').textContent = purpose==='copy' ? 'Copy here' : purpose==='scan' ? 'Save here' : 'Move here';
     $('fp').classList.add('on');
     fpGo(start);
   });
@@ -3055,6 +3129,125 @@ document.addEventListener('mouseup', e => {
   if(r.w < 0.005 || r.h < 0.004){ renderMarks(); return; }
   addMark(Object.assign({type:ED.tool, rect:r, color:ED.color}, ED.tool==='rect' || ED.tool==='ellipse' ? {width:ED.size, fill:false} : {}), d.page);
 });
+// ---------- scanning from network printers / scanners ----------
+const SC = {devs:[], dev:null, caps:null, job:null, pages:[], polling:null, busy:false,
+  opt: Object.assign({color:'color', source:'platen', dpi:300, paper:'a4', format:'pdf', mode:'one'}, store.get('scanOpts', {})), dest: store.get('scanDest', '')};
+function scanOpen(){ $('scanModal').classList.add('open'); scanSyncChips(); scDestLabel(); if(!SC.devs.length) scanFindDevices(false); if(!$('scName').value) $('scName').placeholder = 'Scan ' + new Date().toISOString().slice(0,10); }
+function scanClose(){ if(SC.busy){ toast('Wait for the scan to finish'); return; } $('scanModal').classList.remove('open'); }
+$('scanBtn').onclick = scanOpen; $('scClose').onclick = scanClose;
+$('scanModal').addEventListener('mousedown', e => { if(e.target === $('scanModal')) scanClose(); });
+async function scanFindDevices(refresh){
+  $('scMsg').className = 'scanmsg'; $('scMsg').textContent = 'Looking for scanners on the network…'; $('scRefresh').disabled = true;
+  try{ SC.devs = (await api('/api/scanners' + (refresh ? '?refresh=1' : ''))).items || []; }catch(e){ SC.devs = []; }
+  $('scRefresh').disabled = false;
+  const sel = $('scDev');
+  sel.innerHTML = SC.devs.length ? SC.devs.map(d => `<option value="${esc(d.id)}">${esc(d.name)}${d.source==='manual' ? ' (added by address)' : ''}</option>`).join('') : '<option value="">No scanner found</option>';
+  const keep = SC.dev && SC.devs.find(d => d.id === SC.dev.id) ? SC.dev.id : (store.get('scanDev','') && SC.devs.find(d => d.id === store.get('scanDev')) ? store.get('scanDev') : (SC.devs[0] || {}).id);
+  if(keep){ sel.value = keep; scanPickDevice(keep); }
+  else { SC.dev = null; SC.caps = null; $('scGo').disabled = true; $('scMsg').innerHTML = 'No scanner found on the network. Make sure it is on and on the same Wi-Fi, then press <b>Look again</b>, or use <b>Add by address</b> with its IP (shown on the printer\'s screen or in its network settings).'; }
+}
+async function scanPickDevice(id){
+  SC.dev = SC.devs.find(d => d.id === id) || null; SC.caps = null; store.set('scanDev', id);
+  if(!SC.dev) return;
+  $('scMsg').className = 'scanmsg'; $('scMsg').textContent = `Asking “${SC.dev.name}” what it can do…`; $('scGo').disabled = true;
+  try{ SC.caps = await api('/api/scanner/caps?id=' + encodeURIComponent(id)); }
+  catch(e){ $('scMsg').className = 'scanmsg err'; $('scMsg').textContent = e.message; return; }
+  scanApplyCaps(); $('scGo').disabled = false;
+  $('scMsg').textContent = SC.opt.source === 'platen' ? 'Put the paper on the glass and press Scan.' : 'Put the pages in the feeder and press Scan.';
+}
+function scanApplyCaps(){
+  const c = SC.caps; if(!c) return;
+  const srcs = c.sources;
+  // sources the scanner has
+  document.querySelectorAll('[data-opt="source"] button').forEach(b => b.disabled = !srcs[b.dataset.v]);
+  if(!srcs[SC.opt.source]) SC.opt.source = srcs.platen ? 'platen' : Object.keys(srcs)[0];
+  const src = srcs[SC.opt.source];
+  const colors = {color:'RGB24', grey:'Grayscale8', bw:'BlackAndWhite1'};
+  document.querySelectorAll('[data-opt="color"] button').forEach(b => b.disabled = !src.colors.includes(colors[b.dataset.v]));
+  if(!src.colors.includes(colors[SC.opt.color])) SC.opt.color = src.colors.includes('RGB24') ? 'color' : src.colors.includes('Grayscale8') ? 'grey' : 'bw';
+  const res = src.resolutions.filter(r => r >= 75 && r <= 600); const shown = res.length ? res : src.resolutions.slice(0, 5);
+  $('scOpts').querySelector('[data-opt="dpi"]').innerHTML = shown.map(r => `<button data-v="${r}">${r}${r===300?' · best for documents':r>=600?' · photos':''}</button>`).join('');
+  if(!shown.includes(SC.opt.dpi)) SC.opt.dpi = shown.includes(300) ? 300 : shown[Math.floor(shown.length/2)];
+  const maxBtn = document.querySelector('[data-opt="paper"] [data-v="max"]'); if(maxBtn) maxBtn.textContent = SC.opt.source === 'platen' ? 'Whole glass' : 'Longest';
+  scanSyncChips();
+}
+function scanSyncChips(){
+  document.querySelectorAll('#scanModal .scchips[data-opt]').forEach(g => { const k = g.dataset.opt; g.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(SC.opt[k]) === b.dataset.v)); });
+  $('scModeRow').style.display = SC.opt.format === 'pdf' ? '' : 'none';
+  $('scSave').disabled = !SC.pages.length || SC.busy;
+  $('scSave').textContent = !SC.pages.length ? 'Save' : SC.opt.format !== 'pdf' || SC.opt.mode === 'separate' ? `Save ${plural(SC.pages.length, SC.opt.format === 'pdf' ? 'PDF' : SC.opt.format.toUpperCase())}` : `Save 1 PDF (${plural(SC.pages.length,'page')})`;
+  $('scGoLbl').textContent = SC.busy ? 'Scanning…' : SC.pages.length && SC.opt.source === 'platen' ? 'Scan next page' : 'Scan';
+}
+document.querySelectorAll('#scanModal .scchips[data-opt]').forEach(g => g.addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b || b.disabled) return;
+  const k = g.dataset.opt; SC.opt[k] = k === 'dpi' ? +b.dataset.v : b.dataset.v; store.set('scanOpts', SC.opt);
+  if(k === 'source' && SC.caps){ scanApplyCaps(); $('scMsg').className = 'scanmsg'; $('scMsg').textContent = SC.opt.source === 'platen' ? 'Put the paper on the glass and press Scan.' : 'Put the pages in the feeder and press Scan.'; }
+  scanSyncChips();
+}));
+$('scDev').addEventListener('change', () => scanPickDevice($('scDev').value));
+$('scRefresh').onclick = () => scanFindDevices(true);
+$('scAdd').onclick = async () => {
+  const addr = await ask({title:'Add a scanner by address', text:'Type the scanner\'s IP address or name, e.g. 192.168.1.20. You can find it on the printer\'s screen under Network or Wi-Fi settings.', value:'', ok:'Add'});
+  if(!addr) return;
+  $('scMsg').className = 'scanmsg'; $('scMsg').textContent = `Trying ${addr}…`;
+  try{ const d = await call('/api/scanners/add', {address: addr}); SC.devs = SC.devs.filter(x => x.id !== d.id).concat([d]); SC.dev = d; await scanFindDevices(false); $('scDev').value = d.id; scanPickDevice(d.id); toast(`Added “${d.name}”`); }
+  catch(e){ $('scMsg').className = 'scanmsg err'; $('scMsg').textContent = e.message; }
+};
+$('scGo').onclick = async () => {
+  if(!SC.dev || SC.busy) return;
+  SC.busy = true; $('scGo').classList.add('busy'); $('scMsg').className = 'scanmsg'; $('scMsg').textContent = 'Scanning… keep the paper still.'; scanSyncChips();
+  try{
+    const d = await call('/api/scan/start', {scanner: SC.dev.id, source: SC.opt.source, color: SC.opt.color, dpi: SC.opt.dpi, paper: SC.opt.paper, job: SC.job});
+    SC.job = d.job; scanPoll();
+  }catch(e){ SC.busy = false; $('scGo').classList.remove('busy'); $('scMsg').className = 'scanmsg err'; $('scMsg').textContent = e.message; scanSyncChips(); }
+};
+function scanPoll(){
+  clearTimeout(SC.polling);
+  SC.polling = setTimeout(async () => {
+    let st; try{ st = await api('/api/scan/status?job=' + SC.job); }catch(e){ SC.busy = false; $('scGo').classList.remove('busy'); $('scMsg').className = 'scanmsg err'; $('scMsg').textContent = e.message; scanSyncChips(); return; }
+    const before = SC.pages.length; SC.pages = st.pages; if(st.pages.length !== before) scanRenderPages();
+    if(st.state === 'scanning'){ $('scMsg').textContent = st.pages.length ? `${plural(st.pages.length,'page')} so far…` : 'Scanning… keep the paper still.'; scanPoll(); return; }
+    SC.busy = false; $('scGo').classList.remove('busy');
+    if(st.state === 'error'){ $('scMsg').className = 'scanmsg err'; $('scMsg').textContent = st.error || 'The scan failed.'; }
+    else { $('scMsg').className = 'scanmsg'; $('scMsg').textContent = SC.opt.source === 'platen' ? `Done — ${plural(SC.pages.length,'page')} ready. Put the next page on the glass and press Scan next page, or Save.` : `Done — ${plural(SC.pages.length,'page')} ready. Add more, or Save.`; }
+    scanSyncChips();
+  }, 600);
+}
+function scanRenderPages(){
+  $('scCount').textContent = SC.pages.length ? plural(SC.pages.length,'page') : 'No pages yet';
+  $('scPages').innerHTML = SC.pages.length ? SC.pages.map((p, i) => `<div class="scpg" data-n="${p.n}">
+      <div class="im"><img src="/api/scan/page?job=${SC.job}&n=${p.n}&v=${p.rot}" alt="" style="transform:rotate(${p.rot}deg)${p.rot%180 ? ' scale(.74)' : ''}"></div>
+      <div class="nm">Page ${i+1}</div>
+      <div class="acts"><button data-pg="left" title="Move earlier" ${i===0?'disabled':''}>‹</button><button data-pg="rotl" title="Turn left">↺</button><button data-pg="rotr" title="Turn right">↻</button><button data-pg="right" title="Move later" ${i===SC.pages.length-1?'disabled':''}>›</button><button data-pg="del" class="del" title="Remove this page">✕</button></div>
+    </div>`).join('') : `<div class="scanempty"><div class="ic">📄</div>Scanned pages appear here.<br>Turn, remove or reorder them before saving.</div>`;
+  scanSyncChips();
+}
+$('scPages').addEventListener('click', async e => {
+  const b = e.target.closest('[data-pg]'); if(!b || b.disabled) return;
+  const el = b.closest('.scpg'), n = +el.dataset.n, i = SC.pages.findIndex(p => p.n === n); if(i < 0) return;
+  const a = b.dataset.pg, p = SC.pages[i];
+  if(a === 'del'){ SC.pages.splice(i, 1); }
+  else if(a === 'rotl') p.rot = (p.rot + 270) % 360; else if(a === 'rotr') p.rot = (p.rot + 90) % 360;
+  else if(a === 'left' && i > 0){ SC.pages.splice(i-1, 0, SC.pages.splice(i, 1)[0]); }
+  else if(a === 'right' && i < SC.pages.length-1){ SC.pages.splice(i+1, 0, SC.pages.splice(i, 1)[0]); }
+  scanRenderPages();
+  try{ await call('/api/scan/edit', {job: SC.job, pages: SC.pages.map(x => ({n:x.n, rot:x.rot}))}); }catch(err){ toast(err.message); }
+});
+$('scClear').onclick = async () => { if(SC.busy) return; if(SC.pages.length && !(await ask({title:'Throw these pages away?', text:`${plural(SC.pages.length,'scanned page')} will be lost.`, ok:'Start again'}))) return; SC.job = null; SC.pages = []; scanRenderPages(); $('scMsg').className = 'scanmsg'; $('scMsg').textContent = 'Ready for a new scan.'; };
+function scDestLabel(){ $('scDest').textContent = SC.dest ? nicePath(SC.dest) : 'Documents › Scans'; }
+const nicePath = p => { const home = (S.places.find(x => x.icon==='home') || {}).path; return (home && p.startsWith(home + '/') ? p.slice(home.length + 1) : p).split('/').filter(Boolean).join(' › '); };
+$('scDest').onclick = async () => { const d = await pickFolderFor('scan'); if(d){ SC.dest = d; store.set('scanDest', d); scDestLabel(); } };
+$('scSave').onclick = async () => {
+  if(!SC.pages.length || SC.busy) return;
+  $('scSave').disabled = true; $('scMsg').className = 'scanmsg'; $('scMsg').textContent = 'Saving…';
+  try{
+    const d = await call('/api/scan/save', {job: SC.job, format: SC.opt.format, mode: SC.opt.mode, dest: SC.dest || null, name: $('scName').value.trim()});
+    did({type:'copy', sources:[], dest:d.folder, made:d.made, msg: d.made.length === 1 ? `Saved “${d.names[0]}” in ${nicePath(d.folder)}` : `Saved ${plural(d.made.length,'file')} in ${nicePath(d.folder)}`});
+    SC.job = null; SC.pages = []; scanRenderPages(); $('scName').value = ''; $('scanModal').classList.remove('open');
+    await openFolder(d.folder); await refreshHere(d.made); const f = byPath().get(d.made[0]); if(f) preview(f);
+  }catch(e){ $('scMsg').className = 'scanmsg err'; $('scMsg').textContent = e.message; }
+  scanSyncChips();
+};
 // ---------- make a PDF smaller ----------
 let CMP = null;
 function openCompress(f){

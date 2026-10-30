@@ -43,3 +43,11 @@ The server uses macOS-only tools: Spotlight (`mdfind`, `mdls`), Quick Look (`qlm
 Linux, so file scanning, thumbnails and PDF splitting can only really be tested on the Mac.
 To work on the screen elsewhere, serve `filehub.html` with sample data for the `/api/...`
 endpoints, and keep the Python side compatible with Python 3.9 and the standard library.
+
+## Scanning
+
+The scanner button in the top bar finds printers and scanners on your Wi-Fi (anything that supports
+AirScan / eSCL, which is most network scanners made since about 2015). Choose colour, glass or feeder,
+sharpness and paper size, press Scan, then turn, remove or reorder the pages and save them as JPEG,
+PNG, one PDF per page or one PDF with every page. Scans go to Documents › Scans unless you pick
+another folder. If a scanner isn't found, "Add by address" takes its IP address.
