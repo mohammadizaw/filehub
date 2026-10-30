@@ -237,7 +237,8 @@ dd a{color:var(--accent)}
 .scpg .acts button:hover{background:var(--hover)}
 .scpg .acts button.del{color:#e5484d}
 .scanfoot{display:flex;align-items:flex-end;gap:16px;padding:14px 20px;background:var(--panel);flex-wrap:wrap;border-top:1px solid var(--line)}
-.scanfoot .scchips button{min-height:44px;background:var(--bg)}
+.scanfoot .scchips button{min-height:44px}
+.scanfoot .scchips button:not(.on){background:var(--bg)}
 .scango{position:sticky;bottom:-18px;margin:auto -18px -18px;padding:12px 18px 18px;background:var(--panel);display:flex;flex-direction:column;gap:10px;box-shadow:0 -12px 16px -14px rgba(0,0,0,.25)}
 .scanfoot input{min-height:44px;font-size:15px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);width:100%}
 .scansave{min-width:140px;font-weight:800}
