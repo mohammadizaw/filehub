@@ -200,7 +200,9 @@ dd a{color:var(--accent)}
 .scanhead{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--panel);flex-wrap:wrap;border-bottom:1px solid var(--line)}
 .scanhead h2{margin:0;font-size:20px}
 .scandev{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.scandev select{min-height:44px;font-size:15px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);max-width:320px}
+.scandev .csel{min-height:44px;font-size:15px;padding:0 14px;border-radius:12px;border:0;background:var(--bg);color:var(--text);box-shadow:var(--shadow);max-width:340px;min-width:200px;font:inherit;font-weight:700}
+.scandev .csel:hover{background:var(--hover)}
+.scandev .csel svg{width:16px;height:16px}
 .scanhead .btn,.scanfoot .btn{min-height:44px;font-size:15px;padding:0 16px}
 .scanbody{flex:1;display:grid;grid-template-columns:minmax(300px,380px) 1fr;min-height:0}
 .scanopts{padding:18px;overflow:auto;display:flex;flex-direction:column;gap:14px;border-right:1px solid var(--line);background:var(--panel)}
@@ -3171,7 +3173,7 @@ async function scanFindDevices(refresh){
   const sel = $('scDev');
   sel.innerHTML = SC.devs.length ? SC.devs.map(d => `<option value="${esc(d.id)}">${esc(d.name)}${d.source==='manual' ? ' (added by address)' : ''}</option>`).join('') : '<option value="">No scanner found</option>';
   const keep = SC.dev && SC.devs.find(d => d.id === SC.dev.id) ? SC.dev.id : (store.get('scanDev','') && SC.devs.find(d => d.id === store.get('scanDev')) ? store.get('scanDev') : (SC.devs[0] || {}).id);
-  if(keep){ sel.value = keep; scanPickDevice(keep); }
+  if(keep){ sel.value = keep; if(sel._cs) sel._cs.sync(); scanPickDevice(keep); }
   else { SC.dev = null; SC.caps = null; $('scGo').disabled = true; $('scMsg').innerHTML = 'No scanner found on the network. Make sure it is on and on the same Wi-Fi, then press <b>Look again</b>, or use <b>Add by address</b> with its IP (shown on the printer\'s screen or in its network settings).'; }
 }
 async function scanPickDevice(id){
@@ -3219,7 +3221,7 @@ $('scAdd').onclick = async () => {
   const addr = await ask({title:'Add a scanner by address', text:'Type the scanner\'s IP address or name, e.g. 192.168.1.20. You can find it on the printer\'s screen under Network or Wi-Fi settings.', value:'', ok:'Add'});
   if(!addr) return;
   $('scMsg').className = 'scanmsg'; $('scMsg').textContent = `Trying ${addr}…`;
-  try{ const d = await call('/api/scanners/add', {address: addr}); SC.devs = SC.devs.filter(x => x.id !== d.id).concat([d]); SC.dev = d; await scanFindDevices(false); $('scDev').value = d.id; scanPickDevice(d.id); toast(`Added “${d.name}”`); }
+  try{ const d = await call('/api/scanners/add', {address: addr}); SC.devs = SC.devs.filter(x => x.id !== d.id).concat([d]); SC.dev = d; await scanFindDevices(false); $('scDev').value = d.id; if($('scDev')._cs) $('scDev')._cs.sync(); scanPickDevice(d.id); toast(`Added “${d.name}”`); }
   catch(e){ $('scMsg').className = 'scanmsg err'; $('scMsg').textContent = e.message; }
 };
 $('scGo').onclick = async () => {
