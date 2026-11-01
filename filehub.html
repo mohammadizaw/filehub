@@ -221,7 +221,7 @@ dd a{color:var(--accent)}
 .scanstop{display:none;min-height:52px;border:2px solid #e5484d;border-radius:16px;background:var(--bg);color:#e5484d;font:inherit;font-size:17px;font-weight:800;cursor:pointer}
 .scanstop:hover{background:#e5484d;color:#fff}
 .scanstop.on{display:block}
-.scango.busy .scanbig{display:none}  /* while scanning, Stop takes the Scan button's place */
+.scango.scanning .scanbig{display:none}  /* while scanning, Stop takes the Scan button's place */
 .scanbig:hover{filter:brightness(1.05)}
 .scanbig:active{transform:scale(.98)}
 .scanbig:disabled{opacity:.5;cursor:default}
@@ -3212,7 +3212,7 @@ function scanSyncChips(){
   $('scModeRow').style.display = SC.opt.format === 'pdf' ? '' : 'none';
   $('scSave').disabled = !SC.pages.length || SC.busy;
   $('scSave').textContent = !SC.pages.length ? 'Save' : SC.opt.format !== 'pdf' || SC.opt.mode === 'separate' ? `Save ${plural(SC.pages.length, SC.opt.format === 'pdf' ? 'PDF' : SC.opt.format.toUpperCase())}` : `Save 1 PDF (${plural(SC.pages.length,'page')})`;
-  $('scStop').classList.toggle('on', SC.busy); $('scStop').closest('.scango').classList.toggle('busy', SC.busy); $('scGo').disabled = SC.busy || !SC.dev;
+  $('scStop').classList.toggle('on', SC.busy); $('scStop').closest('.scango').classList.toggle('scanning', SC.busy); $('scGo').disabled = SC.busy || !SC.dev;
   $('scGoLbl').textContent = SC.busy ? 'Scanning…' : SC.pass ? 'Scan the backs' : SC.pages.length && SC.opt.source === 'platen' ? (SC.opt.sides === '2' && SC.pages.length % 2 ? 'Scan the back' : 'Scan next page') : 'Scan';
   scanSidesHint(); scanSteps();
 }
