@@ -68,3 +68,9 @@ Share), and finding scanners on the local network. Click Allow / OK on those. Th
 step on newer Macs: System Settings › Privacy & Security › Full Disk Access › **+** › add FileHub.app
 (FileHub shows a button that opens the right place and another that shows the app in Finder).
 
+## If another program is using FileHub's port
+
+FileHub normally runs at http://127.0.0.1:8765. If another program has taken that port (for example a
+`python3 -m http.server` from another project, which shows a plain "Directory listing" page), FileHub says
+so in its window and uses the next free port, such as 8766, and opens the browser there.
+

@@ -28,7 +28,8 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
-PORT = 8765
+PORT = int(os.environ.get("FILEHUB_PORT", "8765"))  # FileHub moves to the next free port if this one is taken
+FIRST_PORT = 8765
 HOME = os.path.expanduser("~")
 HERE = os.path.dirname(os.path.abspath(__file__))
 THUMBS = os.path.join(tempfile.gettempdir(), "filehub-thumbs")
@@ -2242,9 +2243,55 @@ def self_update():
     return bool(after and after != before)
 
 
+def who_uses_port(port):
+    """Name of the program listening on a port (to explain a clash), or ''."""
+    try:
+        out = subprocess.run(["lsof", "-nP", "-iTCP:%d" % port, "-sTCP:LISTEN", "-Fc"], capture_output=True, text=True, timeout=5).stdout
+        names = sorted({line[1:] for line in out.splitlines() if line.startswith("c")})
+        return ", ".join(names)
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def pick_free_port():
+    """The usual port, or the next free one when another program has taken it."""
+    global PORT
+    import socket
+    for port in range(FIRST_PORT, FIRST_PORT + 12):
+        try:
+            with socket.socket() as sock:
+                sock.bind(("127.0.0.1", port))
+        except OSError:
+            # busy: is it FileHub itself, moved here earlier?
+            v = running_version(port)
+            if v is not None and not os.environ.get("FILEHUB_UPDATED"):
+                if v == VERSION:
+                    print("FileHub is already running on port %d." % port)
+                    webbrowser.open("http://127.0.0.1:%d" % port)
+                    raise SystemExit(0)
+                if stop_old_filehub(port):
+                    print("Stopped the older FileHub on port %d." % port)
+                    time.sleep(1)
+                    try:
+                        with socket.socket() as sock:
+                            sock.bind(("127.0.0.1", port))
+                    except OSError:
+                        continue
+                else:
+                    continue
+            else:
+                continue
+        if port != PORT:
+            print("Port %d is used by another program (%s). FileHub will use port %d instead." % (PORT, who_uses_port(PORT) or "unknown", port))
+        PORT = port
+        os.environ["FILEHUB_PORT"] = str(port)
+        return port
+    return PORT
+
+
 def restart():
     """Start the new version in place of this one (the browser page reloads by itself)."""
-    env = dict(os.environ, FILEHUB_NO_BROWSER="1", FILEHUB_UPDATED="1")
+    env = dict(os.environ, FILEHUB_NO_BROWSER="1", FILEHUB_UPDATED="1", FILEHUB_PORT=str(PORT))
     os.execve(sys.executable, [sys.executable, os.path.abspath(__file__)], env)
 
 
@@ -2256,19 +2303,20 @@ def update_loop():
             restart()
 
 
-def running_version():
+def running_version(port=None):
     try:
-        with urllib.request.urlopen("http://127.0.0.1:%d/api/version" % PORT, timeout=3) as r:
+        with urllib.request.urlopen("http://127.0.0.1:%d/api/version" % (port or PORT), timeout=3) as r:
             return json.loads(r.read()).get("version")
     except Exception:
         return None  # older versions don't answer /api/version
 
 
-def stop_old_filehub():
+def stop_old_filehub(port=None):
     """If an older FileHub is still running, stop it so this version can start."""
-    if VERSION and running_version() == VERSION:
+    port = port or PORT
+    if VERSION and running_version(port) == VERSION:
         return False  # the same version is already running: just use it
-    out = subprocess.run(["lsof", "-nP", "-t", "-iTCP:%d" % PORT, "-sTCP:LISTEN"],
+    out = subprocess.run(["lsof", "-nP", "-t", "-iTCP:%d" % port, "-sTCP:LISTEN"],
                          capture_output=True, text=True)
     stopped = False
     for pid in out.stdout.split():
@@ -2301,14 +2349,20 @@ def main():
     VERSION = git_version()
     try:
         server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    except OSError:  # port busy: an older FileHub, this same version, or our own restart
+    except OSError:  # port busy: an older FileHub, this same version, our own restart, or another program
         if stop_old_filehub():
             print("Stopped the older FileHub.")
-        elif not os.environ.get("FILEHUB_UPDATED"):
+            server = start_server()
+        elif running_version() is not None and not os.environ.get("FILEHUB_UPDATED"):
             print("FileHub is already running.")
             webbrowser.open("http://127.0.0.1:%d" % PORT)
             return
-        server = start_server()
+        elif running_version() is None:
+            # not FileHub on that port: step aside and use the next free one
+            pick_free_port()
+            server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+        else:
+            server = start_server()
     print("FileHub is running at http://127.0.0.1:%d  (press Ctrl+C to stop)" % PORT)
     threading.Thread(target=library, daemon=True).start()  # warm up
     threading.Thread(target=update_loop, daemon=True).start()
