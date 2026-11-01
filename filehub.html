@@ -218,6 +218,9 @@ dd a{color:var(--accent)}
 .scchips button:disabled{opacity:.35;cursor:default}
 .scanbig{min-height:76px;border:0;border-radius:20px;background:var(--accent-grad);color:#fff;font:inherit;font-size:22px;font-weight:800;cursor:pointer;box-shadow:var(--accent-glow);display:flex;align-items:center;justify-content:center;gap:12px;transition:transform .08s,filter .12s}
 .scanbig svg{width:28px;height:28px}
+.scanstop{display:none;min-height:52px;border:2px solid #e5484d;border-radius:16px;background:var(--bg);color:#e5484d;font:inherit;font-size:17px;font-weight:800;cursor:pointer}
+.scanstop:hover{background:#e5484d;color:#fff}
+.scanstop.on{display:block}
 .scanbig:hover{filter:brightness(1.05)}
 .scanbig:active{transform:scale(.98)}
 .scanbig:disabled{opacity:.5;cursor:default}
@@ -1246,7 +1249,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
       <div class="og"><div class="ol">Both sides</div><div class="scchips" data-opt="sides"><button data-v="1">One side</button><button data-v="2">Both sides</button></div><div class="ohint" id="scSidesHint"></div></div>
       <div class="og"><div class="ol">Sharpness</div><div class="scchips" data-opt="dpi"></div></div>
       <div class="og"><div class="ol">Paper size</div><div class="scchips" data-opt="paper"><button data-v="a4">A4</button><button data-v="letter">Letter</button><button data-v="a5">A5</button><button data-v="legal">Legal</button><button data-v="max">Whole glass</button></div></div>
-      <div class="scango"><button class="scanbig" id="scGo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 14h16M6 14V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg><span id="scGoLbl">Scan</span></button>
+      <div class="scango"><button class="scanstop" id="scStop" title="Stop scanning now; pages already scanned are kept">■ Stop</button><button class="scanbig" id="scGo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 14h16M6 14V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7"/><rect x="3" y="14" width="18" height="6" rx="2"/></svg><span id="scGoLbl">Scan</span></button>
       <div class="scanmsg" id="scMsg">Choose a scanner to start.</div></div>
     </div>
     <div class="scanpages">
@@ -3208,6 +3211,7 @@ function scanSyncChips(){
   $('scModeRow').style.display = SC.opt.format === 'pdf' ? '' : 'none';
   $('scSave').disabled = !SC.pages.length || SC.busy;
   $('scSave').textContent = !SC.pages.length ? 'Save' : SC.opt.format !== 'pdf' || SC.opt.mode === 'separate' ? `Save ${plural(SC.pages.length, SC.opt.format === 'pdf' ? 'PDF' : SC.opt.format.toUpperCase())}` : `Save 1 PDF (${plural(SC.pages.length,'page')})`;
+  $('scStop').classList.toggle('on', SC.busy); $('scGo').disabled = SC.busy || !SC.dev;
   $('scGoLbl').textContent = SC.busy ? 'Scanning…' : SC.pass ? 'Scan the backs' : SC.pages.length && SC.opt.source === 'platen' ? (SC.opt.sides === '2' && SC.pages.length % 2 ? 'Scan the back' : 'Scan next page') : 'Scan';
   scanSidesHint(); scanSteps();
 }
@@ -3236,6 +3240,7 @@ $('scGo').onclick = async () => {
     SC.job = d.job; scanPoll();
   }catch(e){ SC.busy = false; $('scGo').classList.remove('busy'); $('scMsg').className = 'scanmsg err'; $('scMsg').textContent = e.message; scanSyncChips(); }
 };
+$('scStop').onclick = async () => { if(!SC.busy || !SC.job) return; $('scStop').disabled = true; $('scMsg').textContent = 'Stopping…'; try{ await call('/api/scan/cancel', {job: SC.job}); }catch(e){ toast(e.message); } $('scStop').disabled = false; };
 function scanPoll(){
   clearTimeout(SC.polling);
   SC.polling = setTimeout(async () => {
@@ -3244,6 +3249,7 @@ function scanPoll(){
     if(st.state === 'scanning'){ $('scMsg').textContent = st.pages.length ? `${plural(st.pages.length,'page')} so far…` : 'Scanning… keep the paper still.'; scanPoll(); return; }
     SC.busy = false; $('scGo').classList.remove('busy');
     if(st.state === 'error'){ $('scMsg').className = 'scanmsg err'; $('scMsg').textContent = st.error || 'The scan failed.'; if(SC.pass && SC.pass.stage !== 'backs') SC.pass = null; }
+    else if(st.stopped){ SC.pass = null; $('scMsg').className = 'scanmsg'; $('scMsg').textContent = SC.pages.length ? `Stopped — ${plural(SC.pages.length,'page')} kept. Scan more, or Save.` : 'Stopped.'; }
     else if(SC.pass && SC.pass.stage !== 'backs'){
       // the fronts are in: now the backs
       SC.pass.stage = 'backs'; SC.pass.fronts = SC.pages.slice(SC.pass.before).map(p => p.n);
