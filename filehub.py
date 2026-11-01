@@ -2165,6 +2165,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, {"ok": True})
             except (ValueError, OSError) as e:
                 return self.send(400, {"error": str(e)})
+        if url.path == "/api/revealapp":  # show FileHub.app so it can be dragged into a permissions list
+            app = os.path.join(HERE, "FileHub.app")
+            subprocess.Popen(["open", "-R", app if os.path.isdir(app) else HERE])
+            return self.send(200, {"ok": True})
         if url.path == "/api/privacy":  # opens System Settings at Full Disk Access
             subprocess.Popen(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"])
             return self.send(200, {"ok": True})

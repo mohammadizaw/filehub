@@ -51,3 +51,20 @@ AirScan / eSCL, which is most network scanners made since about 2015). Choose co
 sharpness and paper size, press Scan, then turn, remove or reorder the pages and save them as JPEG,
 PNG, one PDF per page or one PDF with every page. Scans go to Documents › Scans unless you pick
 another folder. If a scanner isn't found, "Add by address" takes its IP address.
+
+## FileHub as a Mac app
+
+`FileHub.app` in this folder is a double-clickable app: it starts FileHub quietly (no Terminal window)
+and opens it in your browser. Drag it to the Dock and choose Options › Keep in Dock to have it one click
+away. Keep the app inside the FileHub folder (it finds the folder next to it; if you move the app, it
+remembers where the folder was). What it prints goes to `~/Library/Logs/FileHub.log`.
+If you downloaded the folder as a zip rather than with git, the first time you open the app right-click
+it and choose Open, because macOS asks before running apps from the internet.
+To rebuild the app after changing its icon or launcher: `python3 tools/make_app.py` (needs Pillow).
+
+**Permissions.** Because it is a real app, macOS asks FileHub itself for permission the first time it
+needs something: your Documents, Desktop and Downloads folders, controlling Finder (for the Bin and
+Share), and finding scanners on the local network. Click Allow / OK on those. The Bin needs one more
+step on newer Macs: System Settings › Privacy & Security › Full Disk Access › **+** › add FileHub.app
+(FileHub shows a button that opens the right place and another that shows the app in Finder).
+
