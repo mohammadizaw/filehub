@@ -78,6 +78,10 @@ if lsof -nP -iTCP:$PORT -sTCP:LISTEN >/dev/null 2>&1; then
       kill -9 $PIDS 2>/dev/null
       sleep 1
     fi
+  elif [ -z "$RUNNING_VERSION" ] && [ -z "$PIDS" ]; then
+    # Something that isn't FileHub has taken the port: FileHub will pick the next free one.
+    OTHER="$(lsof -nP -iTCP:$PORT -sTCP:LISTEN -Fc 2>/dev/null | sed -n 's/^c//p' | sort -u | tr '\n' ' ')"
+    echo "Note: port $PORT is used by another program (${OTHER:-unknown}). FileHub will use the next free port."
   else
     # Already running the latest version: just open it.
     open "http://127.0.0.1:$PORT"
