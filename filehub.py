@@ -1092,7 +1092,7 @@ def start_scan(sid, source="platen", color="color", dpi=300, paper="a4", job=Non
     j = _scan_jobs.setdefault(jid, {"id": jid, "pages": [], "state": "idle", "error": None, "dpi": dpi})
     if j["state"] == "scanning":
         raise ValueError("Already scanning. Wait for it to finish.")
-    j.update({"state": "scanning", "error": None, "dpi": dpi, "scanner": sc["name"]})
+    j.update({"state": "scanning", "error": None, "dpi": dpi, "scanner": sc["name"], "cancel": False, "loc": None})
     os.makedirs(os.path.join(SCAN_DIR, jid), exist_ok=True)
     threading.Thread(target=_run_scan, args=(j, sc, source, color, dpi, pw, ph), daemon=True).start()
     return {"job": jid, "dpi": dpi, "source": source}
@@ -1115,9 +1115,12 @@ def _run_scan(j, sc, source, color, dpi, pw, ph):
         if loc.startswith("/"):
             m = re.match(r"^(https?://[^/]+)", sc["base"])
             loc = m.group(1) + loc
+        j["loc"] = loc
         n = len(j["pages"])
         waits = 0
         while True:
+            if j.get("cancel"):
+                break
             try:
                 with _http(loc.rstrip("/") + "/NextDocument", timeout=120) as r:
                     data = r.read()
@@ -1142,19 +1145,43 @@ def _run_scan(j, sc, source, color, dpi, pw, ph):
             _http(loc, method="DELETE", timeout=5).close()
         except Exception:  # noqa: BLE001
             pass
+        if j.get("cancel"):
+            j["state"] = "done"
+            j["error"] = None
+            j["stopped"] = True
+            return
         if not j["pages"]:
             raise ValueError("Nothing came back. Is there paper on the glass or in the feeder?")
         j["state"] = "done"
     except Exception as e:  # noqa: BLE001 - whatever went wrong, the page must hear about it
+        if j.get("cancel"):
+            j["state"] = "done"
+            j["stopped"] = True
+            return
         j["state"] = "error"
         j["error"] = str(e)
+
+
+def cancel_scan(jid):
+    """Stop the scan that is running: tell the scanner to drop the job and keep the pages already in."""
+    j = _scan_jobs.get(jid)
+    if not j:
+        raise ValueError("That scan is gone.")
+    j["cancel"] = True
+    loc = j.get("loc")
+    if loc:
+        try:
+            _http(loc, method="DELETE", timeout=5).close()
+        except Exception:  # noqa: BLE001 - the scanner may already be done
+            pass
+    return {"ok": True}
 
 
 def scan_status(jid):
     j = _scan_jobs.get(jid)
     if not j:
         raise ValueError("That scan is gone.")
-    return {"job": jid, "state": j["state"], "error": j["error"], "dpi": j["dpi"],
+    return {"job": jid, "state": j["state"], "error": j["error"], "dpi": j["dpi"], "stopped": bool(j.pop("stopped", False)),
             "pages": [{"n": p["n"], "rot": p["rot"], "w": p["size"][0], "h": p["size"][1], "dpi": p.get("dpi", j["dpi"])} for p in j["pages"]]}
 
 
@@ -2117,6 +2144,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, start_scan(data.get("scanner", ""), data.get("source", "platen"), data.get("color", "color"),
                                                  int(data.get("dpi", 300)), data.get("paper", "a4"), data.get("job")))
             except (ValueError, TypeError) as e:
+                return self.send(400, {"error": str(e)})
+        if url.path == "/api/scan/cancel":
+            try:
+                return self.send(200, cancel_scan(data.get("job", "")))
+            except ValueError as e:
                 return self.send(400, {"error": str(e)})
         if url.path == "/api/scan/edit":
             try:
