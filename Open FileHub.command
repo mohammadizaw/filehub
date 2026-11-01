@@ -46,6 +46,12 @@ update() {
 update
 VERSION="$(current_version)"
 
+# --- 1b. Make sure FileHub.app can run (a copy downloaded as a zip loses this) --------------
+if [ -d "FileHub.app" ]; then
+  chmod +x "FileHub.app/Contents/MacOS/FileHub" 2>/dev/null
+  xattr -dr com.apple.quarantine "FileHub.app" 2>/dev/null
+fi
+
 # --- 2. Is FileHub already running? ----------------------------------------
 filehub_pids() {
   # Only the FileHub server listening on our port, never any other program.
