@@ -1,0 +1,26 @@
+#!/bin/bash
+# FileHub.app: starts FileHub without a Terminal window. Everything it prints goes to ~/Library/Logs/FileHub.log
+APP="$(cd "$(dirname "$0")/../.." && pwd)"
+PARENT="$(dirname "$APP")"
+SAVED="$HOME/Library/Application Support/FileHub/folder"
+LOG="$HOME/Library/Logs/FileHub.log"
+mkdir -p "$(dirname "$SAVED")" "$(dirname "$LOG")"
+
+find_folder() {
+  [ -f "$PARENT/filehub.py" ] && { echo "$PARENT"; return; }
+  if [ -f "$SAVED" ]; then p="$(cat "$SAVED")"; [ -f "$p/filehub.py" ] && { echo "$p"; return; }; fi
+  for d in "$HOME/filehub" "$HOME/FileHub" "$HOME/Documents/filehub" "$HOME/Desktop/filehub" "$HOME/Downloads/filehub" "$HOME/Documents/GitHub/filehub"; do
+    [ -f "$d/filehub.py" ] && { echo "$d"; return; }
+  done
+  mdfind -name filehub.py 2>/dev/null | grep '/filehub.py$' | head -1 | sed 's#/filehub.py$##'
+}
+
+FOLDER="$(find_folder)"
+if [ -z "$FOLDER" ]; then
+  osascript -e 'display dialog "FileHub could not find its folder (the one with filehub.py). Keep FileHub.app inside that folder, or open it from there once." buttons {"OK"} default button 1 with title "FileHub" with icon stop' >/dev/null 2>&1
+  exit 1
+fi
+echo "$FOLDER" > "$SAVED"
+echo "--- $(date) starting from $FOLDER" >> "$LOG"
+cd "$FOLDER" || exit 1
+exec /bin/bash "./Open FileHub.command" >> "$LOG" 2>&1

@@ -81,4 +81,4 @@ fi
 
 # --- 3. Start FileHub -------------------------------------------------------
 [ -n "$VERSION" ] && echo "$VERSION" > "$STAMP"
-python3 filehub.py
+exec python3 filehub.py   # exec: when started from FileHub.app, quitting the app stops the server
